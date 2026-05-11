@@ -1,0 +1,20 @@
+# Editor / IDE 个人配置
+.obsidian/            # Obsidian vault 设置
+.vscode/              # VSCode workspace 设置
+.idea/                # JetBrains 系列
+*.swp
+*.swo
+.DS_Store
+
+# AI 协同框架的临时 / 缓存（用本框架的项目应该继承这条）
+.ai/cache/
+.ai/tmp/
+
+# 注意：.ai/logs/ 看团队偏好是否进版本控制
+# 若希望追溯历史 Agent 输出：不加
+# 若 logs 体积大或含敏感信息：取消下行注释
+# .ai/logs/
+
+# 本地环境
+.env
+.env.local

@@ -1,0 +1,86 @@
+# <PROJECT_NAME> Architecture
+
+> Bootstrap 时由 Claude 基于项目实际填充本文件。
+> 文件名提示：填好后请将 `architecture.md.template` 改名为 `architecture.md`。
+>
+> 本文件描述**架构边界 + 评审触发条件 + 长期不变约束**，不是详细设计文档。
+> 详细设计在 ADR（`decisions.md`）或外部技术文档。
+
+## Architecture Principles
+
+> 项目级架构原则。一般 3-5 条够。Agent 做任何改动都应自检不违反这些原则。
+
+1. <原则 1，例如：单向数据流：客户端 → 后端 → 数据库，不反向同步>
+2. <原则 2，例如：Proto 是契约的单一来源，禁止生成代码与 proto 不同步>
+3. <原则 3，例如：业务逻辑必须有单元测试，不接受"已手测"作为合并理由>
+4. ...
+
+## Module Layout
+
+> 列出项目的主要模块 / 组件以及它们的职责边界。
+> 单仓项目用「目录 → 职责」表；多仓用「仓库 → 职责」表。
+
+| 模块 / 目录 / 仓库 | 职责 | 关键文件 |
+| --- | --- | --- |
+| <e.g. `internal/server`> | <e.g. HTTP / gRPC 入口> | <e.g. `server.go`, `grpc.go`> |
+| <e.g. `internal/store`> | <e.g. 数据持久化与查询> | <e.g. `pgstore.go`> |
+| ... | | |
+
+## Protocol / API Boundaries
+
+> 系统对外或跨模块的接口契约。变更这些边界需 Claude 评审。
+
+### <Boundary 1 名称>
+
+- 类型: <gRPC service / REST endpoint / Message Queue topic / etc.>
+- 主接口: <列出关键方法 / 路径>
+- Provider: <哪个模块 / 仓库实现>
+- Consumer(s): <哪些模块 / 仓库使用>
+- 兼容性纪律: <如何添加新字段 / 如何废弃旧字段 / 是否允许 breaking change>
+
+### <Boundary 2 名称>
+
+（如有）
+
+## Data Contracts
+
+> 数据 schema 与 enum 等持久化层契约。变更这些需 Claude 评审 + 迁移策略。
+
+- <table / collection / file format>: <说明 + schema 位置>
+- ...
+
+## Architecture Review Triggers
+
+> 触发 Claude Code 评审的条件。OC / Codex 遇到下列情况之一必须升级。
+
+满足以下任一条件，必须先有 Claude ADR 才能由 Codex 实施：
+
+1. 修改 Protocol / API Boundaries 段列出的任何接口
+2. 修改 Data Contracts 段列出的任何 schema
+3. 新增项目级依赖（语言、框架、运行时、包管理器、数据库等）
+4. 跨 ≥ 3 个文件 或 跨模块边界 的重构
+5. 影响认证 / 授权 / 数据加密 / 日志脱敏 等安全相关代码
+6. 改变错误处理 / 重试 / 熔断 / 限流等可靠性策略
+7. <项目特定的触发条件，如：影响 fleet rollout 的 release 流程>
+
+不满足任一条件的改动可走 OC 摸排 → Codex 实施。
+
+## Long-term Constraints
+
+> 与项目伴生的长期不可妥协约束。
+> 例如：性能下限、数据保留期、API 向后兼容窗口、合规要求等。
+
+- <constraint 1>
+- <constraint 2>
+
+---
+
+## Bootstrap 备注
+
+本文件初稿由 Claude bootstrap session 生成。**人审后必须做的事**：
+
+1. 删除本「Bootstrap 备注」段
+2. 把文件改名 `architecture.md.template` → `architecture.md`
+3. 把所有 `<...>` 占位符替换为实际内容
+4. 与团队对齐 Architecture Principles 与 Long-term Constraints 段——这些是长期约束，要谨慎拍板
+5. 在 Architecture Review Triggers 段补充项目特定的触发条件

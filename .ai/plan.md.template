@@ -1,0 +1,97 @@
+# <PROJECT_NAME> Plan
+
+> 项目级计划——当前活跃 epic / 里程碑的全局视图。
+> 文件名提示：填好后请将 `plan.md.template` 改名为 `plan.md`。
+>
+> 与 `context.md` 区别：
+> - `context.md` 是「当前快照」（已完成的项 + 当前 What's Next 表）
+> - 本文件 `plan.md` 是「未来计划」（详细的 epic / 里程碑拆解）
+>
+> 与 `tasks/<task>.md` 区别：
+> - 本文件描述 epic 级别（多周）
+> - task 文件描述 slice 级别（1 PR）
+> - 每个 epic 切片到 task 文件后在本文件加链接
+
+## Default Plan Shape
+
+每个 substantial task 应拆为：
+
+1. Scope
+2. Context collection
+3. Architecture decision, if needed
+4. Implementation slice
+5. Tests and verification
+6. Review
+7. Fixes
+8. Merge or handoff
+
+## Current Default Flow
+
+| Phase | Owner | Output |
+| --- | --- | --- |
+| Context scan | OpenCode | File map, impacted symbols, existing tests, risk notes |
+| Architecture | Claude Code | Decision, alternatives, acceptance criteria |
+| Implementation | OpenCode 草稿 → Codex 审校；或 Codex 直接实施 | Patch, tests, progress notes |
+| Low-cost review | OpenCode | Review checklist and obvious issues |
+| Critical review | Claude Code | Architecture and high-risk findings（按需）|
+| Fix and verify | Codex | Approved fixes and verification output |
+
+### Fast Path
+
+当改动满足 `AGENTS.md > Scope Heuristics` 的「Claude 直接修改」条件时，可跳过 Architecture 阶段，由 Claude 直接进入 Implementation + Review。Fast path 仍需在 `.ai/progress.md` 记录变更和测试结果。
+
+## Planning Rules
+
+- One plan should fit one feature, bug or review scope.
+- If a task touches multiple repos, split by repo and name the contract boundary.
+- If a task touches protocol definitions, explicitly list provider, consumer, generated code and tests.
+- If the plan is larger than one Agent session, create a task file in `tasks/`.
+- Do not ask Claude for architecture until OpenCode or Codex has produced enough focused context.
+
+## Active Epics
+
+> 当前活跃的 epic 列表。Bootstrap 后此节为空（项目初始化阶段无活跃 epic）。
+> 随着项目推进按需添加 epic 章节。
+
+<!-- 示例 epic 章节模板（删除此注释后保留下方结构）：
+
+### Epic: <epic 名称>
+
+- 目标: <一句话>
+- 估时: <X 天 / X 周>
+- 状态: <planning / in-progress / merging / completed>
+- ADR: <ADR-YYYYMMDD-NN 链接>
+- 子任务（task 文件）:
+  - `.ai/tasks/<date>-<slug-1>.md` — <slice 1 一句话>
+  - `.ai/tasks/<date>-<slug-2>.md` — <slice 2 一句话>
+  - `.ai/tasks/<date>-<slug-3>.md` — <slice 3 一句话>
+- 已知约束 / 阻塞:
+- 当前下一步: <slice X 实施 / Claude 评审 / 真机验收 等>
+
+-->
+
+## Completed Epics（归档）
+
+> 已完成的 epic 摘要，便于回溯。详细流水在 `progress.md` 与 `archive/`。
+
+<!-- 示例：
+
+### <Epic 名称>（completed YYYY-MM-DD）
+
+- 目标: <一句话>
+- 关键产出: <commit hash 列表>
+- 收口 ADR: <ADR 编号>
+- 教训 / dogfood 发现: <对未来的提醒>
+
+-->
+
+---
+
+## Bootstrap 备注
+
+本文件初稿由 Claude bootstrap session 生成。**人审后必须做的事**：
+
+1. 删除本「Bootstrap 备注」段
+2. 把文件改名 `plan.md.template` → `plan.md`
+3. 删除「Active Epics」段的注释模板，等首个真实 epic 启动后由 Claude 写入
+4. 「Default Plan Shape」「Planning Rules」等普适段如适用直接保留；不适用的整段删除（不要留空架构）
