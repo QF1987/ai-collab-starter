@@ -66,6 +66,99 @@ grep -c "^diff --git" .ai/logs/<task>.draft.patch
 - 写代码前先列改动清单（哪些函数、哪些行），减少返工。
 - 测试代码与实现代码一起提交，不要分两轮。
 
+## 测试质量强约束（Dogfood #17 / #20 / #21 修复）
+
+测试是 Slice 验收的硬门槛。OC 国产模型在测试 discipline 上有反复出现的弱点（连续 3 个 slice 命中）。**违反以下任一条 = 草稿不可交付**，自审清单中标 ✗ 并回退人工或 Claude。
+
+### 1. 测试必须 import 被测对象（Dogfood #17 / P0）
+
+**禁止反模式**：
+
+- ❌ 在测试文件内**重新定义**被测函数 / 类（复制 production 代码到测试里测一遍）
+- ❌ 只测 `vi.mock` 出来的 mock 函数（mock 函数返回什么测试断言什么，自己测自己）
+- ❌ 只测测试文件内的 local 变量 / helper 函数（没 import 被测代码）
+
+**必须**：
+
+- ✅ 显式 `import { 被测函数 } from '@/...'`
+- ✅ assertion 基于**被测函数的真实输出**，不是测试 helper 的输出
+- ✅ 每个 test case 至少调用一次被测函数
+
+**Self-check（产出前跑）**：
+
+```bash
+# 列每个 test 文件 import 的被测对象
+for f in $(find tests -name "*.test.ts" -o -name "*.test.tsx" -o -name "*.spec.ts"); do
+  echo "=== $f ==="
+  grep -E "^import.*from '@/" "$f" || echo "  ⚠️ 未 import 任何 @/ 路径，疑似空跑测试！"
+done
+```
+
+无 `@/...` import 的测试文件 = 高风险空跑——必须人工核对。
+
+### 2. Vue composable 测试用 `mount()` + setup 上下文（Dogfood #21）
+
+测试 Vue composable（含 `onMounted` / `onBeforeUnmount` / `watch` / `provide/inject` 等 lifecycle/context API）**必须**包在 `defineComponent` + `setup()` 内由 `@vue/test-utils` 的 `mount()` 调用。
+
+**禁止反模式**：
+
+```typescript
+❌ // 直接在测试外调 composable
+import { useEcharts } from '@/composables/useEcharts'
+it('test', () => {
+  const result = useEcharts(...)   // ← onMounted 不会触发！lifecycle hooks 全 no-op
+})
+```
+
+**必须**：
+
+```typescript
+✅ import { mount } from '@vue/test-utils'
+import { defineComponent } from 'vue'
+import { useEcharts } from '@/composables/useEcharts'
+
+const TestComponent = defineComponent({
+  setup() {
+    const result = useEcharts(...)
+    return { result }
+  },
+  template: '<div ref="containerRef" />',
+})
+
+it('test', async () => {
+  const wrapper = mount(TestComponent)
+  await nextTick()
+  // assertion 基于真 lifecycle 触发后的状态
+  wrapper.unmount()   // 测 dispose
+})
+```
+
+类似规则适用于 React hooks（用 `@testing-library/react renderHook`）/ Svelte stores 等其它框架的 reactive 模式。
+
+### 3. UI 类 task 必须 Browser 实测（Dogfood #20）
+
+涉及视觉 / DOM 渲染 / 交互 / 路由 / 响应式布局的 task，**typecheck + unit test + build 全过≠ UI 正确**。OC 草稿 Slice 3 的 ChartCard slot 缺失就是 typecheck/test/build 全过但 Browser canvasCount=0 的真实案例。
+
+**草稿产出前**必须做以下一项：
+
+- 跑 headless Browser（playwright / puppeteer）截图或断言关键 DOM 计数（如 `canvasCount > 0` / `cardCount === expected`）
+- 或本地启 dev server，人工 / Agent 用浏览器 MCP 自测关键页面 + 视口切换
+- Browser 实测结果记录在自审清单（产出格式 §Self-review notes 内）
+
+判断「是否 UI 类 task」：
+
+| 判定 | 必须 Browser 实测 |
+| --- | --- |
+| 改了 .vue / .tsx / .svelte / .jsx 组件 | ✅ 是 |
+| 改了 router / 守卫 | ✅ 是 |
+| 改了响应式断点 / SCSS 媒体查询 | ✅ 是 |
+| 改了 ECharts / D3 / 图表注册 | ✅ 是 |
+| 仅改 store / composable 但不涉及 DOM | 否（unit test 足够） |
+| 仅改 API client / types / 工具函数 | 否 |
+| 改 CI / build 配置 | 否（build 通过即可） |
+
+不确定时按「是」处理——多跑一次 Browser 实测的成本远低于上线后发现 UI 坏掉。
+
 ## 输出
 
 ```markdown

@@ -104,6 +104,39 @@
    （数据级）历史 NULL 行不 backfill，新行由修复后的客户端正确填充。"
 ```
 
+##### ADR「零改动」必须分三级（Dogfood #15 修复）
+
+ADR 中 `Compatibility / 共享文件分工表` 段写「某文件零改动」时，**必须**显式区分三级，**禁止**笼统说「零改动」：
+
+| 级别 | 含义 | 默认禁/允许 |
+| --- | --- | --- |
+| **L1 类型/接口结构级** | 新增/删除 type / interface / endpoint / enum 值 | 禁止 |
+| **L2 字段级 / 不兼容改动** | 改既有字段类型 / 删字段 / 改字段名 / 改字段语义 | 禁止 |
+| **L3 向后兼容扩展** | 已有 interface 内增 optional 字段 / 已有 enum 内增值 / devDep 新增 | **允许**（除非 ADR 显式禁） |
+
+反例（Phase 3 Step 5 实际踩过 2 次）：
+
+```
+❌ ADR-05: "src/api/types.ts — Slice 2 零改动 / Slice 3 零改动"
+   ← Slice 2 加 keyword?: string 到 DeviceListParams（L3 向后兼容扩展）触发字面违规
+   ← Slice 3 加 jsdom devDep 到 package.json（L3 测试依赖）触发字面违规
+   两次都是合理 L3 扩展，但 ADR 字面禁绝
+```
+
+正例：
+
+```
+✅ ADR: "src/api/types.ts 改动纪律:
+   L1 禁止: 新增/删除 interface 与 enum（已预置全部需用 type，由 Slice 1 完成）
+   L2 禁止: 改既有字段类型/名/语义
+   L3 允许: 已有 interface 内增 optional 字段（如 DeviceListParams.keyword?）
+   package.json 改动纪律:
+   L1 禁止: 改 main / type / build script
+   L3 允许: devDep 新增（测试 / lint 工具）"
+```
+
+下游 Codex 审校时按「L1/L2 违规 = 阻塞」「L3 扩展 = follow-up 标注，不阻塞」分级判定。
+
 #### `Implementation slices for Codex` 段（Paths 分两组）
 
 每个 slice 的 Paths 表必须分**两组列出**：

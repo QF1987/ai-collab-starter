@@ -18,3 +18,11 @@
 # 本地环境
 .env
 .env.local
+
+# 包管理器误生成（Dogfood #16）
+pnpm-workspace.yaml   # pnpm 11 init 默认生成；单仓 web 项目不需要 monorepo workspace
+.agents/              # 某些 AI 工具会自动生成此目录
+*.lock                # 偶尔非主流包管理器留下的杂物（保留 package-lock.json / pnpm-lock.yaml / yarn.lock）
+!package-lock.json
+!pnpm-lock.yaml
+!yarn.lock

@@ -38,15 +38,33 @@
 
 3. **Acceptance check**：每条 Criterion 是否有 patch 行号或测试名作为证据？OC 自审清单标 △/✗ 的项是否合理？
 
-4. **Test check**：必测 case 是否齐全且全部通过？测试代码是否真的覆盖到分支（不是空跑）？
+4. **Test check**（Dogfood #17 / #21 强化）：必测 case 是否齐全且全部通过？测试代码是否真的覆盖到分支？
+   - **测试 import 检查**：每个 test 文件应至少 import 一个 `@/...` 路径下的被测对象。无 import 的 test 文件 = 高风险空跑（OC 反复犯过）
+   - **被测函数 grep 检查**：不应在测试文件内重定义被测函数（搜 `function 被测名` 在 test 文件出现即可疑）
+   - **Vue composable 测试模式**：含 `onMounted` / `onBeforeUnmount` / `watch` 等 lifecycle/context API 的 composable，测试必须用 `@vue/test-utils mount()` + `defineComponent` setup 包装，**不接受**直接在测试外调 composable
+   - **React hooks 类似**：必须用 `renderHook` 或 component wrapper 测试
 
-5. **平台正确性**：语言 / 框架特有问题：
+5. **Browser 实测**（Dogfood #20 · UI 类 task 必须）：
+
+   涉及视觉 / DOM / 交互 / 响应式布局的改动，**typecheck + test + build 全过 ≠ UI 正确**。OC 草稿 Slice 3 的 ChartCard slot 缺失就是 typecheck/test/build 全过但 canvasCount=0 的实际案例。
+
+   Codex 审校 UI 类 task **必须**：
+   - 启 dev server 或用 Browser MCP 加载关键页面
+   - PC viewport + mobile viewport 各跑一次
+   - 断言关键 DOM 计数（canvas / card / chart-inner / 控件可见性）
+   - 测视口切换 + 路由跳转 + 守卫
+   - Browser 实测结果记录在 `Test check` 段
+
+   UI 类 task 不跑 Browser 实测 → 审校无效，建议升级 REJECT 让 OC 重做。
+
+6. **平台正确性**：语言 / 框架特有问题：
    - Kotlin / Android：资源泄漏、主线程阻塞、空引用、协程/线程生命周期、流关闭顺序
    - Go：goroutine 闭包变量捕获、channel close、context 传递、defer 顺序
    - C++：lifetime / RAII、JNI 局部引用释放、未定义行为、线程同步
    - Python：GIL、async/await、循环引用
+   - Vue 3：composable lifecycle 注册（必须在 setup 内）、reactive ref 解包、template ref timing
 
-6. **TODO(codex-review) 列表**：每条给出明确决策（接受 / 改 / 驳回）。
+7. **TODO(codex-review) 列表**：每条给出明确决策（接受 / 改 / 驳回）。
 
 判定结果三选一：
 
