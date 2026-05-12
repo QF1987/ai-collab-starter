@@ -124,6 +124,15 @@ cp -r "$STARTER_ROOT/.claude"    "$TARGET/"
 # 子项目不再需要 init-collab.sh 自身
 rm -f "$TARGET/scripts/init-collab.sh"
 
+# ===== 初始化 git 仓（Dogfood #11 修复）=====
+
+if [[ ! -d "$TARGET/.git" ]]; then
+  (cd "$TARGET" && git init -b main >/dev/null 2>&1) && \
+    echo "🎯 git init -b main (new repo, no commits yet)"
+else
+  echo "ℹ️  .git already exists — skipping git init"
+fi
+
 # ===== 替换 AGENTS.md 中的 <PROJECT_NAME> 占位符 =====
 
 if [[ -f "$TARGET/AGENTS.md" ]]; then

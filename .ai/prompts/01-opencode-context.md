@@ -105,5 +105,13 @@ prompt body 推荐结构：
 
 - 推断下一步该哪个 Agent（通常 Claude 决策 / Codex 实施 / OC 草稿）。
 - 输出**完整可粘贴**的 prompt（代码块），路径已填好。
+- **引用 `.ai/prompts/0X-*.md` 路径前必须验证存在**（Dogfood #12 强约束）：
+
+  ```bash
+  ls .ai/prompts/0X-<name>.md  # 必须返回路径，禁止 hallucinate 文件名
+  ```
+
+  反面案例：曾把 `02-claude-plan.md` 写成 `02-claude-slice.md`——语义化命名 hallucination。规避：复制现有 prompt 文件名而非「按意图重命名」。
+
 - 若调研后判断「无需后续步骤」（如问题不存在 / 已修复），改为输出「关闭任务」的提示词。
 - 若有分支（多种可能下一步），每分支一个代码块并标明触发条件。

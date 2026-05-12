@@ -9,7 +9,8 @@
 
 - 当前 task: `NONE`
 - 当前阶段: `NONE`
-- 起始时间: `NONE`
+- 起始时间: `NONE` <!-- task 第一次启动时间（intake 完成那一刻）；**跨 step 不变**，详见 AGENTS.md > Session State Discipline 字段表 -->
+
 
 ## Last completed step
 

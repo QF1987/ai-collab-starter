@@ -289,7 +289,9 @@ state.md 的字段更新规则：
 | 字段 | 谁填 | 内容来源 |
 | --- | --- | --- |
 | `Active task` | 当前 Agent | 从输入 task 文件抄路径 |
+| `Active task.起始时间` | 当前 Agent | **task 第一次启动的时间**（intake 完成那一刻）。**跨 step 不变**——OC 摸排 / Claude 决策 / Codex 实施都不要改这个字段。改了就是误解字段语义 |
 | `Last completed step` | 当前 Agent | 描述自己刚做完的 step |
+| `Last completed step.完成时间` | 当前 Agent | 当前 step 完成时间（每 step 刷新） |
 | `Last completed step.Commit` | 当前 Agent | 本步骤改动的 git commit hash；如未 commit 必须标 `⚠️ WORKING TREE — not committed` |
 | `Next step` | 当前 Agent | 把「下一步提示词」原文复制进 `Next step.可粘贴 prompt` 字段 |
 | `Blockers` | 当前 Agent | 已知阻塞，不写「无」就是没有 |

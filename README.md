@@ -26,6 +26,7 @@
 - 多模块、多人 / 多 Agent、长周期
 - 跨语言 / 跨平台 / 跨仓
 - 需要审计追溯（团队回顾、外部 review、合规要求）
+- **业务延续 + 技术栈反差大** —— 如已有 Go backend + 新增 Vue 前端；业务术语复用但技术栈截然不同。Starter kit 完全可用，**业务延续不影响普适性**（Phase 3 Step 5 dogfood 已验证）
 
 ### ❌ 不适用场景
 
@@ -89,6 +90,28 @@ cp -r $STARTER/.claude    /path/to/your-new-project/
 - 跑 `/intake` 开你的第一个真任务
 
 完整 5 步 bootstrap 详见 `.ai/getting-started.md` §1。
+
+### `/intake` skill 跨项目限制（Dogfood #8 修复说明）
+
+`.claude/skills/intake/SKILL.md` 是 **project-local skill**——必须在目标项目目录开新 Claude Code session 才能用 `/intake` 触发：
+
+```bash
+cd /path/to/your-new-project
+claude   # 在此目录启动 session，/intake 才能识别
+```
+
+**你不能在其它项目的 session 内远程触发新项目的 `/intake`**——Claude Code skill 机制是 cwd-scoped。
+
+#### Fallback · 手动触发指引
+
+如果你确实需要在其它 session 内启动 intake 流程（如**正在 review starter kit 自身、想顺便起一个新项目**），用 fallback：
+
+1. 打开 `.ai/intake-templates.md`（OC / Codex / Claude 任何 Agent 都能读）
+2. 让当前 session 的 Agent 按 `> 模式选择` + `§A/B/C/D` 对应分支问答
+3. 产出 brief 草稿 + 自己审 + 落盘到目标项目 `.ai/logs/<date>-<slug>.brief.md`
+4. 同步刷 state.md（按 `AGENTS.md > Session State Discipline`）
+
+这种 fallback 跑出来的 intake 与 skill 自动触发产出的 brief **完全等价**——只是没有 `AskUserQuestion` 工具的 UX 优势。
 
 ## 占位符约定
 
