@@ -152,6 +152,28 @@ Tokens: in=<n> out=<n> total=<n>
 
 汇报最末追加 `## 下一步提示词` 段落，**并把同一份 prompt 覆盖写入 `.ai/state.md`**（详见 AGENTS.md > Session State Discipline）。两件事缺一不可。
 
+#### state.md 覆盖前必读（Dogfood #19 强约束）
+
+**覆盖写入 state.md 前必须先 Read 前一版**——这是 Pattern A 「Agent 不读 state.md」的**轻量例外**。原因：state.md 含若干跨 step 不变的 **invariant 字段**，Agent 不知道前一版值就会胡填（曾 4 次发生「起始时间」字段被错填为当前 step 开工时间，OC / Codex / Claude 都犯过——证明这是 Pattern A 设计副作用，不是 Agent 执行力问题）。
+
+**必须从前一版完整复制（不变）**：
+
+| invariant 字段 | 含义 |
+| --- | --- |
+| `Active task.起始时间` | task 第一次启动那一刻；**禁止改成当前 step 时间** |
+| `Active task.当前 task` 路径 | 同一 task 跨 step 不变 |
+| `Notes` 中的历史 commit hash 引用 | 累积记录，保留前一版后**按需追加**，不覆盖 |
+| `Notes` 中的 ADR / Epic / Phase 上下文 | 同上 |
+
+**每次 step 都更新（覆盖）**：
+
+- `Active task.当前阶段`
+- `Last completed step.*`（全部子字段：Agent / Step / 完成时间 / Commit / 产出）
+- `Next step.*`（全部子字段）
+- `Blockers`（按当前实际情况重写）
+
+违反此约束 → state.md invariant 字段被破坏 → 下次 session 接力时**没有可靠时间锚点 / commit 历史 / 任务身份**。
+
 #### 统一格式（硬约束）
 
 `## 下一步提示词` 段必须含 4 个固定字段：
