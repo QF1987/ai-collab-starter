@@ -36,6 +36,15 @@
 
 2. **Scope check**：patch 只动了 task `Scope` 列出的路径吗？动了 `Non-goals` 范围吗？
 
+   **ADR 模式漂移扫描（Dogfood #22 强化）**：除 Scope 字面核对外，还要扫**跨 slice 模式一致性**：
+
+   - **types / interface 放置位置**：本 slice 新增 type 是否放在与历史 slice 同模式位置？（如历史 Slice X 把图表 type 放 `src/charts/types.ts`，本 slice 不应把同类 type 塞 `src/api/types.ts`）
+   - **新依赖位置**：本 slice 加新依赖到 dependencies vs devDependencies 是否符合 ADR-05 三级规则（L1 禁运行时依赖 / L3 允许 devDep）？
+   - **测试文件 layout**：本 slice 测试是否放在与历史 slice 同位置/同命名约定？（如 `tests/composables/*.test.ts` vs `tests/<feature>/*.test.ts`）
+   - **mock fixture 命名约定**：本 slice 新增 fixture 是否遵循历史命名（如统一带 / 不带 domain 前缀）？
+
+   发现模式漂移**不一定升 REJECT**，但**必须**在 audit 报告 `Scope check` 段显式标记 + 在 Follow-up 段建议 Claude 在新 slice ADR 中显式 reaffirm 或 lift。漏抓模式漂移 = epic-level review 时再追溯成本高（实际 Slice 4 types 漂移直到 OC epic review 才发现）。
+
 3. **Acceptance check**：每条 Criterion 是否有 patch 行号或测试名作为证据？OC 自审清单标 △/✗ 的项是否合理？
 
 4. **Test check**（Dogfood #17 / #21 强化）：必测 case 是否齐全且全部通过？测试代码是否真的覆盖到分支？

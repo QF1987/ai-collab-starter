@@ -159,6 +159,49 @@ it('test', async () => {
 
 不确定时按「是」处理——多跑一次 Browser 实测的成本远低于上线后发现 UI 坏掉。
 
+#### Browser 实测「不可交付」硬约束（Dogfood #20-v2 P0）
+
+文字约束不足以拦住 OC 推责（Slice 4 OC 主动写「Browser 实测待 Codex」直接跳过）。**v0.4 修复**：草稿自审段中 Browser 实测**必须有可机器读取的证据**，否则草稿**不可交付**。
+
+`Self-review notes` 中**必须**含以下任一证据形式（任选一种但必须有）：
+
+**形式 A · 命令输出粘贴**（推荐，最低成本）：
+
+```text
+Browser self-check (CLI):
+$ npx playwright test path/to/ui-smoke.spec.ts --reporter=line
+✓  PC 1920×1080 render check (canvasCount=5, cardCount=6)
+✓  Mobile 390×844 redirect check (toCount=1, redirect=true)
+2 passed (3.2s)
+```
+
+**形式 B · Browser MCP 截图引用**：
+
+```text
+Browser MCP screenshots (saved to .ai/logs/<task>.screenshots/):
+- pc-1920x1080-loaded.png  (canvas=5, card=6, 关键元素 visible)
+- mobile-390x844-after-redirect.png  (URL=/dashboard, Toast=1)
+```
+
+**形式 C · 人工浏览器测试** + key DOM 计数文字描述：
+
+```text
+Manual browser test (Chrome 1920×1080):
+- /devices: 表格 7 列 + 20 行 ✓
+- /dashboard: 6 chart card + 5 ECharts canvas ✓
+- /bigscreen: 时钟实时跳 + 5 panel ✓
+```
+
+**禁止**的反例：
+
+```
+❌ "Browser 实测 OC 未做，待 Codex" (Slice 4 实际推责)
+❌ "UI 应该工作（看代码逻辑没问题）" (无证据)
+❌ "build 通过即说明 UI OK" (build 不等于 UI 正确)
+```
+
+无 Browser 证据 = 草稿 `Self-review` 段标 ✗ = 草稿不可交付，OC 必须自跑或退回人/Claude。下游 Codex 审校发现无 Browser 证据**直接 REJECT**（08 prompt 已加，#20 v0.3 修法）。
+
 ## 输出
 
 ```markdown

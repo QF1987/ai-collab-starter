@@ -121,6 +121,12 @@ cp    "$STARTER_ROOT/AGENTS.md"  "$TARGET/"
 cp -r "$STARTER_ROOT/scripts"    "$TARGET/"
 cp -r "$STARTER_ROOT/.claude"    "$TARGET/"
 
+# .gitignore 也复制过去（Dogfood #16-v2 修复——子项目没 .gitignore 就 append 不上）
+if [[ -f "$STARTER_ROOT/.gitignore" ]]; then
+  cp "$STARTER_ROOT/.gitignore" "$TARGET/"
+  echo "📋 .gitignore 复制（含协同框架级 ignore）"
+fi
+
 # 子项目不再需要 init-collab.sh 自身
 rm -f "$TARGET/scripts/init-collab.sh"
 
@@ -131,6 +137,36 @@ if [[ ! -d "$TARGET/.git" ]]; then
     echo "🎯 git init -b main (new repo, no commits yet)"
 else
   echo "ℹ️  .git already exists — skipping git init"
+fi
+
+# ===== 补齐目标 .gitignore（Dogfood #16-v2 修复）=====
+#
+# starter kit 自带的 .gitignore 只含协同框架级 ignore（.obsidian/ .ai/cache 等）；
+# 子项目通常需要语言/工具链相关的 ignore（node_modules / dist 等）。
+# 不能为所有语言都加，但前端项目最常见——加 .gitignore 末尾追加通用前端段。
+
+if [[ -f "$TARGET/.gitignore" ]]; then
+  # 检查是否已含 node_modules 行（避免重复追加）
+  if ! grep -q "^node_modules/" "$TARGET/.gitignore"; then
+    cat >> "$TARGET/.gitignore" << 'GITIGNORE_EOF'
+
+# === 通用包管理器 / 构建产物（由 init-collab.sh 追加, Dogfood #16-v2）===
+# 若本项目不是 Node / Vue / React 类前端，可手动删此段或扩展为对应语言
+
+node_modules/
+dist/
+build/
+.vite/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+GITIGNORE_EOF
+    echo "📝 .gitignore 追加前端项目通用 ignore (Dogfood #16-v2)"
+  else
+    echo "ℹ️  .gitignore 已含 node_modules — 跳过追加"
+  fi
 fi
 
 # ===== 替换 AGENTS.md 中的 <PROJECT_NAME> 占位符 =====
