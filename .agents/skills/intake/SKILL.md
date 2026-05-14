@@ -7,7 +7,7 @@ description: Use when the user starts new work and the description is vague — 
 
 把人参与的关键信息**问出来再写**。避免模型猜偏 → 走错 → 回退。
 
-> 详细问题库与产出模板见 `.ai/intake-templates.md`。本文件是 Claude Code skill 包装；OpenCode / Codex 直接读 templates 文件即可。
+> 详细问题库与产出模板见 `.ai/intake-templates.md`。本文件是 Codex skill 包装；OpenCode / Codex 直接读 templates 文件即可。
 
 ## 何时触发
 
@@ -145,14 +145,14 @@ options:
 
 - task 文件：`.ai/tasks/<YYYY-MM-DD>-<slug>.md`
 - bug 文件：`.ai/tasks/<YYYY-MM-DD>-bug-<slug>.md` + `.ai/review.md` 追加 finding
-- bootstrap：`.ai/decisions.md` 追加 ADR + 输出 Claude bootstrap prompt（不直接执行）
+- bootstrap：`.ai/decisions.md` 追加 ADR + 输出 Codex bootstrap prompt（不直接执行）
 - triage-only：不写文件，只口述路由
 
 **同步覆盖刷新 `.ai/state.md`**（与产物文件落盘是同一原子动作，缺一不可）：
 
 - 按 `AGENTS.md > Session State Discipline` 填字段
 - `Active task` = task 文件路径，或 `NONE`（探索阶段尚未生成 task 文件时）
-- `Last completed step.Agent` = `Claude (intake skill)`
+- `Last completed step.Agent` = `Codex (intake skill)`
 - `Last completed step.Commit` = `n/a`（intake 步骤无代码改动）
 - **`Next step` 段必须按 `.ai/prompts/0X-*.md > 下一步提示词 > 统一格式` 的 4 字段输出**（Dogfood #7 修复）：
   - `Agent` / `关键输入`（文件路径列表 ≤ 4 条）/ `Token 预算估计` / `可粘贴 prompt`（≤ 15 行硬上限）
@@ -186,7 +186,7 @@ options:
 
 ### 第 5 步 · Worktree 模式收尾（v2.0 新增 / Dogfood #08, #09）
 
-若本次 intake 运行在 **isolation=worktree** 模式（检查 `pwd` 是否含 `.claude/worktrees/`）：
+若本次 intake 运行在 **isolation=worktree** 模式（检查 `pwd` 是否含 `.Codex/worktrees/`）：
 
 1. **state.md 顶部加警告行**：
    ```
@@ -197,7 +197,7 @@ options:
 
    ```bash
    cd <主仓路径>
-   rsync -av --exclude='.git' .claude/worktrees/<worktree-name>/.ai/ .ai/
+   rsync -av --exclude='.git' .Codex/worktrees/<worktree-name>/.ai/ .ai/
    git status   # 确认产出已出现在主仓
    git add .ai/ && git commit -m "intake(<epic>): ..."
    ```
@@ -230,7 +230,7 @@ options:
 ## 调用方式
 
 用户输入 `/intake` 时本 skill 启动。
-未显式输入但符合触发条件时，Claude 主动建议「需要我用 /intake 把这次任务的关键信息问清楚吗？」并等用户确认。
+未显式输入但符合触发条件时，Codex 主动建议「需要我用 /intake 把这次任务的关键信息问清楚吗？」并等用户确认。
 
 ## 与其他文件关系
 

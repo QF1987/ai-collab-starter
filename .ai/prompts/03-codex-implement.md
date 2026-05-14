@@ -33,6 +33,30 @@
 - 不忽略用户已有改动。
 - 不把已通过测试的失败分支（如「功能跑通但 patch artefact 不完整」）当成 PASS 报。
 
+## Scope 强约束（v2.0 / Dogfood #14）
+
+实施过程中若发现以下情况之一，**立即停下**，不要静默扩大改动：
+
+- task 的 Acceptance Criteria 要求改 X 文件，但 X 不在 Scope.paths 内
+- 实施过程中发现某个 bean wiring / DI / 配置问题需要改前序 Slice 已交付代码
+- 发现可以"顺手"重构 / 清理的相邻代码
+- 测试框架特性（如 Mockito inline）在本机环境不可用，修复需新增 scope 外文件
+
+正确的处理方式（不是默默扩大 scope）：
+
+1. 在 `.ai/logs/` 新建 `starter-vN-finding-NN-<slug>.md`（项目方便沉淀启动包升级清单）
+   或在 commit message 留 TODO，记录"我本来想改 X 但 X 不在 Scope.paths，停下"
+2. 在自己的产出中**写明该冲突**（"AC 第 3 条要求 ALPHA，但 ALPHA 不在 Scope.paths，
+   按 scope 守住，建议 Plan 阶段补 paths 或拆 task"）
+3. 设法绕过该冲突完成 AC（典型：用手写 fake 替代 Mockito mock）；
+   或在 task 文件 Handoff state 中说明部分 AC 因 scope 冲突未实施
+4. **不要**为了完成 AC 而越界——AC 与 Scope.paths 冲突时**Scope 优先**
+
+例外（允许的"顺带改动"）：
+- ≤ 3 行 且 是 Expected fix 自然延伸（如 import 清理、typo 修正）
+- 已 staged 但漏掉的 docstring / 注释
+此时在 commit message 注明"顺带改进: XXX"。
+
 ## Scope 自检（实施前必跑）
 
 改动后、测试前，跑：
@@ -80,6 +104,19 @@ grep -c "^diff --git" .ai/logs/<task>.draft.patch
 ## Next step
 ```
 
+## 后端 E2E 证据要素（v2.0 / Dogfood #05+18）
+
+若本次实施涉及完整 E2E 测试（典型：`@SpringBootTest` + MockMvc / 真实 DB / 文件 fixture），
+`Tests run` 段必须记录**四类机器证据**：
+
+1. **fixture 来源 + 运行时路径映射**：测试 fixture 文件物理位置 + 运行时 LocalFileFetcher 等如何解析（例：`testdata/sample.csv` → `target/test-files/CHANNEL_yyyyMMdd.csv`）
+2. **关键 HTTP status + JSON 字段断言**：不只验 200，要列具体哪些字段断言（例：`taskId` 不为 null、`status="COMPLETED"`、`disputeCount=N`）
+3. **关键 DB 行数 / 状态断言**：写入 DB 的预期行数 + 关键列值（例：`recon_detail` 5 行、其中 `MATCHED=3`、`ONLY_INTERNAL=2`）
+4. **Testcontainers / 外部服务证据**：镜像版本 + Flyway applied + 容器启动日志（例：`postgres:15-alpine` / `Flyway V1/V2 applied`）
+
+仅写"mvn test PASS"是**不充分的**——前端 Browser 实测的等价物在批处理 / 文件驱动域是上述四要素。
+如果项目不是批处理域（如纯 HTTP API、纯 CLI 工具），可只取适用的要素。
+
 ## 收尾必做
 
 ### Token 消耗记录
@@ -90,9 +127,22 @@ grep -c "^diff --git" .ai/logs/<task>.draft.patch
 Tokens: in=<n> out=<n> total=<n>
 ```
 
-### 下一步提示词 + 刷新 state.md
+### 下一步提示词 + 刷新 state.md（v2.0 工作流闸门强约束）
 
 汇报最末追加 `## 下一步提示词` 段落，**并把同一份 prompt 覆盖写入 `.ai/state.md`**（详见 AGENTS.md > Session State Discipline）。两件事缺一不可。
+
+#### Next step 必接 04-review,不允许跳到下一个 03
+
+03 完成后，state.md `Next step` **必须**指向 `04-opencode-review`：
+
+- `Next step.Agent` = `OpenCode`
+- `Next step.Prompt 模板` = `.ai/prompts/04-opencode-review.md`
+
+**禁止**：
+- 自行决定"下一个 Slice"并直接产出下一个 03 的可粘贴 prompt（那是 04 review 通过后 Claude 的职责）
+- 跳过 review 关卡进入下一片实施
+
+**例外**：仅当 task 文件显式标 `skip-review: true`（< 30 行单文件小补丁）时允许直接进下一步，此时 state.md `Next step` 需注明"已豁免 review，豁免理由 X"。
 
 #### 统一格式（硬约束）
 

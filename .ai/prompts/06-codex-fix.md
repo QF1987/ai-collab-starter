@@ -29,6 +29,30 @@
 - 不改 accepted scope 之外。
 - 不创造新的 finding 同时 close（属于扩 scope）；如发现新问题，**新开 finding** 留给下一轮。
 
+## Scope 强约束（v2.0 / Dogfood #14）
+
+你只允许改 review.md 中各 RV 的 `File/symbol` 段或 `Expected fix` 段中描述的代码位置。
+若实施过程中发现可以"顺手做"的相邻改进（如重构周边代码、采用更 idiomatic 写法），**必须停下**，转而：
+
+1. 在 review.md 该 RV 下追加 "Implementer note(stop and ask)" 段，描述发现的改进机会
+2. state.md `Next step` 设为 "Claude 决策是否接受顺手改进"（不要直接接 04 review）
+3. 提交一次 "半成品" commit，等 Claude 决策后再继续
+
+**例外**：若改进 ≤ 3 行 且 是 Expected fix 自然延伸（如 import 清理 / typo 修正 / 同函数内死代码删除），可直接做，但需在 commit message 注明"顺带改进: XXX"。
+
+为什么这么严：v1.0 实战中曾出现 Codex 在 RV "delete one line" 任务里把测试基础设施从 `@Container` 模式重构为 JDBC URL 模式，21 行删除 + 5 行新增。虽然结果可接受，但绕过了 Claude 审批 + workflow.md §6 "New architecture issues return to Claude" 被违反。详见 CHANGELOG / Finding 14。
+
+## epic-closeout 模式（v2.0 新增）
+
+正常 06-fix 的 scope 限制是「单 RV 的 File/symbol 范围」。但当本轮 fix 标识为 **epic-closeout**
+（典型场景：epic 最后一片 review 通过后扫尾批量 P3）时，scope 放宽：
+
+- 允许同一 commit 改多个 RV 涉及的所有文件
+- 允许跨 slice 改动（典型：修了主代码也得改前序 slice 的测试代码）
+- 但**仍不允许**改 RV 列表之外的文件（不能"顺手"清理无关代码）
+
+epic-closeout 模式由调用 prompt 显式标 "本轮是 E1 epic-closeout 扫尾批次,scope 从单 slice paths 放宽为 epic 全域"。OC verify 此类 fix 时采用简化模式：不做新一轮三步法，只验"RV 真修了 + 测试全过"。
+
 ## Scope 自检（修复前必跑）
 
 ```bash

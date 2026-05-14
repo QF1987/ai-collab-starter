@@ -18,7 +18,41 @@
 - 只看改动文件；必要时扩到直接 caller / callee 与对应测试。
 - 检查明显 bug、缺失测试、生成代码 drift、文档 drift。
 - 检查改动是否在 scope 内。
-- 输出可供 Codex 修复或 Claude 升级的 finding。
+- 输出可供 Codex 修复或升级给 Claude 的 finding。
+
+## Review 三步法（v2.0 强约束）
+
+每次 review 必须按以下顺序执行；任一步发现问题都需在 review.md 显式记录：
+
+### 第一步 · Scope 验证
+
+对照 task 文件「核心改动 paths」+「连带改动 paths」核对 commit 实际改动文件清单：
+
+- 严格在范围内 → 正常进入第二步
+- **超出范围**（scope-deviation）：
+  - 修改文件数超过 Expected fix 字面描述的 1.5 倍
+  - 单文件 diff 行数超过 Expected fix 描述行数的 2 倍
+  - 改变了已有 annotation / 类继承 / 配置文件结构 / SPI 接口签名
+  - 触发任一即记 `scope-deviation detected: ...`，将该 RV 的 `Status` 翻 **`escalated`** 而非 `verified`
+  - state.md `Next step.Agent` 写 **`Claude`**（escalation 路径，无独立 prompt 文件——v2.0 已合并 04+05）
+  - 由 Claude 决定：接受 → verified；不接受 → 新增 RV 要求 Codex 回滚
+
+### 第二步 · Architecture 对齐
+
+对照已 accepted ADR 的 `Decision` 段 + `Data Contract` 段（L1-L5 全部级别）：
+
+- 实现兑现 ADR 承诺 → 正常进入第三步
+- **偏离 ADR 但 commit 中未新增对应 ADR**：触发 escalation（同 scope-deviation 规则）
+- **形式上用了 ADR 选择的工具但实际把价值吃光**（如 ADR 说"selectCursor 流式读取"但实现 cursor 一出来就 `.toList()`）→ 视为 architecture deviation，escalate
+
+### 第三步 · Quality 常规
+
+- correctness / missing tests / docs drift / style consistency
+- N+1 风险（任何 for 循环里调 jdbcTemplate / mapper / 远程 service 都需 flag）
+- 资源关闭（Stream / Cursor / Connection 必须 try-with-resources）
+- 字段语义滥用（如 success 路径写 errorMessage）
+- 写完又读的无谓 round-trip
+- Java idiom（单一构造器 / null check 防御 / enum vs String）
 
 ## 禁止
 
@@ -162,7 +196,7 @@ prompt body 推荐结构：
 
 下一步提示词的**业务内容**（按本 prompt 角色具体写）：
 
-- 若有 P0/P1 finding 或标 `Escalate to Claude: yes`：输出 Claude 升级 review prompt（`05-claude-review.md`），把本次 finding 摘要传过去。
+- 若 review 三步法第一/二步检出 scope-deviation 或 architecture deviation：state.md `Next step.Agent` 写 `Claude`，提示词正文写"Claude 复检 RV-NN 是 accept 还是要求 Codex 回滚"；**不要**指向独立 prompt 文件——v1.0 的 `05-claude-review.md` 已在 v2.0 删除（详见 CHANGELOG），Claude 介入是 main session 协作模式。
 - 若有 P2/P3 finding：输出 Codex 修复 prompt（`06-codex-fix.md`），把已 accepted 的 finding 列清楚。
 - 若无 finding 且 scope 干净：输出「人工合入 + 文档收口」prompt。
 - Doc state flip check 不通过：在「人工合入」prompt 里明确加一步「先 commit / 先把 hash 填进 context.md 再 merge」。

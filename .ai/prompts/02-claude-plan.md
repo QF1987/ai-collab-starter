@@ -18,7 +18,10 @@
 
 - 决定架构 / 根因策略。
 - 定义兼容性约束与上线风险。
-- 把实施切成有边界的 Codex 任务（≤ 3 切片，每片一个 PR）。
+- 把实施切成有边界的 Codex 任务（**推荐 3-5 切片**，每片一个 PR）：
+  - Web 全栈 Epic（前端 + 后端 + DB / 协议）通常 3 片
+  - 批处理 / 多层后端 Epic（DB / Adapter / Engine / API）可到 4-5 片
+  - 单片 PR diff 应控制在 300-500 行内；超过则继续细切
 - 指定测试与 review 重点。
 - 写决策到 `.ai/decisions.md`（ADR 格式）。
 - 当 scope 满足 `AGENTS.md > Scope Heuristics` 的「Claude 直改」条件时，可直接 patch 不必 handoff。
@@ -82,11 +85,16 @@
 
 #### `Compatibility and rollout` 段（数据契约约束分三级）
 
-数据契约 / schema 类约束**必须区分三级**，禁止一句话混并：
+数据契约 / schema 类约束**必须分级**，禁止一句话混并：
 
-1. **列语义级**：某列的值含义不变（如 `status` 列存的字符串语义不动）
-2. **表结构级**：某表的列结构（如「不加新列」/「不删现有列」）
-3. **数据级**：数据迁移 / backfill 策略（如「不 backfill 历史 NULL 值」）
+1. **L1 列语义级**：某列的值含义不变（如 `status` 列存的字符串语义不动）
+2. **L2 表结构级**：某表的列结构（如「不加新列」/「不删现有列」）
+3. **L3 数据级**：数据迁移 / backfill 策略（如「不 backfill 历史 NULL 值」）
+4. **L4 实体注解级**（Java/Kotlin + ORM 项目适用）：entity 字段 ↔ DB 列映射（`@Results`/`resultMap`/`@Column`）禁止跨 Slice 单方面改 entity 字段名而不同步改 ORM 映射
+5. **L5 Mapper / Repository 接口级**（同 L4 适用范围）：Mapper Java 接口的方法签名是 Service 层的调用合约；改方法参数/返回类型须在 ADR 中声明，与 L2 同等约束
+
+**何时用 L4/L5**：项目语言 = Java/Kotlin + ORM 框架（MyBatis/JPA/Hibernate）时必须补；
+Go/Rust/TS 项目通常不需要（schema 与代码距离更近）。详见 `.ai/decisions.md > 强约束 #4`。
 
 反例（dogfood 中实际踩过）：
 
@@ -256,8 +264,34 @@ ADR `Consequences` 段必须含两个**显式子标题**：
 
 ### 附带产出
 
-- 为每个切片直接生成一份 task 文件，路径 `.ai/tasks/<date>-<slug>.md`，结构遵循现有 task 模板。task 文件中的 Slice Paths 表必须遵守上方「Paths 分两组」纪律。
-- 决策追加到 `.ai/decisions.md`，遵守上方「分三级数据契约约束」与「Positive/Negative consequences 双段」纪律。
+- 为每个切片直接生成一份 task 文件，路径 `.ai/tasks/<epic-id>-S<N>-<slug>.md`（如 `E1-S1-schema-entity.md`）。task 文件中的 Slice Paths 表必须遵守上方「Paths 分两组」纪律。
+- 决策追加到 `.ai/decisions.md`，遵守上方「数据契约 L1-L5 分级」与「Positive/Negative consequences 双段」纪律。
+
+#### task 文件 AC ↔ Scope.paths 校验（Dogfood #15 强约束）
+
+每个 task 文件的 `Acceptance Criteria` 段中**提到的每个文件 / 模块 / 命令行参数**都必须出现在
+`核心改动 paths` 或 `连带改动 paths` 列表中。常见漏检场景：
+
+- AC 写"`application-test.yml` 配置 `xxx.config-key` 字段" → 必须把 `src/test/resources/application-test.yml` 列入连带改动
+- AC 写"测试用 Mockito mock X 接口" → 若 Mockito 在该项目需扩展配置（如 macOS 不支持 inline），必须把 `src/test/resources/mockito-extensions/...` 列入
+- AC 写"集成测试启动完整 @SpringBootTest" → 必须把"前序 Slice 中 bean wiring 修复路径"列入连带改动（详见下方「集成测试场景的特别约定」）
+
+写完 task 后**自检**：在 AC 每条找出涉及的所有文件路径，逐一在 paths 段 grep 验证。若有缺失，
+立即补 paths 段，否则 Codex 实施时会触发 scope vs reality 冲突。
+
+#### 集成测试场景的特别约定（Dogfood #17 强约束）
+
+当 task 要求 `@SpringBootTest` / 完整应用上下文 / 真实容器启动时（典型：Slice N 的 E2E 测试），
+**前序 Slice 已交付代码中可能未发现的 bean wiring 问题会在此触发**（例：构造器歧义、配置缺失）。
+
+为避免 Codex 实施时再次面临 scope vs reality 冲突，Plan 阶段必须：
+
+1. 评估 task 是否会触发完整应用上下文初始化
+2. 若会，在「连带改动 paths」中**预先纳入**前序 Slice 中可能需要 bean wiring 修复的文件
+3. 在 task spec 中显式说明「该文件仅允许做 bean wiring 类小修（如加 `@Autowired`），
+   不允许 refactor 业务逻辑」
+4. 实施失败回退路径：若 Codex 实施时发现该文件不在 paths 内但又必须改 → 停下记 finding，
+   不要越界（见 04-opencode-review.md scope deviation 处理）
 
 ## 收尾必做
 

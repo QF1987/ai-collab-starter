@@ -1,0 +1,18 @@
+{
+  "id": "ws_31d78046",
+  "name": "ai-collab-starter",
+  "slug": "ai-collab-starter",
+  "defaults": {
+    "permissionMode": "safe",
+    "cyclablePermissionModes": [
+      "safe",
+      "allow-all"
+    ],
+    "enabledSourceSlugs": []
+  },
+  "localMcpServers": {
+    "enabled": true
+  },
+  "createdAt": 1778726274879,
+  "updatedAt": 1778726274880
+}

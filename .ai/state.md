@@ -20,7 +20,20 @@
 - Commit: `NONE`
 - 产出: `NONE`
 
+<!-- 产出字段填写约定（v2.0）：
+     不要手写具体 finding 文件清单（如 "finding-01..04"），改写产出根目录（如 `.ai/logs/starter-v2-finding-*.md`）+
+     "(数量请 ls 实查)"。原因：分阶段产出时容易摘要滞后于实际文件状态（Finding 07）。 -->
+
+
 ## Next step
+
+<!-- 校验规则（v2.0）：
+  - 若 Last completed.Step 含 "03-codex-implement"，则 Next step.Agent 必须是 OpenCode
+    且 Prompt 模板必须是 04-opencode-review.md（除非 task 文件显式标 `skip-review: true`）
+  - 若 OpenCode review 检出 scope-deviation 或架构敏感改动 → Next step.Agent 为 Claude（escalation 路径，无独立 prompt）
+  - 违反上述规则的 state.md 视为损坏，需 Claude 复检后才能继续
+  - 若本步在 worktree 中执行（pwd 含 `.claude/worktrees/`），Next step.可粘贴 prompt 必须以 `⚠️ 粘贴前请先 rsync 回主仓` 起头
+-->
 
 - Agent: `NONE`
 - Prompt 模板: `NONE`
