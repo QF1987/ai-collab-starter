@@ -105,16 +105,22 @@ Tokens: in=<n> out=<n> total=<n>
 1. **下一步 Agent**: `OpenCode | Claude | Codex | Human`
 2. **关键输入**: 必读文件路径列表（≤ 4 条）
 3. **Token 预算估计**: `数千 | 万 | 多万`
-4. **可粘贴 prompt**: text code block
+4. **可粘贴 prompt**: text code block(指针版,见下)
 
 **prompt body 硬上限 15 行（软目标 10 行）**。超过说明任务定义不清，应把详细信息搬进 task / packet / ADR 文件，prompt 只承担「指向 + 启动」职责，不重复任务文件已有内容。
 
-prompt body 推荐结构：
+prompt body 推荐结构(**v3.0 指针版 / Finding #20 F-C**):
 
 - 第 1 行：`你是 <X>。按 .ai/prompts/0Y-*.md 契约执行。`
-- 任务一句话 + 输入指向 + 输出期望
-- 具体要求 5-8 条 bullet
-- 完成后动作（跑测试 / 汇报格式 / 刷新 state.md）
+- 第 2 行:任务一句话(指向 task / RV / commit hash,**不**复述细节)
+- **3 个固定字段**:
+  1. `必读输入`: 文件路径列表(≤ 4 条,**不**复述文件内容)
+  2. `Expected fix ID`(若 fix 类) / `Acceptance Criteria 指针`(若 implement 类) / `Verdict 路径`(若 review 类):指向 task / review.md 段落,不复述
+  3. `验证命令`: 一行 shell(如 `go test -v ./...` 或 `mvn test -Dtest=X`)
+- 完成后动作 ≤ 2 行(刷新 state.md + 汇报 verdict)
+
+**禁止**:在 prompt body 内复述 task 文件已有的 AC / 改动步骤 / 决策细节(那是 task 文件的责任,
+prompt 只指向不复述)。若 Human 阅读 prompt 时仍需展开细节,改进 task 文件而非膨胀 prompt。
 
 若有 verdict 分支（如 PASS/PATCH/REJECT），分别给每个分支一个完整代码块并标明触发条件。
 
@@ -123,3 +129,19 @@ prompt body 推荐结构：
 - 若所有 P0/P1 finding 已 fixed：输出 OC re-review prompt（`04-opencode-review.md`）确认 verifier 状态翻 `verified`。
 - 若 finding 依赖人工验证（真机 / 多端协调）：输出「人工验证 + 翻状态」prompt，明确写要翻哪几条 finding。
 - 若修复中发现新阻塞问题：输出 Claude 决策 prompt（`02-claude-plan.md`），不要在本轮硬修。
+
+## 收尾纪律 · Reporter verify 必经路径（v3.0 / Finding #21 强约束）
+
+修复 RV finding 完成后,你产出的 state.md `Next step` 段:
+
+1. **必须**指向 Reporter 做 verify(`Next step.Agent` 字段值 = 该 RV 的 Reporter 字段值;对 `OpenCode` / `Claude` 两种 Reporter 都适用)
+2. `Prompt 模板` 字段:
+   - Reporter = OpenCode → `.ai/prompts/04-opencode-review.md`
+   - Reporter = Claude → 描述性 prompt 段(无独立 prompt 文件,沿用 escalation 路径)
+3. **禁止**把 Next step 直接指向 Human 跳过 Reporter
+4. 例外:仅当 RV `Severity` = P3 **且** fix < 10 行时,可指向 Human(视为 Reporter 显式代行)
+5. P0/P1 finding **严禁**跳过 Reporter verify,违反即视为 RV 闭合无效(参照 workflow.md §5 关闭规则)
+
+理由:v2.0 dogfood 二轮在 DeviceOps P1 #2 case 暴露——Codex 06-fix 完成后直接给 Human 翻 verified,
+跳过 Reporter (OC) 复审。当前 P2 case 走运,但 P0/P1 同样路径会违反 workflow.md "Reporter 翻 verified 才算关闭"
+硬约束。本约束消除该制度缺口。详见 CHANGELOG v3.0 / Finding #21。

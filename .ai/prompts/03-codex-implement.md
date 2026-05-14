@@ -151,16 +151,22 @@ Tokens: in=<n> out=<n> total=<n>
 1. **下一步 Agent**: `OpenCode | Claude | Codex | Human`
 2. **关键输入**: 必读文件路径列表（≤ 4 条）
 3. **Token 预算估计**: `数千 | 万 | 多万`
-4. **可粘贴 prompt**: text code block
+4. **可粘贴 prompt**: text code block(指针版,见下)
 
 **prompt body 硬上限 15 行（软目标 10 行）**。超过说明任务定义不清，应把详细信息搬进 task / packet / ADR 文件，prompt 只承担「指向 + 启动」职责，不重复任务文件已有内容。
 
-prompt body 推荐结构：
+prompt body 推荐结构(**v3.0 指针版 / Finding #20 F-C**):
 
 - 第 1 行：`你是 <X>。按 .ai/prompts/0Y-*.md 契约执行。`
-- 任务一句话 + 输入指向 + 输出期望
-- 具体要求 5-8 条 bullet
-- 完成后动作（跑测试 / 汇报格式 / 刷新 state.md）
+- 第 2 行:任务一句话(指向 task / RV / commit hash,**不**复述细节)
+- **3 个固定字段**:
+  1. `必读输入`: 文件路径列表(≤ 4 条,**不**复述文件内容)
+  2. `Acceptance Criteria 指针` / `Expected fix ID` / `Verdict 路径`:指向 task / review.md 段落,不复述
+  3. `验证命令`: 一行 shell(如 `go test -v ./...` 或 `mvn test`)
+- 完成后动作 ≤ 2 行(刷新 state.md + 汇报 verdict)
+
+**禁止**:在 prompt body 内复述 task 文件已有的 AC / 改动步骤 / 决策细节(那是 task 文件的责任,
+prompt 只指向不复述)。若 Human 阅读 prompt 时仍需展开细节,改进 task 文件而非膨胀 prompt。
 
 若有 verdict 分支（如 PASS/PATCH/REJECT），分别给每个分支一个完整代码块并标明触发条件。
 

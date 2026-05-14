@@ -20,9 +20,31 @@
 - 检查改动是否在 scope 内。
 - 输出可供 Codex 修复或升级给 Claude 的 finding。
 
-## Review 三步法（v2.0 强约束）
+## Small Task Shortcut（v3.0 / Finding #20 F-A）
 
-每次 review 必须按以下顺序执行；任一步发现问题都需在 review.md 显式记录：
+满足以下条件即为 **Small Task**,跳过三步法的 Architecture 子段,只做精简 review:
+
+- 改动 ≤ 30 行 **且** 单文件 **且** 无架构敏感字段(annotation / 类继承 / 配置结构 / SPI 接口签名)
+- task spec 未涉及 ADR 决策(不引用 `decisions.md` / 不新增 ADR / 不偏离已 accepted ADR)
+
+Small Task 精简 review 步骤:
+
+1. **Scope**: 文件数 + 行数 + 路径匹配
+2. **AC 逐条核对**: 用 task 文件 Acceptance Criteria 表逐条打 ✅/❌
+3. **测试证据**: 测试输出片段必须出现在 progress.md(不只是 "PASS")
+4. **一条常规检查**: 全仓 grep 调用点(有遗漏记 P2)
+
+Small Task review **不**需要 ADR Data Contract L1-L5 对齐、GitNexus impact 结果、commit 状态完整检查。
+Verdict 路径同三步法:`PASS → Human` / `PATCH → Codex` / `REJECT → Claude(escalation)`。
+
+为什么这么改:v2.0 dogfood 二轮发现三步法对 ≤30 行小修补 over-engineered(读起来像在审 Epic)。
+详见 CHANGELOG v3.0 / Finding #20 F-A。
+
+---
+
+## Review 三步法（v2.0 强约束 · 非 Small Task 用）
+
+非 Small Task(改动 > 30 行 / 多文件 / 涉 ADR / 架构敏感)每次 review 必须按以下顺序执行；任一步发现问题都需在 review.md 显式记录：
 
 ### 第一步 · Scope 验证
 
@@ -45,14 +67,28 @@
 - **偏离 ADR 但 commit 中未新增对应 ADR**：触发 escalation（同 scope-deviation 规则）
 - **形式上用了 ADR 选择的工具但实际把价值吃光**（如 ADR 说"selectCursor 流式读取"但实现 cursor 一出来就 `.toList()`）→ 视为 architecture deviation，escalate
 
-### 第三步 · Quality 常规
+### 第三步 · Quality 常规（v3.0 repo-自适应 / Finding #20 F-B）
 
+通用项(所有语言/repo):
 - correctness / missing tests / docs drift / style consistency
-- N+1 风险（任何 for 循环里调 jdbcTemplate / mapper / 远程 service 都需 flag）
-- 资源关闭（Stream / Cursor / Connection 必须 try-with-resources）
-- 字段语义滥用（如 success 路径写 errorMessage）
+- 字段语义滥用(如 success 路径写 errorMessage)
 - 写完又读的无谓 round-trip
-- Java idiom（单一构造器 / null check 防御 / enum vs String）
+
+按改动文件后缀 / 语言**自适应启用**的子项:
+
+| 语言 / 生态 | 必查项 |
+|------------|--------|
+| **Java / Kotlin + Spring** | N+1(for 循环里调 jdbcTemplate / mapper / 远程 service)、资源关闭(Stream / Cursor / Connection try-with-resources)、单一构造器 / null check / enum vs String / lifecycle 时序 |
+| **Go** | -race 检测、context 取消传播、resource Close()、goroutine leak、error wrap (%w)、interface vs struct |
+| **TypeScript / JavaScript** | async/await 错误链、Promise 拒绝兜底、null safety / optional chaining、React 副作用清理 / dep array、bundle size 影响 |
+| **Rust** | unsafe 边界、Send/Sync 推理、async runtime 选择一致性 |
+| **SQL / Migrations** | IF NOT EXISTS / IF EXISTS 幂等、destructive 操作有回滚、新约束对历史数据兼容 |
+| **ops-only / shell scripts** | set -euo pipefail、错误信息明确、幂等性、清理 trap |
+
+review 时**只跑改动语言对应那行**,跨语言项目交集都跑。**不**跑改动语言外的项(避免 false positive)。
+
+注:本表是 v3.0 起点,实战中遇到新模式可在 review.md note 一笔 "建议加 X 语言 Y 子项",
+积累到 starter v4.0 升级清单。
 
 ## 禁止
 
@@ -181,16 +217,22 @@ OC review 完成后**必须立即刷 state.md**，不可推迟、不可跳过、
 1. **下一步 Agent**: `OpenCode | Claude | Codex | Human`
 2. **关键输入**: 必读文件路径列表（≤ 4 条）
 3. **Token 预算估计**: `数千 | 万 | 多万`
-4. **可粘贴 prompt**: text code block
+4. **可粘贴 prompt**: text code block(指针版,见下)
 
 **prompt body 硬上限 15 行（软目标 10 行）**。超过说明任务定义不清，应把详细信息搬进 task / packet / ADR 文件，prompt 只承担「指向 + 启动」职责，不重复任务文件已有内容。
 
-prompt body 推荐结构：
+prompt body 推荐结构(**v3.0 指针版 / Finding #20 F-C**):
 
 - 第 1 行：`你是 <X>。按 .ai/prompts/0Y-*.md 契约执行。`
-- 任务一句话 + 输入指向 + 输出期望
-- 具体要求 5-8 条 bullet
-- 完成后动作（跑测试 / 汇报格式 / 刷新 state.md）
+- 第 2 行:任务一句话(指向 task / RV / commit hash,**不**复述细节)
+- **3 个固定字段**:
+  1. `必读输入`: 文件路径列表(≤ 4 条,**不**复述文件内容)
+  2. `Expected fix ID` / `Verdict 路径` / `Acceptance Criteria 指针`:指向 review.md / task 段落,不复述
+  3. `验证命令`: 一行 shell(如 `grep -c X-Device-ID FILE` 或 `mvn test -Dtest=X`)
+- 完成后动作 ≤ 2 行(翻 status + 刷 state.md)
+
+**禁止**:在 prompt body 内复述 review 已写明的 finding 细节 / Expected fix 步骤(那是 review.md 的责任,
+prompt 只指向不复述)。若 Human 阅读 prompt 时仍需展开细节,改进 review.md 而非膨胀 prompt。
 
 若有 verdict 分支（如 PASS/PATCH/REJECT），分别给每个分支一个完整代码块并标明触发条件。
 
