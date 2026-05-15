@@ -81,6 +81,72 @@
 ## Decision record (ADR-YYYYMMDD-NN)
 ```
 
+## Task brief frontmatter 约定（v4.0 / 触发来源 A · pre-declared）
+
+每个 task brief 文件(`.ai/tasks/<task>.md` / `<epic-id>-<slug>.md`)**头部**应含 metadata 段。
+本段是 v4.0 多源触发机制中 **A · 预声明** 路径的载体——Claude 02-plan 时可在此显式锁定
+"本 task 实施完后必须 Claude review"。
+
+格式:
+
+```markdown
+---
+task-id: <epic-id-slice-N 或 task-id>
+size: Tiny | Small | Medium | Large | Epic
+claude-review-required: false | auto | required
+claude-review-reason: <若 required,一句话理由>
+skip-review: false | true   # < 30 行单文件小补丁可豁免 04(参考 03-codex-implement.md 收尾)
+created: YYYY-MM-DD
+---
+
+# Task: <title>
+...
+```
+
+### `claude-review-required` 语义
+
+| 值 | 含义 | 适用场景 |
+|----|------|---------|
+| `false`(默认) | 走标准 OC 04-review,只在 OC escalate 时升 Claude | 大多数业务实施 task |
+| `auto` | 由 OC 04-review 按 6 条件清单**自动**判断升级(等价 false,但显式表达"Claude 期望介入边界") | 中等复杂度,Claude 想让 OC 帮看是否触发 |
+| `required` | 04-review 完成后**强制**升 Claude 复审,无论 OC 判定如何 | 架构敏感 / 跨 ADR / P0-P1 fix / 历史踩过类似坑的领域 |
+
+### 何时 Claude 02-plan 应主动声明 `required`
+
+- 本 task 涉及修改任何 SPI 接口签名 / annotation / 类继承 / 配置结构
+- 本 task 跨 ADR 影响(L4/L5 实体注解级 / Mapper 接口级 被触及)
+- 本 task 是 epic-closeout 或 P0-P1 finding 的 fix
+- 本 task 跨 repo / 跨语言 / 涉及协议(proto / gRPC / REST schema)
+- 历史上同领域 finding 累积 ≥ 3 条(查 `ai-collab-starter/.ai/logs/`)
+
+不要无脑标 `required`——每次 Claude review 都是 token 成本。**默认 false 即可**。
+
+### Downstream agent 如何消费 frontmatter
+
+- **Codex (03-implement)**:读 frontmatter,实施完成后据 `claude-review-required` 决定刷 state.md `Next step.Agent`
+  - `required` → `Next step.Agent = Claude`(直接,不走 OC 04)
+  - `auto` / `false` → `Next step.Agent = OpenCode`(走 04 闸门)
+- **OC (04-review)**:读 frontmatter,
+  - `required` → review 通过后**仍**指 Next step 为 Claude(显式 "需 Claude 复审")
+  - `auto` → 跑完三步法,据 6 条件清单决定 escalate
+  - `false` → 跑完三步法,只在 hard scope/architecture deviation 时 escalate
+- **state.md** 模板 `Next step.触发来源` 字段记录"为什么是这个 Agent"(详见 state.md v4.0 模板)
+
+## 多源触发清单(v4.0 / Claude review 何时介入)
+
+Claude 在以下 4 类情况介入 review。OC / Codex / Human 任一可触发:
+
+| # | 触发名称 | 谁触发 | 何时触发 | 落地机制 |
+|---|---------|------|--------|--------|
+| **A** | Pre-declared | Claude 02-plan | 出 task brief 时 | task frontmatter `claude-review-required: required` |
+| **B** | Codex self-flag | Codex 03 / 06 | 实施期发现自己触及架构 | progress.md 该 commit 段加 `self-flag: needs Claude(reason)` + state.md Next step 指 Claude |
+| **C** | OC escalation | OC 04 | review 时 | 现状 6 条件清单(见 workflow.md §5.2 / 04 prompt 三步法) |
+| **D** | Auto-P0/P1 | 系统 prompt 硬约束 | 06-fix 收尾 | P0/P1 severity 的 RV fix 完成后强制 Reporter = Claude(参考 06-codex-fix.md v3.0 强约束) |
+
+任一触发 → state.md `Next step.Agent = Claude` + `Next step.触发来源 = A/B/C/D` + `Next step.触发条件 = <具体>`。
+
+详见 `.ai/starter-upgrade-protocol.md`(若存在)和 workflow.md §5。
+
 ### 各段强约束（Dogfood #3 / #5 / #6 修复）
 
 #### `Compatibility and rollout` 段（数据契约约束分三级）

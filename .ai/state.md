@@ -27,16 +27,23 @@
 
 ## Next step
 
-<!-- 校验规则（v2.0）：
+<!-- 校验规则（v4.0 多源触发机制 + v2.0 闸门）:
   - 若 Last completed.Step 含 "03-codex-implement"，则 Next step.Agent 必须是 OpenCode
     且 Prompt 模板必须是 04-opencode-review.md（除非 task 文件显式标 `skip-review: true`）
-  - 若 OpenCode review 检出 scope-deviation 或架构敏感改动 → Next step.Agent 为 Claude（escalation 路径，无独立 prompt）
+  - 若 task frontmatter `claude-review-required: required` → Next step.Agent 必须为 Claude(触发来源 A)
+  - 若 progress.md 含 `self-flag(Codex): needs Claude` → Next step.Agent 为 Claude(触发来源 B)
+  - 若 OpenCode review 检出 scope-deviation / 架构敏感改动(参考 04-opencode-review.md Escalation 判定表 C1-C7)
+    → Next step.Agent 为 Claude(触发来源 C, 写明命中的 C 编号)
+  - 若 06-codex-fix 完成且 RV severity = P0/P1 → Next step.Agent 必须为 Reporter(通常 OpenCode 或 Claude)
+    (触发来源 D · Auto-P0/P1 / 详见 06-codex-fix.md 收尾纪律 v3.0)
   - 违反上述规则的 state.md 视为损坏，需 Claude 复检后才能继续
   - 若本步在 worktree 中执行（pwd 含 `.claude/worktrees/`），Next step.可粘贴 prompt 必须以 `⚠️ 粘贴前请先 rsync 回主仓` 起头
 -->
 
 - Agent: `NONE`
 - Prompt 模板: `NONE`
+- 触发来源(v4.0): `NONE` <!-- A · pre-declared / B · Codex self-flag / C · OC escalation / D · Auto-P0/P1 / normal · 标准路径 -->
+- 触发条件(v4.0): `NONE` <!-- 若触发来源 = A,填 task frontmatter 字段值;C 填命中 C1-C7 编号;B/D 填一句话理由 -->
 - 输入: `NONE`
 - 可粘贴 prompt（由上一步 Agent 自动生成）：
 

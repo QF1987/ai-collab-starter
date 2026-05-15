@@ -10,6 +10,55 @@
 > - `README.md` 解释目录结构
 > - `workflow.md` 解释 7 步法
 > - `getting-started.md`（本文）解释**怎么开始**——目的不同
+> - `starter-upgrade-protocol.md` 解释 starter 自己怎么升级
+
+---
+
+## 〇、任何新 Claude session 启动前的检查清单（v4.0 强约束）
+
+任何 Claude / OC / Codex session 在 derived 项目内启动业务任务**之前**,**必须**先跑这套检查:
+
+```bash
+# 1. 看本项目 STARTER_VERSION stamp
+cat .ai/STARTER_VERSION 2>/dev/null || echo "未 stamp,可能是新 init 项目"
+
+# 2. 看 starter 当前 latest
+cat /path/to/ai-collab-starter/VERSION
+
+# 3. 跑 status check(若 scripts/starter-status.sh 被 init-collab.sh 复制进来,
+#    则在本项目下直接跑;否则跑 starter 仓的)
+bash scripts/starter-status.sh 2>/dev/null || \
+  bash /path/to/ai-collab-starter/scripts/starter-status.sh
+```
+
+### 结果决策矩阵
+
+| 输出情况 | Claude 应当 |
+|---------|----------|
+| 项目 stamp == starter 最新 + inbox 0 pending | 直接进业务任务 |
+| 项目 stamp 落后 + inbox < 5 pending | **主动提醒** Human:"项目落后 X 版本,要 sync 吗?" |
+| inbox ≥ 5 pending(不论项目 stamp) | **主动提醒** Human:"starter 该升级了,建议本周抽 1-2h 跑 starter-upgrade-protocol.md" |
+| inbox 任一 P0/P1 finding | **强烈主动提醒**:"P0/P1 未实施,建议立即先做 starter 升级,业务任务延后" |
+| 未 stamp 项目(新 init) | 跑 init-collab.sh 时自动 stamp + 更新本流程 |
+
+**不做检查的风险**:Claude 用过时 starter 处理新任务,重复别人已经发现并解决过的 finding;
+或在本项目 discover 新 finding 但没 sync 到 starter inbox,跨 session 信息丢失。
+
+### Finding 落档双写约定(v4.0)
+
+任何 session 在 derived 项目 discover starter improvement finding 时:
+
+```bash
+# 1. 本地写 finding(原有约定不变)
+$EDITOR .ai/logs/starter-vN-finding-NN-<slug>.md
+
+# 2. 同步到 starter inbox(v4.0 新增 / 强约束)
+bash /path/to/ai-collab-starter/scripts/sync-finding.sh \
+     .ai/logs/starter-vN-finding-NN-<slug>.md
+```
+
+`sync-finding.sh` 自动识别 project name 并 cp 到 `pending-findings/from-<project>/`。
+**不双写 = 跨 session 信息丢失 = starter 不知道有这条 finding**。
 
 ---
 

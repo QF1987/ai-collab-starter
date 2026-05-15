@@ -140,6 +140,27 @@ Codex:
 - 纯格式化、依赖升级、机械性重命名 -> 直接交 Codex，不消耗 Claude。
 - "broad refactor"（OpenCode 禁止）定义为：跨 >= 3 个文件 或 跨模块边界 或 修改公共函数签名。
 
+### Claude 主动提醒升级 starter(v4.0)
+
+Claude 在 derived 项目内 main session 期间,**主动**监控以下事件并提醒 Human:
+
+| 时机 | 触发条件 | Claude 应说什么 |
+|------|---------|----------------|
+| **finding 落档时** | 本 session 写完新 finding 并 sync 到 starter inbox 后 | "已落 Finding NN。当前 starter inbox 累计 X 条 pending。阈值 5 条,当前 X/5。" |
+| **epic-closeout 时** | 任一 epic 收口后 | "Epic 收口。盘点 starter inbox: 新增 X 条 / 累计 Y 条 / 距上次 release Z 天。建议: [立即升级 / 再做 1 epic / 不需要]" |
+| **新形态发现** | 跑通 starter 未系统支持的形态(ops-only / 新语言 / 新框架) | "本 task 是 ops-only / 新形态。starter 缺该形态指导,建议记 finding 候选 NN。" |
+| **跨过时间阈值** | session 启动时检测距上次 release ≥ 30 天 + inbox ≥ 1 | "starter 距上次 release ≥ 30 天 + 累计 X finding。建议本周抽 1-2h 启动升级 session。" |
+| **P0/P1 触发** | 任一新 finding 是 P0/P1 | "🔴 P0/P1 finding 出现。**强烈建议**立即停手做 starter 升级,业务任务暂缓。" |
+
+**Claude 主动提醒 ≠ 自动执行**——只是在 main session 输出里加一句话提醒,Human 决定是否启动升级 session。
+Human 同意后,Claude 跑 `.ai/starter-upgrade-protocol.md` 7-step 仪式。
+
+#### Claude 不主动提醒的场景
+
+- session 在非 derived 项目(ai-collab-starter 自己内部 dogfood 除外)
+- Human 已显式说"先不动 starter,专注业务"
+- 当前 session 已有 in-progress 升级,正在跑 protocol 步骤
+
 ## Code Style
 
 - Follow the style already used in the target repo and module.

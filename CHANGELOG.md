@@ -9,6 +9,125 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html):
 
 ---
 
+## [v4.0.0-rc1] — 2026-05-15
+
+> ⚠️ **Release candidate · 待实战 dogfood 验证后翻 stable**
+>
+> 本版本是从 v3.0 实战 + 两个 meta-design 讨论(触发机制 / 跨 session 演化)推导而来,
+> **0 实战 dogfood**。derived 项目默认仍 sync v3.0.0 stable,本 rc 留作 starter 自身实验。
+> 下次 epic 跑通后,若信号良好 → 翻 v4.0.0 stable;若撞坑 → 退回 v3.0.0 出 rc2。
+
+### TL;DR
+
+为 starter 加 **跨 session 自演化基础设施 + 多源 review 触发机制 + 升级仪式文档化**。
+解决两个结构性盲点:
+
+1. **跨 session findings 失联**:v3.0 之前 finding 散在各 derived 项目本地 `.ai/logs/`,
+   starter 自己看不到。新 session 的 Claude 没法知道有多少待实施。
+2. **演化纯被动**:v2.0/v3.0 升级都靠 Human 显式触发。Claude 不主动监控阈值,
+   findings 容易积压被遗忘。
+
+**无 breaking change**(v4.0 完全向后兼容 v3.0 工作流契约)。
+
+### Added · 基础设施层
+
+#### `ai-collab-starter/VERSION`(新)
+- 单行文件存当前 release 版本(如 `v3.0.0`)
+- 任意脚本 / Claude session 都可 `cat` 读取
+
+#### `.ai/logs/pending-findings/` + `.ai/logs/archived/`(新)
+- 跨项目 finding 汇聚 inbox(`from-<project-name>/` 分桶)
+- 已实施 finding 按 release 归档(`v2.0-released/` / `v3.0-released/`)
+- 22 历史 findings 已 backfill 进 inbox(2 deferred + 17 v2.0 + 3 v3.0)
+- `.ai/logs/README.md` 解释 inbox 约定 + 双写规则
+
+#### `scripts/starter-status.sh`(新)
+- 任意项目跑,输出:starter VERSION + project STARTER_VERSION drift 检测 + inbox pending count + 升级触发评估
+- 支持 P0/P1 finding 强警告
+
+#### `scripts/sync-finding.sh`(新)
+- 帮助 derived 项目把 finding 同步到 starter inbox
+- 自动识别 project name(git remote / pwd basename)
+- 阈值告警 ≥ 5 时提醒升级
+
+#### `derived-project/.ai/STARTER_VERSION` stamp 约定(新)
+- 每个 derived 项目 stamp 一行 `vX.Y.Z · synced YYYY-MM-DD`
+- `starter-status.sh` 用此 stamp 与 starter VERSION 比对检测 drift
+
+### Added · 机制层
+
+#### `.ai/prompts/02-claude-plan.md`
+- **Task brief frontmatter 约定**(`claude-review-required: false | auto | required`)
+- **多源触发清单表**(4 类:Pre-declared / Codex self-flag / OC escalation / Auto-P0-P1)
+- 何时 Claude 02-plan 应主动声明 `required` 的标准
+
+#### `.ai/prompts/03-codex-implement.md`
+- **Codex self-flag 路径**:实施期发现架构敏感时,主动在 progress.md 记 `self-flag(Codex):`,
+  并刷 state.md `Next step.Agent = Claude` + `触发来源 = B`
+
+#### `.ai/prompts/04-opencode-review.md`
+- **Escalation 判定表 C1-C7**(机器化):7 条机器可判定条件 + grep / count 方法
+- 与触发来源 A(预声明)/ B(self-flag)的协同规则(已声明的跳过判定表)
+
+#### `.ai/state.md` template
+- 新增 `Next step.触发来源` + `Next step.触发条件` 字段
+- 校验规则注释扩展为 v4.0 4 源(A/B/C/D)+ 原 v2.0 闸门
+
+### Added · 入口层
+
+#### `.ai/starter-upgrade-protocol.md`(新)
+- starter 升级仪式 SoT,7-step 跨 session 可复现流程
+- 触发条件清单 + SemVer 决策树 + rc 模式约定
+- 任何 Claude session 跑此协议都一致(不依赖具体 session 上下文)
+
+#### `.ai/getting-started.md`
+- 新 §〇 段:**任何新 Claude session 启动前的检查清单**
+- 决策矩阵:何时主动提醒 Human + 何时直接进业务
+- Finding 落档双写约定(本地 + sync-finding.sh)
+
+#### `AGENTS.md`
+- 新增 "Claude 主动提醒升级 starter (v4.0)" 子段
+- 5 类时机 + 应说什么 + 不该主动提醒的场景
+
+### Why v4.0 而不是 v3.1 patch
+
+最初考虑过只发 v3.1 patch(只做基础设施),但实际 backlog 包含的不只是基础设施:
+- 多源触发机制(02/03/04 prompt 改动)是 v3.0 dogfood 后两个 meta-design 讨论的产物
+- 升级仪式文档化是结构性新增
+- 这些**新增了 minor 级能力**,不是 typo / wording 改进
+
+按 SemVer:**MINOR**(向后兼容的新能力)。所以 v4.0.0(用 rc1 标记未 dogfood)。
+
+### Validation status
+
+| 类别 | 状态 |
+|------|------|
+| 基础设施(VERSION / stamps / scripts / inbox) | ✅ smoke 测过 |
+| 机制层 prompts 改动 | ⏳ 待下个 epic 实战 |
+| 升级仪式 protocol | ⏳ 待下次 starter 升级实战 |
+| 整体 cross-session 检查清单 | ⏳ 待下次新 session 实战 |
+
+**建议下一个 epic** 启动时:
+1. 跑 `bash scripts/starter-status.sh` 验证检查清单工作
+2. 在新 task brief 实验 `claude-review-required` frontmatter
+3. 若 Codex 实施期撞到架构问题,尝试 self-flag 路径
+4. epic-closeout 后回顾 v4.0 这套机制是否真有用
+
+实战信号良好 → tag `v4.0.0` stable;撞坑 → tag `v4.0.0-rc2` 修正后重试。
+
+### 升级指南(rc 不强推,但 starter 自己已 stamp v4.0.0-rc1)
+
+derived 项目**不需要**主动 sync。下次升级 v4.0 stable 时再统一 sync。
+若想提前体验 rc:
+
+```bash
+rsync -av --exclude='.git' /path/to/ai-collab-starter/.ai/prompts/ .ai/prompts/
+rsync -av /path/to/ai-collab-starter/.ai/{intake-templates,workflow,starter-upgrade-protocol,getting-started}.md .ai/
+echo "v4.0.0-rc1  · synced $(date +%Y-%m-%d)" > .ai/STARTER_VERSION
+```
+
+---
+
 ## [v3.0.0] — 2026-05-15
 
 ### TL;DR

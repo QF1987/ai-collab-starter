@@ -90,6 +90,31 @@ review 时**只跑改动语言对应那行**,跨语言项目交集都跑。**不
 注:本表是 v3.0 起点,实战中遇到新模式可在 review.md note 一笔 "建议加 X 语言 Y 子项",
 积累到 starter v4.0 升级清单。
 
+## Escalation 判定表(v4.0 / 触发来源 C 机器化 / Finding #20 续)
+
+review 完三步法后,对照下表逐条 grep / count / check。**任一触发** → 该 RV `Status = escalated`,
+state.md `Next step.Agent = Claude`,`Next step.触发来源 = C · OC escalation`,
+`Next step.触发条件 = <下表对应行编号>`:
+
+| # | 条件 | 机器化判定方法 |
+|---|------|--------------|
+| **C1** | 修改文件数超 Expected fix 描述 1.5x | `git show --stat $COMMIT \| awk` 数文件数 vs Expected fix 段提到的文件数 |
+| **C2** | 单文件 diff 行数超 Expected fix 描述 2x | `git diff --numstat` 比对 |
+| **C3** | 改 annotation / 类继承 / 配置结构 / SPI 接口签名 | `git diff $COMMIT` 中 grep `^[-+].*@\w+\|extends \|implements \|class.*:\|interface ` |
+| **C4** | ADR 偏离但 commit 未新增对应 ADR | `git show $COMMIT -- decisions.md` 若为空 + 实现实际改了 schema/protocol/contract |
+| **C5** | 跨仓 / 跨服务协议改动 | commit message 含 `proto:` / `schema:` 或 改动 `*.proto` / `*Mapper.xml` / `migration/*.sql` |
+| **C6** | 失败模式 / 并发 / lifecycle 复杂度 | grep `transaction\|@Transactional\|goroutine\|async\|Lifecycle\|CountDownLatch\|Semaphore` 在 diff 内 |
+| **C7** | 安全 / fleet rollout 风险 | grep `password\|secret\|token\|auth\|credential\|encrypt` 在 diff 内,或 task brief 涉及 ≥ 100 设备 |
+
+判定优先级:**C3-C5 优先**(架构敏感),C1-C2 是规模启发(可能 false positive 需 review 自己判),
+C6-C7 是垂直领域(看任务性质)。
+
+若 task frontmatter `claude-review-required: required`(触发来源 A · pre-declared)→
+**跳过 Escalation 判定表,直接走 Claude 复审**(已预声明,无需再判)。
+
+若 progress.md 含 `self-flag(Codex):` 段(触发来源 B · Codex self-flag)→
+**Next step 已被 Codex 指为 Claude**,OC 04 不需要再判 escalation(但仍跑三步法做 quality check)。
+
 ## 禁止
 
 - 不重新设计架构。

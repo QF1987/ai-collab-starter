@@ -57,6 +57,34 @@
 - 已 staged 但漏掉的 docstring / 注释
 此时在 commit message 注明"顺带改进: XXX"。
 
+## Codex self-flag 路径(v4.0 / 触发来源 B)
+
+实施期发现以下情况,即便守住了 scope,也应**主动 flag Claude review**(不能仅靠 OC 04 兜底):
+
+- 改 SPI 接口签名 / 注解 / 类继承 / 配置文件结构
+- 改 schema migration / 跨语言协议 / 公开 API
+- 实施期撞到 task brief 没声明的架构选择(如选 ORM mode / 选 framework / 选库)
+- task frontmatter `claude-review-required: auto` 且自己觉得"该升 Claude 看一眼"
+
+**self-flag 落地动作**(实施完成 + commit 前):
+
+1. `progress.md` commit 段加一行:
+   ```
+   self-flag(Codex): needs Claude review — <一句话理由>
+   ```
+2. 刷 state.md 时,`Next step.Agent` 直接设 `Claude`(**不**走 OC 04 流程)
+   - `Next step.Prompt 模板`: `(escalation, 无独立 prompt — Claude main session 处理)`
+   - `Next step.触发来源`: `B · Codex self-flag`
+   - `Next step.触发条件`: `<self-flag 理由原文>`
+3. 在可粘贴 prompt body 第 1 行加: `这是 ESCALATION review,Codex self-flag 触发`
+
+self-flag **不是甩锅**——这是 Codex 在实施期发现"超 brief 预期"时的诚实告警。
+Claude 介入后可能:
+- 接受改动 + 补 ADR(代价小)
+- 要求回滚 + 重新 02-plan(代价大,但避免架构污染)
+
+self-flag 比"让 OC 兜底 catch"更早一步,**catch 成本更低**。
+
 ## Scope 自检（实施前必跑）
 
 改动后、测试前，跑：
