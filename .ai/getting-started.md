@@ -1,153 +1,152 @@
-# Getting Started
+# Getting Started (lite v0.1.0)
 
-> 入口文档。三类常见情境都能在这里找到答案：
+> 入口文档。三类常见情境都能在这里找到答案:
 >
-> - 新项目第一步
-> - 新需求第一步（按规模路由）
+> - 新项目第一步(bootstrap)
+> - 新需求第一步(按规模路由)
 > - Bug 处理流程
 >
-> 与其他 .ai/ 文件区别：
-> - `README.md` 解释目录结构
-> - `workflow.md` 解释 7 步法
-> - `getting-started.md`（本文）解释**怎么开始**——目的不同
-> - `starter-upgrade-protocol.md` 解释 starter 自己怎么升级
+> 与其他 `.ai/` 文件的区别:
+> - `README.md` 解释目录结构 + lite vs main
+> - `workflow.md` 解释 7 步法 + 4 终端拓扑
+> - `getting-started.md`(本文)解释**怎么开始**
+> - `lite-upgrade-protocol.md` 解释 lite 自身怎么升级
 
 ---
 
-## 〇、任何新 Claude session 启动前的检查清单（v4.0 强约束）
+## 〇 · 任何新 epic 启动前的检查清单 (lite)
 
-任何 Claude / OC / Codex session 在 derived 项目内启动业务任务**之前**,**必须**先跑这套检查:
+任何 epic 开工前,**Human** 必须先跑这套检查(替代 main 的 Claude 主动提醒机制):
 
 ```bash
-# 1. 看本项目 STARTER_VERSION stamp
-cat .ai/STARTER_VERSION 2>/dev/null || echo "未 stamp,可能是新 init 项目"
+# 1. 看本项目 STARTER_VERSION stamp (若有)
+cat .ai/STARTER_VERSION 2>/dev/null || echo "未 stamp, 可能是新 init 项目"
 
-# 2. 看 starter 当前 latest
-cat /path/to/ai-collab-starter/VERSION
+# 2. 看 lite 当前 latest
+cat /path/to/ai-collab-starter-lite/VERSION
 
-# 3. 跑 status check(若 scripts/starter-status.sh 被 init-collab.sh 复制进来,
-#    则在本项目下直接跑;否则跑 starter 仓的)
-bash scripts/starter-status.sh 2>/dev/null || \
-  bash /path/to/ai-collab-starter/scripts/starter-status.sh
+# 3. 看 inbox 累计 finding
+ls .ai/logs/pending-findings/from-*/ 2>/dev/null | wc -l
 ```
 
-### 结果决策矩阵
+### Human 决策矩阵
 
-| 输出情况 | Claude 应当 |
+| 输出情况 | Human 应当 |
 |---------|----------|
-| 项目 stamp == starter 最新 + inbox 0 pending | 直接进业务任务 |
-| 项目 stamp 落后 + inbox < 5 pending | **主动提醒** Human:"项目落后 X 版本,要 sync 吗?" |
-| inbox ≥ 5 pending(不论项目 stamp) | **主动提醒** Human:"starter 该升级了,建议本周抽 1-2h 跑 starter-upgrade-protocol.md" |
-| inbox 任一 P0/P1 finding | **强烈主动提醒**:"P0/P1 未实施,建议立即先做 starter 升级,业务任务延后" |
-| 未 stamp 项目(新 init) | 跑 init-collab.sh 时自动 stamp + 更新本流程 |
+| 项目 stamp == lite 最新 + inbox 0 pending | 直接进业务任务 |
+| 项目 stamp 落后 + inbox < 5 pending | 评估:要 sync 吗?不急可累积。 |
+| inbox ≥ 5 pending | **本周抽 1-2h 跑 `lite-upgrade-protocol.md`** |
+| inbox 任一 P0/P1 finding | **立即先做 lite 升级, 业务任务延后** |
+| 未 stamp 项目(新 init) | 跑 bootstrap (见 §一) |
 
-**不做检查的风险**:Claude 用过时 starter 处理新任务,重复别人已经发现并解决过的 finding;
-或在本项目 discover 新 finding 但没 sync 到 starter inbox,跨 session 信息丢失。
+**不做检查的风险**: 用过时 lite 处理新任务,重复别人已经发现并解决过的 finding;或在本项目 discover 新 finding 但没 sync 到 lite inbox,跨 session 信息丢失。
 
-### Finding 落档双写约定(v4.0)
+### Finding 落档双写约定
 
-任何 session 在 derived 项目 discover starter improvement finding 时:
+任何 session 在 derived 项目 discover lite improvement finding 时:
 
 ```bash
-# 1. 本地写 finding(原有约定不变)
-$EDITOR .ai/logs/starter-vN-finding-NN-<slug>.md
+# 1. 本地写 finding
+$EDITOR .ai/logs/lite-v0.X-finding-NN-<slug>.md
 
-# 2. 同步到 starter inbox(v4.0 新增 / 强约束)
-bash /path/to/ai-collab-starter/scripts/sync-finding.sh \
-     .ai/logs/starter-vN-finding-NN-<slug>.md
+# 2. 同步到 lite inbox (从 lite 仓 cp, 或脚本)
+cp .ai/logs/lite-v0.X-finding-NN-<slug>.md \
+   /path/to/ai-collab-starter-lite/.ai/logs/pending-findings/from-<project>/
 ```
 
-`sync-finding.sh` 自动识别 project name 并 cp 到 `pending-findings/from-<project>/`。
-**不双写 = 跨 session 信息丢失 = starter 不知道有这条 finding**。
+**不双写 = 跨 session 信息丢失 = lite 不知道有这条 finding**。
+
+### 通用 finding sync 到 main 候选
+
+若发现的 finding 是 lite/main 通用(非 Claude-specific),Human 在 lite minor release 时:
+
+```bash
+cp /path/to/ai-collab-starter-lite/.ai/logs/pending-findings/from-<project>/<finding>.md \
+   /path/to/ai-collab-starter/.ai/logs/pending-findings/from-lite-<project>/
+```
+
+prefix `from-lite-` 让 main 升级 session 能识别来源。
 
 ---
 
-## 一、新项目第一步：手动 bootstrap
+## 一 · 新项目 bootstrap (Human 主导, ~1h)
 
-> 自动化引导脚本见 `scripts/init-collab.sh`。手动启动也只需 5 步、约 1 小时。
+> lite 中无 Claude bootstrap session。Human 用 Codex 当辅助,跑下面 5 步。
 
-### 5 步（约 1 小时）
-
-#### 1. 复制骨架（5 分钟，机械）
+### 1. 复制骨架 (5 分钟, 机械)
 
 ```bash
-STARTER=<本 starter kit 所在路径>     # 例如 ~/ai-collab-starter
+STARTER_LITE=<本 lite 仓所在路径>    # 例如 ~/Alcedo/code/ai-collab-starter-lite
 DST=<新项目目录>
 
-cp -r "$STARTER/.ai"        "$DST/.ai"
-cp    "$STARTER/AGENTS.md"  "$DST/AGENTS.md"
-cp -r "$STARTER/scripts"    "$DST/scripts"
-cp -r "$STARTER/.claude"    "$DST/.claude"
+cp -r "$STARTER_LITE/.ai"        "$DST/.ai"
+cp    "$STARTER_LITE/AGENTS.md"  "$DST/AGENTS.md"
+cp -r "$STARTER_LITE/scripts"    "$DST/scripts" 2>/dev/null || true
+cp -r "$STARTER_LITE/.claude"    "$DST/.claude" 2>/dev/null || true
+
+echo "v0.1.0-lite · synced $(date +%Y-%m-%d)" > "$DST/.ai/STARTER_VERSION"
 ```
 
-或一条命令跑自动化脚本：
-
-```bash
-$STARTER/scripts/init-collab.sh --target "$DST" --name "<PROJECT_NAME>"
-```
-
-#### 2. 清空动态内容（2 分钟）
+### 2. 清空动态内容 (2 分钟)
 
 ```bash
 cd "$DST"
 echo "# Progress" > .ai/progress.md
-# review.md decisions.md state.md plan.md 各自保留模板/表头，删具体内容
-rm -rf .ai/tasks/* .ai/logs/* .ai/archive/* 2>/dev/null || true
+# review.md decisions.md state.md plan.md 各自保留模板/表头, 删具体内容
+rm -rf .ai/tasks/* .ai/logs/* .ai/archive/* .ai/scratch/* 2>/dev/null || true
 ```
 
-#### 3. 写第一个 ADR（5 分钟，人手写）
+### 3. 开 4 终端 (3 分钟)
 
-在 `.ai/decisions.md` 追加：
+```bash
+# 推荐 tmux 布局:
+tmux new -s lite-epic-<name>
+# 然后:
+#   Ctrl-B "    水平分屏
+#   Ctrl-B %    垂直分屏
+# 直到 4 panes:
+#   T1 (top-left)     : codex
+#   T2 (top-right)    : opencode (OC-helper, 按需启动)
+#   T3 (bottom-left)  : opencode (OC-impl)
+#   T4 (bottom-right) : opencode (OC-review)
 
-```markdown
-## ADR-YYYYMMDD-01: 采用多 Agent 协同框架
-
-- Status: accepted
-- Owner: <human>
-- Date: YYYY-MM-DD
-- Repos affected: <list>
-- Context: 新项目 <PROJECT_NAME> 启动，引入多 Agent 协同框架（Claude Code + Codex + OpenCode）以应对中-大型工作量的可追溯性需求。
-- Decision:
-  - Claude Code 负责架构决策与高风险评审
-  - Codex 负责实施、审校、修复
-  - OpenCode 负责上下文摸排、草稿实施、低成本 review、文档维护
-  - 工作目录与日志统一在 .ai/，源码在真实仓
-- Alternatives considered: 单 Agent 全包；不引入框架。
-- Consequences:
-  - 任务 ≥ 2 小时工作量者必走 task 文件 + 三阶段流水
-  - 成本：约一次 Claude bootstrap session（30-45 分钟）+ 持续轻量维护
-- Follow-up: 跑通第一个真实任务后复盘是否需要调整角色边界。
+# 或 iTerm 4 个 tab 分别命名。
 ```
 
-#### 4. Claude bootstrap session（30-45 分钟，最贵一步）
+**单终端探索模式**(初次试水 / Tiny task):
+- T1 Codex 同时模拟 OC-impl(临时授权,标 `human-override-codex-fix`)
+- T4 OC-review 仍开独立终端(防自审盲点)
+- T2 OC-helper 不需要
 
-把以下 prompt 喂给 Claude——**唯一**应该让 Claude 在新项目花大 token 的地方：
+### 4. 在 T1 Codex 跑 bootstrap 喂下方启动话术 (30-45 分钟)
+
+> lite 中无 Claude 大 token bootstrap。Codex 直接读项目元数据 + 写三份草稿。
 
 ```text
-你是 Claude Code。本次任务为新项目 <NAME> bootstrap 协作框架。
+你是 Codex, lite v0.1.0 lead engineer。本次任务: 新项目 <PROJECT_NAME> bootstrap 协作框架。
 
-操作：
+按 .ai/getting-started.md §1 Step 4 描述操作:
 1. 读 <REPO_PATH> 的 README、package.json/go.mod/Cargo.toml/build.gradle 等顶层元数据
-2. 用 ls / find 探查目录结构，不要读源码细节
-3. 输出三份草稿到对应路径：
-   - <PROJECT>/.ai/context.md：项目身份、仓库地图、关键边界、当前状态
-   - <PROJECT>/.ai/architecture.md：架构原则、模块划分、协议边界
-   - <PROJECT>/AGENTS.md（在 starter 模板基础上填实）：项目特定的 Tech Stack、Build Commands、
-     Known Sharp Edges（初版可空，后续累积）
-4. 输出每份文件的最终内容，人审后再提交
-5. Token 限制：单次会话内完成，不要切片
+2. 用 ls / find 探查目录结构, 不要读源码细节
+3. 输出三份草稿到对应路径:
+   - <PROJECT>/.ai/context.md: 项目身份、仓库地图、关键边界、当前状态
+   - <PROJECT>/.ai/architecture.md: 架构原则、模块划分、协议边界
+   - <PROJECT>/AGENTS.md (在 lite 模板基础上填实): 项目特定的 Tech Stack、Build Commands、
+     Known Sharp Edges (初版可空, 后续累积)
+4. 输出每份文件的最终内容, Human 审后再 commit
+5. 单次会话内完成, 不要切片
 
-不要：
-- 扫源码细节
+不要:
+- 扫源码细节 (那是 OC-helper 的活, 暂不需要)
 - 编造未读到的项目细节
-- 复述 starter kit 中已经存在的普适约束（那些读者已经读过）
+- 复述 lite kit 中已经存在的普适约束
 ```
 
-#### 5. 人审 + 修正（10-15 分钟）
+### 5. Human 审 + 修正 (10-15 分钟)
 
-Claude 写的有偏差或漏掉的项目特性，手动改对。常见漏项：
+Codex 写的有偏差或漏掉的项目特性, Human 手动改对。常见漏项:
 
-- 私有部署 / 内部工具（README 没写的约定）
+- 私有部署 / 内部工具(README 没写的约定)
 - 团队特殊 git 工作流
 - 上线 / 发布流程
 
@@ -161,23 +160,30 @@ Claude 写的有偏差或漏掉的项目特性，手动改对。常见漏项：
 
 ---
 
-## 二、新需求第一步：按规模路由
+## 二 · 新需求第一步:按规模路由
 
-> 核心：**流程开销不该 > 任务本身工作量**。先评估规模，再选入口。
+> 核心:**流程开销不该 > 任务本身工作量**。先评估规模,再选入口。
 
-### 路由表
+### 路由表 (lite 版)
 
 | 规模 | 标志 | 入口 | 跑哪些 prompt | 何时止步 |
 | --- | --- | --- | --- | --- |
 | **Tiny** | < 30 行、单文件、命名调整、文档改字 | 单 Agent 单轮对话 | 不走框架 | commit 即止 |
-| **Small** | 1-2 小时、单模块、行为清晰 | 人直接写 task 文件 | 03（Codex 实施）→ 04（OC review）→ 合入 | review 通过即合入 |
-| **Medium** | 半天-1 天、多文件、需权衡 | 人写一两段 brief | 01 → 02 → 03 → 04 → 合入 | 同上 |
-| **Large** | 多日、跨模块、可能跨仓 | 人写 brief 标 Large | 01 → 02（切片 ≤3）→ 多次 (07+08) → 04 合入前 | 切片全部合入 |
-| **Epic** | 多周、跨多目标（如 P0 系列） | `.ai/plan.md` 建 epic 章节 | epic 拆 ≥3 个 task 文件，各自走 Large | 整 epic 收口 |
+| **Small** | 1-2 小时、单模块、行为清晰 | Human 直接写 task 文件 | 02(Codex)→ 03a/b/c → 04 OC-review → 合入 | review 通过即合入 |
+| **Medium** | 半天-1 天、多文件、需权衡 | Human 写一两段 brief | 02 → 03a/b/c → 04 → 合入(4 终端) | 同上 |
+| **Large** | 多日、跨模块、可能跨仓 | Human 写 brief 标 Large | 02(切片 ≤3)→ 多次 03 三段式 → 04 各 slice → epic-level review | 切片全部合入 |
+| **Epic** | 多周、跨多目标 | `.ai/plan.md` 建 epic 章节 | epic 拆 ≥3 个 task 文件, 各自走 Large | 整 epic 收口 |
 
-### Brief 最小模板（Medium / Large 起用）
+### Brief 最小模板 (Medium / Large 起用)
 
 ```markdown
+---
+task-id: <epic-id-slice-N 或 task-id>
+size: Tiny | Small | Medium | Large | Epic
+human-escalation-suggested: false | true
+created: YYYY-MM-DD
+---
+
 # Brief: <一句话需求>
 
 ## What
@@ -191,17 +197,24 @@ Claude 写的有偏差或漏掉的项目特性，手动改对。常见漏项：
 - Out of scope: <列表>
 
 ## Acceptance hint
-<一句话定义"完成的样子"，不必精确，由后续阶段细化>
+<一句话定义"完成的样子", 不必精确, 由后续阶段细化>
 
 ## Known constraints
 <已知的技术限制 / 截止时间 / 依赖>
 ```
 
-把这段贴给 OC（用 `01-opencode-context.md` 模板）即可启动。
+把这段贴给 T1 Codex 启动 02。
 
 ### Small 任务的 task 文件最小模板
 
 ```markdown
+---
+task-id: <id>
+size: Small
+human-escalation-suggested: false
+created: YYYY-MM-DD
+---
+
 # Task: <name>
 
 ## Goal
@@ -209,7 +222,13 @@ Claude 写的有偏差或漏掉的项目特性，手动改对。常见漏项：
 
 ## Scope
 - Repo: <path>
-- Paths: <list>
+- Paths (核心): <list>
+- Paths (连带, 允许小改): <list>
+
+## Pre-decisions (≥ 3 条)
+- D1: ...
+- D2: ...
+- D3: ...
 
 ## Non-goals
 - <list>
@@ -225,38 +244,46 @@ Claude 写的有偏差或漏掉的项目特性，手动改对。常见漏项：
 - [ ] ...
 ```
 
-直接喂给 Codex（`03-codex-implement.md`）。
+直接喂给 T1 Codex 02-codex-plan.md(或若 Small 简单,Codex 02 一次产 brief + 子任务包合并)。
 
-### 「跳过哪一步」纪律
+### 「跳过哪一步」纪律 (lite)
 
 | 跳过 | 何时合理 | 何时危险 |
 | --- | --- | --- |
-| 跳 OC 摸排（01） | task 写得已够清楚 / Small | Medium 以上禁止跳——容易扩 scope |
-| 跳 Claude 决策（02） | scope 满足 `AGENTS.md > Scope Heuristics` 的 Claude 直改条件 | 跨仓 / 协议改动禁止跳 |
-| 跳 OC review（04） | Codex 自审 + Claude 评审已覆盖 | 不要跳——便宜的最后一道扫雷 |
-| 跳 Claude 评审（05） | OC 没标 escalate | OC 标了就不能跳 |
+| 跳 Codex 02 直接 03a | task 已是 brief 形式 + Small | Medium+ 禁止跳, 容易扩 scope |
+| 跳 Codex 03a 子任务包(让 OC-impl 自己理解 brief) | **禁止**, 这是 lite 设计核心 | 总是危险 |
+| 跳 OC-review 04 | task 标 `skip-review: true` 且 < 30 行单文件 | 默认不跳——便宜的最后扫雷 |
+| 跳 4 终端只用 1 终端 | Tiny / Small 初次试水 | Medium+ 禁止——session 隔离破坏 |
 
 ---
 
-## 三、Bug 处理：现有流程兼容，加一道「先复现」纪律
+## 三 · Bug 处理:加一道「先复现」纪律
 
-> **不需要新增 prompt**。现有 8 个完全能处理 bug，只是流程差三道纪律。
+> **不需要新增 prompt**。lite 5 prompt 完全能处理 bug, 流程差三道纪律。
 
-### Bug 流程速记
+### Bug 流程速记 (lite)
 
 ```
-Step 1: OC bug packet（含复现路径 + 嫌疑 commit 区间）
-Step 2: Claude 修复策略决策（minimal patch / refactor-with-fix / defer + workaround）
-Step 3: Codex / OC 实施 + 回归测试（必须）
-Step 4: OC review（专门检查回归测试有效性）
-Step 5: 合入 + 关闭 review.md 中对应 finding
+Step 1: OC-helper 跑 bug 复现路径 grep / 嫌疑 commit 区间 scan (写 out-*.md)
+Step 2: Codex 02 修复策略决策 (minimal patch / refactor-with-fix / defer + workaround)
+Step 3: Codex 03a 拆任务 → OC-impl 03b 实施 → Codex 03c 验收 (必须含回归测试)
+Step 4: OC-review 04 (专门检查回归测试有效性)
+Step 5: Human 合入 + 关闭 review.md 中对应 finding
 ```
 
 ### 差异 1 · Bug Brief 模板
 
-bug 的 Step 1 输入比 feature 多两段：
+bug 的 Step 1 输入比 feature 多两段:
 
 ```markdown
+---
+task-id: bug-<date>-<slug>
+size: ...
+severity: P0 | P1 | P2 | P3
+human-escalation-suggested: <若 P0/P1 通常 true>
+created: YYYY-MM-DD
+---
+
 # Bug Brief: <现象一句话>
 
 ## Reproduction
@@ -265,114 +292,99 @@ bug 的 Step 1 输入比 feature 多两段：
 
 ## Expected vs Actual
 - Expected: <应有行为>
-- Actual: <实际行为，附 log / 截图 / 错误码 / stack trace>
+- Actual: <实际行为, 附 log / 截图 / 错误码 / stack trace>
 
 ## When did it start?
-<最近一次 work 的时间 / commit；最近一次 break 在哪>
-<git bisect 候选区间，如已知>
+<最近一次 work 的时间 / commit; 最近一次 break 在哪>
 
 ## Initial hypothesis
-<可选；OC 调研后会确认或推翻>
+<可选>
 
 ## Severity
-P0 / P1 / P2 / P3（参考 review.md > Severity 定义）
+P0 / P1 / P2 / P3
 ```
 
-OC 的 packet 输出多两段：
+OC-helper 跑的 packet 多两段:
 
-- **稳定复现路径**（明确步骤，人能照做）
-- **嫌疑 commit 区间**（git log + 可能的 bisect 候选）
+- **稳定复现路径**(明确步骤, Human 能照做)
+- **嫌疑 commit 区间**(git log + 可能的 bisect 候选)
 
-### 差异 2 · Claude 修复策略三选一
+### 差异 2 · Codex 02 修复策略三选一
 
-bug 的 02 ADR `Decision` 段必须明确：
+bug 的 02 brief Decision 段必须明确:
 
 | 策略 | 何时用 | 风险 |
 | --- | --- | --- |
-| **Minimal patch** | 多数 bug；改几行能解决 | 可能掩盖深层设计问题 |
-| **Refactor-with-fix** | bug 暴露架构问题，顺带改 | scope 容易爆；务必明确收益 |
-| **Defer + workaround** | root cause 太大；先临时 workaround，root cause 另立项 | workaround 本身可能成新债；必须开 follow-up issue |
+| **Minimal patch** | 多数 bug; 改几行能解决 | 可能掩盖深层设计问题 |
+| **Refactor-with-fix** | bug 暴露架构问题, 顺带改 | scope 容易爆; 务必明确收益 |
+| **Defer + workaround** | root cause 太大; 先临时 workaround | workaround 本身可能成新债; 必须开 follow-up issue |
 
-紧急生产 bug 一律走 minimal patch + workaround，不允许 refactor。
+紧急生产 bug 一律走 minimal patch + workaround, 不允许 refactor。
 
 ### 差异 3 · 实施必须带回归测试
 
-bug task 文件 Acceptance Criteria 必须包含：
+bug task 文件 Acceptance Criteria 必须包含:
 
 ```markdown
 ## Acceptance Criteria
-- [ ] 回归测试：复现脚本 / 单测能在 patch 前 fail、patch 后 pass
-- [ ] 测试名 / 测试 docstring 包含 issue 或 bug 编号，方便日后 grep
-- [ ] 该回归测试加入常规测试套件（CI 默认跑）
+- [ ] 回归测试: 复现脚本 / 单测能在 patch 前 fail, patch 后 pass
+- [ ] 测试名 / 测试 docstring 包含 issue 或 bug 编号, 方便日后 grep
+- [ ] 该回归测试加入常规测试套件 (CI 默认跑)
 ```
 
-08 Codex 审校对 bug 任务**额外**检查（在通用第 4 步之上）：
+Codex 03c 验收对 bug 任务**额外**检查:
 
-- 测试代码**真的**跑了 bug 的代码路径，不是空跑
-- 临时 revert patch 后测试**确实 fail**（如条件允许；不能 revert 时至少要静态确认逻辑覆盖）
+- 测试代码**真的**跑了 bug 的代码路径, 不是空跑
+- 临时 revert patch 后测试**确实 fail** (静态确认逻辑覆盖)
 
 ### 差异 4 · Review 纪律
 
-bug 必须作为 finding 在 `.ai/review.md` 追踪：
+bug 必须作为 finding 在 `.ai/review.md` 追踪 (格式同 main, 略)。
 
-```markdown
-### RV-YYYYMMDD-NN: <bug 标题>
-
-- Severity: P0 | P1 | P2 | P3
-- Reporter: <人 / Agent / 监控告警>
-- Owner: Codex（或 OC 草稿）
-- Verifier: <Reporter 或指定人>
-- Repo: <path>
-- File/symbol: <精确定位>
-- Status: open | accepted | in-progress | fixed | verified | rejected | deferred
-- Finding: <现象 + root cause>
-- Expected fix: <策略 minimal/refactor/defer 之一>
-- Verification: <回归测试名 + 真机或环境验证步骤>
-```
-
-合入后 status 由 verifier（不是修复人）翻 `verified`，否则不算关闭。
+合入后 status 由 verifier(不是修复人)翻 `verified`, 否则不算关闭。
 
 ### 紧急 bug 快速通道
 
-生产事故 / 阻塞用户的 P0 bug 允许：
+生产事故 / 阻塞用户的 P0 bug 允许:
 
-- 跳过 Step 1 OC packet——**人**直接写复现到 task 文件
-- 跳过 Step 2 ADR——**先**打 minimal hotfix 合入，**事后** 24 小时内补 ADR
-- 跳过 Step 4 OC review——Codex 自审 + 人 review 即可
+- 跳过 Step 1 OC-helper packet——**Human** 直接写复现到 task 文件
+- 跳过 Step 2 完整 02——**先**打 minimal hotfix 合入(Human override Codex 临时写),**事后** 24h 内补 ADR
+- 跳过 Step 4 OC-review——Codex 03c 自审 + Human review 即可
 
-但**绝不**允许：
+但**绝不**允许:
 
 - 跳过回归测试
 - 不开 review.md finding
-- 事后不补 ADR（如果跳过了 Step 2）
+- 事后不补 ADR
 
-紧急通道用过一次必须在 progress.md 记一笔，月底统计：本月用了几次紧急通道，是否有可流程化避免的根因。
+紧急通道用过一次必须在 progress.md 记一笔, 月底统计本月用了几次。
 
 ---
 
-## 四、什么情况都别套这个框架
+## 四 · 什么情况都别套这个框架
 
-明确**不**该走的场景：
+明确**不**该走的场景:
 
 - < 30 行的 typo / 注释 / 命名调整 / README 改字
 - 写一封邮件、博客、聊天回复草稿
 - 探索性原型 / Jupyter notebook 灵感期 / spike
-- 一次性临时脚本，不需要审计追溯
+- 一次性临时脚本, 不需要审计追溯
 - 写完即弃的 demo 代码
 
-这些场景直接和**一个** Agent 单轮对话最快。框架是加速器，不是仪式。
+这些场景直接和**一个** Agent 单轮对话最快。框架是加速器, 不是仪式。
 
 ---
 
-## 五、把这份文档当 reference
+## 五 · 把这份文档当 reference
 
-每次开始工作前先读本文 §1-§3 对应段，问自己：
+每次开始工作前先读本文 §1-§3 对应段, 问自己:
 
-1. 这是新项目还是已有项目？
-2. 是新需求还是 bug？
-3. 规模属于 Tiny / Small / Medium / Large / Epic 哪一档？
+1. 这是新项目还是已有项目?
+2. 是新需求还是 bug?
+3. 规模属于 Tiny / Small / Medium / Large / Epic 哪一档?
+4. 要开几个终端? (Tiny: 1, Small: 1-2, Medium+: 4)
 
-确定后直接走对应入口，不要每次都重新设计流程。
+确定后直接走对应入口, 不要每次都重新设计流程。
 
 发现新踩的坑 → 追加到 `AGENTS.md > Known Sharp Edges`。
 发现入口流程缺陷 → 改本文。

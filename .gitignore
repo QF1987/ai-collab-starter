@@ -10,6 +10,9 @@
 .ai/cache/
 .ai/tmp/
 
+# lite v0.1.0: Codex ↔ OC-helper 共享文件总线 (epic 结束 Human 可清空)
+.ai/scratch/
+
 # 注意：.ai/logs/ 看团队偏好是否进版本控制
 # 若希望追溯历史 Agent 输出：不加
 # 若 logs 体积大或含敏感信息：取消下行注释

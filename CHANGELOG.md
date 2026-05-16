@@ -1,13 +1,188 @@
 # Changelog
 
-All notable changes to **ai-collab-starter** are documented here.
+All notable changes to **ai-collab-starter-lite** are documented here.
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html):
 - **MAJOR** version when breaking changes to the workflow contract (prompts removed/merged, file paths renamed)
 - **MINOR** version when adding capabilities backwards-compatibly
 - **PATCH** version when fixing typos / wording / non-structural improvements
 
+**lite vs main**: `ai-collab-starter-lite` 是 `ai-collab-starter` 的独立产品线(SemVer 独立追踪),
+fork 起点见 v0.1.0 段。
+
 ---
+
+## [v0.1.0-lite] — 2026-05-16
+
+> **lite 产品线起点**。从 `ai-collab-starter` v4.0.0-rc1 fork,删除 Claude 角色,
+> 引入 Codex 当 lead engineer + OC 写代码 + Human 当 bus 的 4 终端协同范式。
+>
+> ⚠️ **Release candidate · 待 ≥ 1 个真实 epic dogfood 验证后翻 stable**。
+
+### TL;DR
+
+- **角色重排**: Codex(02 plan + 03a 拆任务 + 03c 验收, **不写代码**) + OC-impl(03b 写代码) + OC-review(04 审) + OC-helper(全仓搜索, 按需) + Human(message bus + escalation gate)
+- **拓扑**: 4 终端 per epic(T1 Codex + T2 OC-helper + T3 OC-impl + T4 OC-review)
+- **协议**: **无**。Human 当 bus + `.ai/scratch/oc-helper/` 共享文件总线(req/out 文件交换)
+- **rubric 化验收**: 新增 `.ai/oc-code-quality-rubric.md`(8 维度 + 5 硬门槛, ≥ 16/24 通过)
+- **重试上限**: 03b ↔ 03c 最多 3 轮, 超限升 Human 三选
+
+### 设计源流
+
+- **fork 起点**: ai-collab-starter v4.0.0-rc1 (commit c9f25ea, 2026-05-15)
+- **设计冻结**: `.ai/lite-v0.1.0-design.md` (v2 · 无协议版, 2026-05-16)
+- **v1 设计 (ACP via MCP) 已否决**: 归档为 `.ai/lite-v0.1.0-design-v1-acp-archived.md`,
+  否决理由: IBM BeeAI ACP 已 2025-08-27 archived 合并入 A2A; Codex CLI 不原生支持 ACP;
+  HTTP REST server 与 lite 极简定位矛盾。Human 决策出局, 改用 "无协议 + Human bus + 文件总线" 设计。
+
+### Added · 新增能力
+
+#### 新 prompt: `.ai/prompts/02-codex-plan.md`
+- 替代 main 的 `02-claude-plan.md`
+- 强约束 7 条: alternatives ≥ 2 / Data Contract L1-L5 / Negative consequences 不空 /
+  pre-decisions ≥ 3 (frontmatter 锁定) / Paths 二组分 / 锁名前 grep 同包预检 / OC delegation candidates
+- Codex 自然倾向 force-反: 不擅长 trade-off 决策, prompt 强制 force 出来
+
+#### 新 prompt: `.ai/prompts/03-codex-orchestrate.md`
+- 替代 main 的 `03-codex-implement.md` (lite 中 Codex **不写代码**)
+- 改名 orchestrate 反映 lead engineer 角色
+- 含 03a 拆任务 + 03c 验收两段, 03b 单独 prompt 给 OC-impl
+
+#### 新 prompt: `.ai/prompts/03b-opencode-impl.md`
+- OC-impl 写代码强约束: 只动子任务包 paths / 不翻案 pre-decisions / 单文件 > 200 行停下来问 / 完成只说 "done, 见 git diff"
+- 子任务包模板 (Codex 03a 产出 → OC-impl 03b 消费)
+
+#### 新 prompt: `.ai/prompts/oc-helper.md`
+- OC-helper 通用 prompt: 读 `.ai/scratch/oc-helper/req-*.md`, 执行 grep/scan/summarize, 写 out-*.md
+- 不动业务代码, 只读全仓 + 写共享文件
+
+#### 新 rubric: `.ai/oc-code-quality-rubric.md`
+- Codex 03c 验收 OC-impl 产出的打分表
+- 5 硬门槛 (H1-H5): pre-decisions / paths / 编译 / 现有测试 / 单文件 200 行
+- 8 维度 (D1-D8): brief 完成度 / 可读性 / 测试质量 / 边界处理 / 不越界 / 注释克制 / 安全 / 性能
+- 总分 24, 门槛 **≥ 16/24** (不分核心/glue)
+- 退回模板 + 维度低分常见模式速查
+
+#### 新协议: `.ai/scratch/oc-helper/` 共享文件总线
+- Codex 写 `req-<epic-id>-<n>.md`, OC-helper 写 `out-<epic-id>-<n>.md`
+- 触发边界: 全仓搜索走 OC-helper, 有限范围 Codex 自己
+- `.gitignore` 加 `.ai/scratch/` (epic 结束 Human 可清空)
+
+#### 新 upgrade protocol: `.ai/lite-upgrade-protocol.md`
+- 从 main 的 `starter-upgrade-protocol.md` rename + lite 化
+- Human 主导 (lite 无 Claude), Codex 辅助 grep / draft CHANGELOG
+- 含 lite SemVer 决策树 + lite → main 双向 sync 协议
+
+### Changed · 适配性改动
+
+#### `.ai/prompts/04-opencode-review.md`
+- Escalation 接收方: Claude → **Human**
+- 三步法第三步新增 "Codex 自审盲点专项 checklist" (catch 拆任务粗糙 / 03c 偷工 / pre-decisions 翻案 / 推倒重来)
+- Escalation 判定表保留 (C1-C7), 但 Next step.Agent 改 Human
+
+#### `.ai/state.md` template
+- 删 Claude 相关字段 / 校验规则
+- 触发来源 main v4.0 4 类 (A/B/C/D) → lite 3 类 (A · pre-declared / C · OC escalation / H · 重试上限)
+- 新增 "当前 epic 终端布局" 段 (4 终端各自 session 状态)
+- Last completed step.Agent 枚举改 Codex | OC-helper | OC-impl | OC-review | Human
+
+#### `.ai/workflow.md`
+- §0 加 4 终端拓扑图 + session 隔离规则
+- §3 架构 owner 改 Codex
+- §3 实施阶段拆为 03a/03b/03c 三段式
+- §4 review escalation 路径改 Human
+- §5 escalation 接收方改 Human
+- 新增 §6.1 OC-impl 子任务包模板 + §8 共享文件协议
+
+#### `.ai/getting-started.md`
+- §〇 新 session 启动清单中 Claude 主动提醒改为 Human 看 status report
+- §一 bootstrap 5 步中 "Claude bootstrap session" 改为 "Codex bootstrap session"
+- §一 加 4 终端 tmux/iTerm 开法说明 + 单终端探索模式
+- §三 bug 流程速记换 Codex 02 + OC-impl + OC-review + Human
+
+#### `AGENTS.md`
+- 全文 lite 化: Codex lead + OC-impl/helper/review + Human bus
+- 顶部 §0 加 "lite vs main" 对比表
+- Agent Responsibilities 段 4 角色明确职责 + Codex 临时写代码例外路径
+- Known Sharp Edges 加 "OC-review 与 OC-impl 共谋盲点" (lite 特有, 同模型问题)
+- Session State Discipline 字段表加 "当前 epic 终端布局"
+
+#### `README.md`
+- 顶部 lite vs main 决策矩阵
+- Quick Start 4 终端 + 单终端探索两版
+- 删 main 的 Phase 1-3 Step 5 历程, 改 lite 设计源流
+- 维护契约 5 prompts (lite 比 main 少 3 个: 01-context / 06-fix / 07-draft / 08-audit)
+
+#### `.ai/starter-upgrade-protocol.md` → `.ai/lite-upgrade-protocol.md`
+- git mv + 全文 lite 化
+- 主导方 Claude → Human, 升级触发条件加 "main → lite sync" 一项
+
+#### `.ai/lite-v0.1.0-design.md`
+- 设计文档 (v2 · 无协议版) 进入 lite repo 永久保留, 不归档
+- v1 ACP 版归档为 `.ai/lite-v0.1.0-design-v1-acp-archived.md`
+
+#### `VERSION`
+- v4.0.0-rc1 → **v0.1.0-lite** (SemVer 重置, lite 是独立产品线)
+
+#### `.gitignore`
+- 加 `.ai/scratch/` (OC-helper 共享文件总线临时文件)
+
+### Removed · 删除内容
+
+#### `.ai/prompts/02-claude-plan.md` (整文件删除)
+- 替换为 `02-codex-plan.md`
+- lite 中无 Claude 02-plan 角色
+
+### Kept from main · 未改但保留
+
+以下 main v4.0-rc1 文件保留进 lite, 但 v0.1.0 暂未做 lite 化适配 (v0.2.0 候选):
+
+- `.ai/prompts/01-opencode-context.md` (OC 上下文摸排, lite 可用)
+- `.ai/prompts/06-codex-fix.md` (lite 中改由 OC-impl 修, 此 prompt 暂保留参考)
+- `.ai/prompts/07-opencode-draft.md` (lite 中 OC-impl 是主路径, 草稿模式暂不用)
+- `.ai/prompts/08-codex-audit.md` (lite 中 Codex 03c 走 rubric, 此 prompt 暂保留参考)
+- `.ai/intake-templates.md` (intake skill 问题库, lite 复用)
+- `.ai/decisions.md` / `.ai/context.md` / `.ai/architecture.md` / `.ai/plan.md` template 与 `progress.md` / `review.md` / `token-strategy.md` (协议无关, 直接复用)
+
+### Breaking changes vs main
+
+lite 是独立产品线, **不**视为 main 的 breaking。但若从 main v4.0 项目 migrate 到 lite:
+
+- 删 Claude 相关 session / prompt 引用
+- 02 prompt 路径换 `02-codex-plan.md`
+- 03 prompt 路径换 `03-codex-orchestrate.md` + 新增 `03b-opencode-impl.md`
+- state.md `Next step.触发来源` 字段值改 (A/C/H, 删 B/D)
+- task brief frontmatter `claude-review-required` 改 `human-escalation-suggested`
+
+### 升级指南
+
+derived 项目从 main 迁移到 lite: 暂无自动脚本, 手动 rsync `.ai/prompts/` + 改 `state.md`
++ 替换 `AGENTS.md` 顶部段。详见 §设计源流。
+
+### v0.1.0-lite → 验证清单 (从 `.ai/lite-v0.1.0-design.md` §9)
+
+1. [x] 4 个新/改 prompt 文件各跑通一次本机 smoke
+2. [x] 02-codex-plan.md 强约束 7 条全落地
+3. [x] oc-code-quality-rubric.md 文件存在, 03c prompt 引用了它
+4. [x] 04-opencode-review.md "Codex 自审盲点专项检查" 段有可执行 checklist
+5. [x] state.md template 触发来源 lite 3 类逻辑自洽 (无 Claude 残留)
+6. [x] lite-upgrade-protocol.md 7-step Human 主导版本完整
+7. [x] CHANGELOG 写明 fork from main v4.0-rc1 + breaking diffs + ACP 否决记录
+8. [ ] 共享文件协议 smoke (T1/T2 两终端实跑) · **Phase 5, 待 Human 跑**
+9. [ ] 完整 epic smoke (4 终端齐用) · **Phase 5, 待 Human 跑**
+10. [x] 经验回流协议在 lite-upgrade-protocol.md 引用 (§8 双向 sync)
+
+打勾项由 release 实施 session 落地; 未打勾项需 Human 亲跑 4 终端 smoke 后回填。
+
+---
+
+## [v4.0.0-rc1] — 2026-05-15
+
+> ⚠️ **Release candidate · 待实战 dogfood 验证后翻 stable**
+
+(以下为 fork 来源的 main v4.0-rc1 段, 保留供溯源)
+
+
 
 ## [v4.0.0-rc1] — 2026-05-15
 
