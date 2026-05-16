@@ -528,30 +528,55 @@ v2 删除了 v1 的 ACP spike phase, **不再有技术不确定性**(全是 prom
 
 ## 11 · 下次 session 启动指南 (v4.0-rc1 自演化能力试金石)
 
+### 物理布局 (2026-05-16 定稿)
+
+```
+~/Alcedo/code/
+├── ai-collab-starter/         [main 分支]   ← starter 主线, 已删除 lite 设计文档
+└── ai-collab-starter-lite/    [lite 分支]   ← lite 工作区 (worktree, 共享同一 .git)
+                                              ← 本设计文档 + v1 归档都在这里
+```
+
+两个文件夹共享同一 `.git` 仓库 (git worktree 机制), 但分支隔离:
+- 在 `ai-collab-starter-lite/` commit → 只进 `lite` 分支
+- 在 `ai-collab-starter/` commit → 只进 `main` 分支
+- 互看历史: `git log lite` / `git log main` 任一仓内皆可
+
 ### Human 启动新 session 步骤
 
 ```bash
-# 1. cd 到 starter 仓
-cd /Users/qf/Alcedo/code/ai-collab-starter
+# 1. 进 lite 工作区 (设计文档在这里, 不在 main)
+cd ~/Alcedo/code/ai-collab-starter-lite
 
-# 2. 跑 status check(v4.0-rc1 新机制)
-bash scripts/starter-status.sh
+# 2. 确认是 lite 分支 + 看 §0 v1→v2 变更摘要
+git branch --show-current        # 应输出 "lite"
+head -80 .ai/lite-v0.1.0-design.md
 
-# 3. 让 Claude(在 main 仓 / 本机)读这份设计文档启动 lite 实施
-cat .ai/lite-v0.1.0-design.md | head -80  # 看一眼 §0 变更摘要
+# 3. (可选) 顺便看一眼 main 现状, 了解 fork 起点
+cd ~/Alcedo/code/ai-collab-starter && git log --oneline -5 && cd -
+
+# 4. 起新 Claude session, 喂下方启动话术
 ```
 
-然后告诉 Claude(任意 Claude session, 不需要带本次对话上下文):
+### 喂给新 Claude session 的启动话术 (直接复制)
 
 ```
-请读 ai-collab-starter/.ai/lite-v0.1.0-design.md 全文,
-按其中 §10 工时表执行 Phase 1-6, 实施 lite v0.1.0 发布。
+请读 ~/Alcedo/code/ai-collab-starter-lite/.ai/lite-v0.1.0-design.md 全文。
 
-注: v1 设计 (.ai/lite-v0.1.0-design-v1-acp-archived.md) 已否决, 不要看。
-v2 (本文) 是当前唯一有效设计。
+当前布局:
+- ~/Alcedo/code/ai-collab-starter-lite/  → lite 分支 (本设计文档所在)
+- ~/Alcedo/code/ai-collab-starter/        → main 分支 (fork 起点, 已不持有 lite 设计文档)
+- 两文件夹共享同一 .git 仓库 (git worktree), 分支隔离
 
-无技术 spike phase (v2 已删除 ACP), 但 Phase 5 跑完后要报 smoke 结果,
-Human 决定是否继续 release。
+任务: 按设计文档 §10 工时表执行 Phase 1-6, 实施 lite v0.1.0 发布。
+
+约束:
+- 所有改动 commit 到 lite 分支 (在 ai-collab-starter-lite/ 文件夹内操作即可, 不要污染 main)
+- v1 设计文档 (.ai/lite-v0.1.0-design-v1-acp-archived.md) 已否决, 仅作历史参考, 不要看
+- v2 (lite-v0.1.0-design.md) 是当前唯一有效设计
+- 无 ACP 技术 spike (v2 已删除), 但 Phase 5 完整 epic smoke 跑完后要报结果, Human (我) 决定是否继续 release
+
+参考 main 仓 (~/Alcedo/code/ai-collab-starter/) 现有 .ai/ 下的文件 (prompts/state.md/workflow.md 等), 因为 lite 是从 main v4.0-rc1 fork, 大部分文件直接照搬再按 §4 改动清单调整。
 ```
 
 ### 这个流程本身验证 v4.0-rc1 的什么
@@ -561,6 +586,7 @@ Human 决定是否继续 release。
 - ✅ **finding 双写**: 实施期发现的新 finding 应同时入 lite repo 和 main inbox(prefix `from-lite-`)
 - ✅ **Human 决策点显式**: §10 Go/No-go 是 Human escalation 接口
 - ✅ **设计文档迭代**: v1 → v2 完整保留(归档 + 顶部 §0 变更摘要), 验证演化追溯能力
+- ✅ **物理布局 sibling**: lite 跟 main 同级文件夹但共享 git, 验证 worktree 做"轻量产品线分家"是否够用
 
 ### 如果新 session Claude 卡壳
 
