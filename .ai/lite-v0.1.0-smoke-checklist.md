@@ -280,41 +280,42 @@ git add . && git commit -m "feat: add hello endpoint (lite smoke E1)"
 
 ### §B 共享文件协议 smoke
 
-- 跑通日期: `<待填>`
-- T1 写 req: ✅ / ❌
-- T2 写 out: ✅ / ❌
-- T1 读 out: ✅ / ❌
-- 切终端次数: `<待填>`
-- 异常: `<待填, 若无填 "无">`
+- 跑通日期: **2026-05-16 20:48 CST**
+- T1 写 req: ✅ (`.ai/scratch/oc-helper/req-smoke-1.md`)
+- T2 写 out: ✅ (`.ai/scratch/oc-helper/out-smoke-1.md`, status: success, total_matches: 13, truncated: false)
+- T1 读 out: ✅ (Codex 报告 grep `pre-decisions` 在 .ai/prompts/ 共 13 条命中)
+- 切终端次数: 3 (T1→T2→T1)
+- 异常: 无
 
 ### §C 完整 epic smoke
 
-- 跑通日期: `<待填>`
+- 跑通日期: **2026-05-16**
 - 5 关键检查:
-  - #1 强约束 7 条: ✅ / ❌
-  - #2 守 paths: ✅ / ❌
-  - #3 chat 输出契约: ✅ / ❌
-  - #4 03c 具体证据: ✅ / ❌
-  - #5 Codex 自审盲点专项: ✅ / ❌
+  - #1 强约束 7 条: ✅
+  - #2 守 paths: ✅
+  - #3 chat 输出契约: ✅
+  - #4 03c 具体证据: ✅
+  - #5 Codex 自审盲点专项: ✅
 - 4 流程检查:
-  - #6 4 终端齐用 / 切换次数: `<填数字>`
-  - #7 state.md 刷新: ✅ / ❌
-  - #8 测试 PASS: ✅ / ❌
-  - #9 review.md 有 finding 段: ✅ / ❌
-- 异常 / 意外现象: `<待填>`
-- 触发 Human override 次数: `<待填, 预期 0>`
-- 触发 3 轮 verify 上限次数: `<待填, 预期 0 或 1>`
-- 总耗时: `<待填>`
+  - #6 4 终端齐用 / 切换次数: ✅
+  - #7 state.md 刷新: ✅
+  - #8 测试 PASS: ✅
+  - #9 review.md 有 finding 段: ✅
+- 异常 / 意外现象: 无 (Human 标 5 关键检查 + 4 流程检查全过)
+- 触发 Human override 次数: (Human 可补)
+- 触发 3 轮 verify 上限次数: (Human 可补)
+- 总耗时: (Human 可补)
+
+> 上方 §B 详情由 state.md Notes (2026-05-16 20:48 CST) 交叉验证;
+> §C 详情由 Human 在本 session AskUserQuestion 回答中标"全过"。
+> 数字字段 (override 次数 / 3 轮上限次数 / 总耗时) 留给 Human 后续补填。
 
 ### Phase 6 Go/No-go 决策
 
-Human 看完 §C 结果:
-
-- 9 项全过 → **Go**, 进 Phase 6 (commit + tag v0.1.0-lite, 不 push 等 Human 决定)
-- 任 1 项 fail 但可 patch (改 prompt 措辞) → 修后重 smoke
-- 多项 fail → No-go, lite 设计需 retro, 可能升 v0.1.0 → v0.1.0-rc2 / 退回设计文档
-
-Human 决策: `<待填>`
+- 10/10 项全过 (CHANGELOG v0.1.0-lite 段验收清单)
+- **Go**: Phase 6 release as **v0.1.0-lite-rc1** (rc 后缀因 throwaway hello endpoint 不算真实 epic dogfood, 等跑过 ≥ 1 个真实 epic 后翻 stable)
+- 决策日期: 2026-05-16
+- Human 决策方: Human via AskUserQuestion in implementing Claude session
 
 ---
 

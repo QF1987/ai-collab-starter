@@ -168,11 +168,11 @@ derived 项目从 main 迁移到 lite: 暂无自动脚本, 手动 rsync `.ai/pro
 5. [x] state.md template 触发来源 lite 3 类逻辑自洽 (无 Claude 残留)
 6. [x] lite-upgrade-protocol.md 7-step Human 主导版本完整
 7. [x] CHANGELOG 写明 fork from main v4.0-rc1 + breaking diffs + ACP 否决记录
-8. [ ] 共享文件协议 smoke (T1/T2 两终端实跑) · **Phase 5, 待 Human 跑**
-9. [ ] 完整 epic smoke (4 终端齐用) · **Phase 5, 待 Human 跑**
+8. [x] 共享文件协议 smoke (T1/T2 两终端实跑) · 2026-05-16 跑通 (req-smoke-1.md / out-smoke-1.md, 13 matches, status success)
+9. [x] 完整 epic smoke (4 终端齐用, throwaway hello endpoint) · 2026-05-16 跑通 (5 关键检查 + 4 流程检查全过)
 10. [x] 经验回流协议在 lite-upgrade-protocol.md 引用 (§8 双向 sync)
 
-打勾项由 release 实施 session 落地; 未打勾项需 Human 亲跑 4 终端 smoke 后回填。
+10/10 全过, Phase 5 Human gate 通过, 进 Phase 6 rc1 release。详见 `.ai/lite-v0.1.0-smoke-checklist.md §D`。
 
 ---
 

@@ -73,6 +73,8 @@ NONE
 - 本项目是 lite 分支:2 Agent + 1 Human 协同 (Codex 脑力 + OC 体力 + Human bus)。详见 `AGENTS.md` 与 `.ai/getting-started.md`。
 - 启动新任务:Human 直接在 T1 Codex 喂 `.ai/prompts/02-codex-plan.md` 契约的 prompt。
 - OC-helper / OC-impl / OC-review 默认懒启动,等 Codex 第一次需要再开终端。
+- 2026-05-16 20:48 CST: §B 共享文件协议 smoke 已跑通。Codex 写入 `.ai/scratch/oc-helper/req-smoke-1.md`, OC-helper 写回 `.ai/scratch/oc-helper/out-smoke-1.md`; grep `.ai/prompts/` 中 `pre-decisions` 共 13 条, `status: success`, `truncated: false`。
+- 2026-05-16: §C 完整 epic smoke (4 终端 throwaway hello endpoint) 跑通, 5 关键检查 + 4 流程检查全过。Phase 5 Human gate 通过, 进 Phase 6 release v0.1.0-lite-rc1 (rc 因 throwaway 不算真实 epic dogfood)。
 
 ---
 
