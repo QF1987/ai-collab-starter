@@ -22,6 +22,9 @@
 .env
 .env.local
 
+# Claude Code user-specific settings (per-user hook overrides etc.)
+.claude/settings.local.json
+
 # 包管理器误生成（Dogfood #16）
 pnpm-workspace.yaml   # pnpm 11 init 默认生成；单仓 web 项目不需要 monorepo workspace
 .agents/              # 某些 AI 工具会自动生成此目录
