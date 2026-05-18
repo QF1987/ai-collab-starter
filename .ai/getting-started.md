@@ -1,4 +1,4 @@
-# Getting Started (lite v0.2.0-lite)
+# Getting Started (lite v0.3.0-lite-rc1)
 
 > 入口文档。三类常见情境都能在这里找到答案:
 >
@@ -230,15 +230,28 @@ Codex 写的有偏差或漏掉的项目特性, Human 手动改对。常见漏项
 
 > 核心:**流程开销不该 > 任务本身工作量**。先评估规模,再选入口。
 
-### 路由表 (lite 版)
+### v0.3 新增: 一句话粗描述入口 (Codex 01-intake)
+
+不想先写 brief? 把一句话喂 T1 Codex + 加载 `.ai/prompts/01-codex-intake.md` 契约, Codex 反问 ≤ 5 个澄清问题, 你答完它产 brief 文件 (落 `.ai/tasks/<id>.md`)。
+
+```text
+你是 Codex。按 .ai/prompts/01-codex-intake.md 契约执行。
+一句话需求: <你的一句话>
+反问 ≤ 5 个澄清问题, 我答完你写 brief 文件。
+```
+
+适用场景: 需求细节还没想清 / 类型 (feature vs bug vs refactor) 模糊 / 想偷懒。
+详见 `.ai/prompts/01-codex-intake.md > §触发边界` + `.ai/workflow.md > §1 双入口`。
+
+### 路由表 (lite 版 · v0.3 加 01-intake 行)
 
 | 规模 | 标志 | 入口 | 跑哪些 prompt | 何时止步 |
 | --- | --- | --- | --- | --- |
 | **Tiny** | < 30 行、单文件、命名调整、文档改字 | 单 Agent 单轮对话 | 不走框架 | commit 即止 |
-| **Small** | 1-2 小时、单模块、行为清晰 | Human 直接写 task 文件 | 02(Codex)→ 03a/b/c → 04 OC-review → 合入 | review 通过即合入 |
-| **Medium** | 半天-1 天、多文件、需权衡 | Human 写一两段 brief | 02 → 03a/b/c → 04 → 合入(4 终端) | 同上 |
-| **Large** | 多日、跨模块、可能跨仓 | Human 写 brief 标 Large | 02(切片 ≤3)→ 多次 03 三段式 → 04 各 slice → epic-level review | 切片全部合入 |
-| **Epic** | 多周、跨多目标 | `.ai/plan.md` 建 epic 章节 | epic 拆 ≥3 个 task 文件, 各自走 Large | 整 epic 收口 |
+| **Small** | 1-2 小时、单模块、行为清晰 | Human 直接写 task 文件 **或** Codex 01-intake (v0.3) | (01-intake 可选)→ 02(Codex)→ 03a/b/c → 04 OC-review → 合入 | review 通过即合入 |
+| **Medium** | 半天-1 天、多文件、需权衡 | Human 写一两段 brief **或** Codex 01-intake (v0.3) | (01-intake 可选)→ 02 → 03a/b/c → 04 → 合入(4 终端) | 同上 |
+| **Large** | 多日、跨模块、可能跨仓 | Human 写 brief 标 Large **或** Codex 01-intake (v0.3) | (01-intake 可选)→ 02(切片 ≤3)→ 多次 03 三段式 → 04 各 slice → epic-level review | 切片全部合入 |
+| **Epic** | 多周、跨多目标 | `.ai/plan.md` 建 epic 章节 **或** Codex 01-intake (v0.3 · 产 epic plan) | (01-intake 可选)→ epic 拆 ≥3 个 task 文件, 各自走 Large | 整 epic 收口 |
 
 ### Brief 最小模板 (Medium / Large 起用)
 

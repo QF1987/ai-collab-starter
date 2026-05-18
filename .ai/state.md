@@ -1,4 +1,4 @@
-# Session State (lite v0.2.0-lite)
+# Session State (lite v0.3.0-lite-rc1)
 
 > Resume 协议。每个 Agent 完成后必须刷新本文件。
 > 下一次开 session 第一件事:读这里就知道接哪一步。
@@ -14,8 +14,10 @@
 ## Active task
 
 - 当前 task: `NONE`
-- 当前阶段: `NONE` <!-- 主线阶段 + 过渡态 (v0.2.0 · F13):
-     02-plan              · Codex 出 brief
+- 当前阶段: `NONE` <!-- 主线阶段 + 过渡态 (v0.2.0 · F13 + v0.3.0 加 01-intake):
+     01-intake            · Codex 跑 ≤ 5 轮 Q&A 把一句话 → brief (v0.3 新增 · 可选起点)
+     01-intake-done       · Q&A 完成, brief 文件已落 (v0.3 新增)
+     02-plan              · Codex 出 brief 决策
      02-plan-refine       · brief 已出但需微 L2 / 用户反馈才能 finalize (v0.2 新增)
      03a-decompose        · Codex 拆 OC-impl 子任务包
      03a-prep             · 03a 前的微 L2 / 补查 (v0.2 新增)

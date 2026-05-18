@@ -1,4 +1,4 @@
-# AI Collaboration Workflow (lite v0.2.0-lite)
+# AI Collaboration Workflow (lite v0.3.0-lite-rc1)
 
 > **lite vs main**: 无 Claude,Codex 当 lead engineer(架构 + 拆任务 + 验收),OC 写代码 + 审 + 信息查询。
 > Escalation 接收方是 **Human**,不是 Claude main session。
@@ -48,11 +48,16 @@ This workflow turns requirements into reviewed, testable changes while preservin
 
 → 详见 `.ai/getting-started.md §一bis · git 拓扑选择` 和 `.ai/prompts/oc-helper.md > git 子操作纪律` 段。
 
-### 阶段流转图 (v0.2.0 · F13)
+### 阶段流转图 (v0.3.0 加 01-intake 起点 · v0.2.0 · F13)
 
-主线 + 5 个过渡态分支:
+主线 + 过渡态分支:
 
 ```
+   ┌──────────────┐   (v0.3 入口 B)
+   │ 01-intake    │   Codex Q&A ≤ 5 轮
+   │ (可选起点)    │───→ 产 brief 文件 ───┐
+   └──────────────┘                       │
+                                          ↓
    ┌─────────┐    ┌──────────────┐    ┌──────────────┐
    │ 02-plan │──→│02-plan-refine│──→│03a-decompose │
    └────┬────┘    └──────────────┘    └────┬─────────┘
@@ -81,20 +86,23 @@ This workflow turns requirements into reviewed, testable changes while preservin
 
 阶段枚举值见 `.ai/state.md > Active task.当前阶段` 注释段。
 
-## 1. Requirement
+## 1. Requirement (v0.3.0 双入口)
+
+### 入口 A: Human 自写 brief (v0.1 起原入口)
 
 Owner: Human(产品 / 工程 lead)。
-
-Output:
-
-- Goal
-- Non-goals
-- Affected repos
-- Expected behavior
-- Constraints
-- Acceptance criteria
-
+Output: Goal / Non-goals / Affected repos / Expected behavior / Constraints / Acceptance criteria。
 substantial work 建一份 `.ai/tasks/<date>-<slug>.md`。
+
+### 入口 B: Codex 01-intake (v0.3 新增 · Human 一句话 → Codex 反问 ≤ 5 → brief)
+
+Owner: **Codex** (协助), Human 喂一句话 + 答 ≤ 5 反问。
+Output: 同入口 A, 但 brief 文件由 Codex 写 + Q&A 留底。
+适用: Human 一句话粗描述 / 类型不明确 / 需求细节没想清。
+契约: `.ai/prompts/01-codex-intake.md`。
+触发边界: 详见 prompt > §触发边界。
+
+无论入口 A 还是 B, 产出 brief 文件后下一步都是 02 (Codex plan)。
 
 ## 2. Plan (Codex)
 

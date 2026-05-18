@@ -12,6 +12,83 @@ fork 起点见 v0.1.0 段。
 
 ---
 
+## [v0.3.0-lite-rc1] — 2026-05-18
+
+> ⚠️ **Release candidate · 待 ≥ 1 个真实 epic dogfood 验证 01-intake 流后翻 stable**。
+> (rc1 理由: 本 release 在 v0.2.0-lite-rc1 release 后约 30 min 内完成, 加新能力时 lite 自身未跑过完整 epic 验证)
+
+### TL;DR
+
+- **新能力: Codex 01-intake** — Human 一句话粗描述 → Codex 反问 ≤ 5 → 产 brief 文件 (落 `.ai/tasks/<id>.md`)
+- workflow.md §1 Requirement 双入口: 入口 A (Human 自写 brief, v0.1 起原入口) + 入口 B (Codex 01-intake, v0.3 新增)
+- 无 breaking change · v0.1/v0.2 旧 Human 自写 brief 入口完全保留
+
+### 触发数据
+
+- 来源: Human 在 v0.2 release 后立刻提问 "再有新 bug/需求, 能给 Codex 一句话, 让它反问吗?"
+- 实战缺口: lite v0.2 之前需求挖掘 Owner 是 Human (workflow.md §1 + getting-started.md §二), Codex 不主动 intake; Human 一句话粗描述场景没契约化支持
+- 对应 main 能力: 大致对应 main 的 `intake` 技能 (Claude 主导), lite 版换 Codex 主导, 不依赖 Claude session
+
+### Added · 新增能力
+
+#### 新 prompt: `.ai/prompts/01-codex-intake.md`
+- Codex 主导 4 步 intake: 类型识别 (feature/bug/refactor/spike/docs/chore) → 反问 ≤ 5 (单轮一次性出, 不挤牙膏) → 产 brief 文件 → 刷 state.md
+- 5 类 checklist (类型对应反问问题清单, 与 F06 severity 映射 + F07 复现未确认 + F10 bug TDD 协同)
+- bug brief 模板 + feature/refactor/spike/docs/chore 通用模板
+- intake Q&A 留底在 brief 末尾 (审计追溯)
+- 反问硬上限 5 (Human 不会被烦) · 不许跨类型反问 · 不许越界做 02 决策
+
+#### `workflow.md §1 Requirement 双入口`
+- 入口 A: Human 自写 brief (v0.1 起, 保留)
+- 入口 B: Codex 01-intake (v0.3 新增)
+- 两入口产出同形 brief, 下一步都是 02
+
+#### `workflow.md §0 阶段流转图`
+- 加 01-intake 起点 (可选入口)
+
+#### `getting-started.md §二`
+- 加"v0.3 新增: 一句话粗描述入口" 段 + 启动 prompt 模板
+- 路由表更新: Small/Medium/Large/Epic 都标"Human 自写 brief 或 Codex 01-intake (v0.3)"
+
+#### `state.md template`
+- `当前阶段` 枚举加 `01-intake` + `01-intake-done` 两个新值
+
+### Changed · 适配性改动
+
+无 (新增能力 = 增量, 不改 v0.2 现有 prompt 契约)。
+
+### Removed · 删除
+
+无。
+
+### Breaking changes
+
+无 · MINOR release。v0.1/v0.2 不走 01-intake 仍合法 (入口 A 完全保留)。
+
+### 升级指南 (derived 项目 sync v0.3)
+
+```bash
+cd <derived-project-root>
+
+rsync -av --exclude='.git' /path/to/ai-collab-starter-lite/.ai/prompts/ .ai/prompts/   # 拿到 01-codex-intake.md
+rsync -av /path/to/ai-collab-starter-lite/.ai/workflow.md .ai/
+rsync -av /path/to/ai-collab-starter-lite/.ai/getting-started.md .ai/
+
+# state.md 项目特定, surgical merge (加 01-intake / 01-intake-done 枚举)
+diff .ai/state.md /path/to/ai-collab-starter-lite/.ai/state.md
+
+# stamp version (rc 默认不强推)
+echo "v0.3.0-lite-rc1  · synced $(date +%Y-%m-%d)" > .ai/STARTER_VERSION
+echo "- $(date +%Y-%m-%d) · lite v0.3.0-lite-rc1 同步, 详见 ai-collab-starter-lite CHANGELOG" >> .ai/progress.md
+```
+
+### lite → main sync 候选
+
+本能力对应 main 已有 `intake` 技能, 不需新 sync (main `intake` 是 Claude 主导, lite 01-intake 是 Codex 主导, 两边形态不同但解决同一问题)。
+若 main owner 决定 sync 时机, 可参考 lite `01-codex-intake.md` 的 4 步流 + Q&A ≤ 5 上限 + 类型 checklist 设计。
+
+---
+
 ## [v0.2.0-lite-rc1] — 2026-05-18
 
 > ⚠️ **Release candidate · 待 ≥ 1 个独立真实 epic dogfood 验证 v0.2 强约束后翻 stable**。
