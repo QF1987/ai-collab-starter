@@ -9,7 +9,7 @@ target:
   - .ai/prompts/03b-opencode-impl.md (收尾必做段 加显式优先级"03b 契约 > 子任务包必做段")
   - .ai/oc-code-quality-rubric.md (H1 验证段补 "子任务包是否含 override 03b 契约的必做项" 检测)
   - .ai/prompts/04-opencode-review.md (3b 自审盲点 加 B8 "子任务包必做段 override 03b 契约" 检测)
-status: pending
+status: implemented-in-v0.4.0-lite-rc1
 related: [F02, F14]
 ---
 
@@ -147,3 +147,12 @@ lite 中 OC-impl 是被调度者, 不是调度者。state.md 由 Codex 03c 刷, 
 - 与 **F14** (03a 子任务包落档) 弱关联: F14 让子任务包跨 session 可见, F05-self 让子任务包内容守契约边界
 - 与 **F08** (B7 state.md 字段完整性) 协同: F08 catch 字段被 condensed, F05-self 通过 B8 catch 越权写; 两者一起 review 兜底 state.md 质量
 - 与 **F04-self** (intake evidence ingestion) 同形态: 都是"契约盲区导致 Agent 个体行为不可预测"; 本次 dogfood 同时暴露
+
+---
+
+## v0.4.0-lite-rc1 实施记录 (2026-05-18)
+
+- **release**: v0.4.0-lite-rc1
+- **触发来源**: lite-self dogfood (smart-uite v0.3.0-lite-rc1 daemon-business-manager-not-started bug epic 跑完 lite v0.3 全流程 + Human 修正 Desktop UI 模型 + 主动询问 closeout 纪律)
+- **实施摘要**: 详见 `CHANGELOG.md > [v0.4.0-lite-rc1]` Added/Changed 段, 本 finding (F05-self) 落入对应分组
+- **archive 路径**: `.ai/logs/archived/v0.4-released/lite-v0.3-finding-05-subtask-package-must-not-override-03b-contract.md`

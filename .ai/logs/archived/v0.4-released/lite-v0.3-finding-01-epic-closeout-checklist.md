@@ -9,7 +9,7 @@ target:
   - .ai/getting-started.md (新增 §四. epic 收口 段 或 §〇 加链接)
   - .ai/state.md (维护规则 4 加链接到 §9)
   - .ai/prompts/09-codex-closeout.md (新 prompt, 类似 01-intake 反过来)
-status: pending
+status: implemented-in-v0.4.0-lite-rc1
 related: [F12, F14]
 ---
 
@@ -149,3 +149,12 @@ epic merge 完, 跑 `workflow.md §9` checklist 或喂 `.ai/prompts/09-codex-clo
 ## SemVer 影响
 
 **MINOR** (新增能力 · 09-closeout prompt + workflow §9 + getting-started §四; 旧 v0.3 项目不走 closeout 仍合法 (state.md 维护规则 4 旧版本仍兼容), 只是没机器化保障)。
+
+---
+
+## v0.4.0-lite-rc1 实施记录 (2026-05-18)
+
+- **release**: v0.4.0-lite-rc1
+- **触发来源**: lite-self dogfood (smart-uite v0.3.0-lite-rc1 daemon-business-manager-not-started bug epic 跑完 lite v0.3 全流程 + Human 修正 Desktop UI 模型 + 主动询问 closeout 纪律)
+- **实施摘要**: 详见 `CHANGELOG.md > [v0.4.0-lite-rc1]` Added/Changed 段, 本 finding (F01-self) 落入对应分组
+- **archive 路径**: `.ai/logs/archived/v0.4-released/lite-v0.3-finding-01-epic-closeout-checklist.md`

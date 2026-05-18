@@ -1,4 +1,4 @@
-# OC 代码质量 rubric (lite v0.2.0-lite)
+# OC 代码质量 rubric (lite v0.4.0-lite-rc1)
 
 ## 用途
 
@@ -29,6 +29,7 @@ Codex 03c 验收 OC-impl 产出时, 按本 rubric 打分。
 - [ ] **H1**. pre-decisions (brief frontmatter) 无一条被违反
   - 验证方法: 对 frontmatter 每条 D 找 diff 中是否动了相关代码 / 接口 / 决策
   - 典型 fail 信号: D2 锁"不引入新依赖", OC-impl 在 package.json 加了 lodash
+  - **(v0.4 · F05-self 新增) 子任务包必做段 override 03b 契约检测**: 子任务包"必做"段是否含 "刷 state.md" / "写下一步提示词" / "写 ADR" / "改 review.md" / "跑 04 自审" 等 03b 禁止项 → H1 直接 fail, 退回 Codex 03a 重写子任务包必做段
 - [ ] **H2**. paths 二组分: OC-impl 只动了"核心 paths" + 子任务包明确许可的"连带 paths"
   - 验证方法 (v0.2.0 · F09 依 git 拓扑分场景):
     - **单 git 场景**: `git diff --cached --stat` 在主仓跑, 逐行核对

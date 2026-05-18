@@ -1,4 +1,4 @@
-# Getting Started (lite v0.3.0-lite-rc1)
+# Getting Started (lite v0.4.0-lite-rc1)
 
 > 入口文档。三类常见情境都能在这里找到答案:
 >
@@ -133,10 +133,20 @@ echo "# Progress" > .ai/progress.md
 rm -rf .ai/tasks/* .ai/logs/* .ai/archive/* .ai/scratch/* 2>/dev/null || true
 ```
 
-### 3. 开 4 终端 (3 分钟)
+### 3. 开 4 终端 / 4 会话 (3 分钟 · v0.4 加 Desktop 形态 · F02-self)
+
+lite 的 "4 终端" 是 **session 抽象**, 不绑死 UI 形态。任选一种实际形态:
+
+#### 形态 A · Desktop app (推荐 · 主流)
+
+- **Codex Desktop**: 开 1 个 chat 会话 (= T1 lead engineer)
+- **OpenCode Desktop**: 开 3 个**独立** chat 会话 (= T2 OC-helper / T3 OC-impl / T4 OC-review)
+  - 关键纪律 (workflow §0): T3 OC-impl ↔ T4 OC-review **必须不同会话** (防自审盲点; 两者都是 OC 模型, 同 session 有共谋风险)
+- Human 在两个 app 间切 + 复制 prompt (Pattern A)
+
+#### 形态 B · tmux 4 panes (CLI / TUI 用户)
 
 ```bash
-# 推荐 tmux 布局:
 tmux new -s lite-epic-<name>
 # 然后:
 #   Ctrl-B "    水平分屏
@@ -146,13 +156,15 @@ tmux new -s lite-epic-<name>
 #   T2 (top-right)    : opencode (OC-helper, 按需启动)
 #   T3 (bottom-left)  : opencode (OC-impl)
 #   T4 (bottom-right) : opencode (OC-review)
-
-# 或 iTerm 4 个 tab 分别命名。
 ```
 
-**单终端探索模式**(初次试水 / Tiny task):
+#### 形态 C · iTerm 4 tabs (CLI / TUI 用户 · macOS)
+
+4 个 tab 分别命名 T1-T4 跑对应 agent。
+
+#### 单终端探索模式(初次试水 / Tiny task · 任意形态都可降级)
 - T1 Codex 同时模拟 OC-impl(临时授权,标 `human-override-codex-fix`)
-- T4 OC-review 仍开独立终端(防自审盲点)
+- T4 OC-review 仍开独立 session (防自审盲点)
 - T2 OC-helper 不需要
 
 ### 4. 在 T1 Codex 跑 bootstrap 喂下方启动话术 (30-45 分钟)
@@ -462,7 +474,27 @@ bug 必须作为 finding 在 `.ai/review.md` 追踪 (格式同 main, 略)。
 
 ---
 
-## 四 · 什么情况都别套这个框架
+## 四 · Epic 收口 (v0.4 新增 · F01-self)
+
+epic merge 完后必须跑收口, 否则下个 epic 启动时 context 污染 (state.md 残留 / scratch 残留)。
+
+两种入口:
+
+### 入口 A: Human 手动跑 checklist
+按 `.ai/workflow.md > §9 Epic closeout (收口)` 清单逐项执行 (清 ephemeral + 留持久 + 机器化 verify)。
+
+### 入口 B (推荐): Codex 09-closeout 协助
+喂 T1 Codex:
+```text
+你是 Codex。按 .ai/prompts/09-codex-closeout.md 契约执行 epic 收口.
+epic: <epic-id> 完了, merge commit <hash>, outcome: <一句话>.
+```
+
+Codex 跑 4 步流 (验证前置条件 → 清 → 留 → 收口验证 5 项 PASS) 自动完成。
+
+---
+
+## 五 · 什么情况都别套这个框架
 
 明确**不**该走的场景:
 
@@ -476,7 +508,7 @@ bug 必须作为 finding 在 `.ai/review.md` 追踪 (格式同 main, 略)。
 
 ---
 
-## 五 · 把这份文档当 reference
+## 六 · 把这份文档当 reference
 
 每次开始工作前先读本文 §1-§3 对应段, 问自己:
 

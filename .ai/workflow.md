@@ -1,11 +1,25 @@
-# AI Collaboration Workflow (lite v0.3.0-lite-rc1)
+# AI Collaboration Workflow (lite v0.4.0-lite-rc1)
 
 > **lite vs main**: 无 Claude,Codex 当 lead engineer(架构 + 拆任务 + 验收),OC 写代码 + 审 + 信息查询。
 > Escalation 接收方是 **Human**,不是 Claude main session。
 
 This workflow turns requirements into reviewed, testable changes while preserving context across long-lived multi-repo development.
 
-## 0. 4 终端拓扑
+## 0. 4 终端拓扑 (session 抽象, 不绑 UI 形态 · v0.4 · F03-self)
+
+> **T1-T4 是 session 抽象**, 不是 4 个物理终端。实际形态见 `.ai/getting-started.md §一 Step 3` (Desktop / tmux / iTerm 三选)。
+>
+> "T" 是 "Terminal" lite v0.1.0 命名遗留 (作者假设 CLI/TUI), v0.4 起建议读作 **"Track" (轨道)** 更准确: 每个 Track 是一个独立 agent session, 跨 epic 不复用。
+
+### Track ↔ UI 形态对照 (v0.4)
+
+| 抽象 (Track) | Desktop app sessions (推荐) | CLI/TUI |
+|-------------|---------------------------|---------|
+| T1 (Codex / lead engineer) | Codex Desktop chat 1 | tmux/iTerm pane 1 |
+| T2 (OC-helper / 全仓搜索) | OpenCode Desktop chat 1 | pane 2 |
+| T3 (OC-impl / 写代码) | OpenCode Desktop chat 2 (独立 session 防自审) | pane 3 |
+| T4 (OC-review / 独立审) | OpenCode Desktop chat 3 (独立 session 防自审) | pane 4 |
+
 
 ```
 ┌──────────────┐   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
@@ -339,6 +353,79 @@ Checklist:
 - git working tree 已改, 等 Codex 03c 验收
 - 输出 "done, 见 git diff" 即可
 ```
+
+## 9. Epic closeout (收口 · v0.4 新增 · F01-self)
+
+epic merge 完成后, Human (或喂 `.ai/prompts/09-codex-closeout.md` 给 Codex 协助) 跑下列 checklist。
+不收口 = 下个 epic 启动时 context 污染 (旧 epic state.md 残留 / scratch 残留干扰新 task)。
+
+### 🗑️ 清 (per-epic ephemeral)
+
+| 文件/目录 | 操作 |
+|----------|-----|
+| `.ai/state.md > Active task` 段 | 全字段 → NONE; 终端布局 → T1-T4 "空闲" |
+| `.ai/state.md > Last completed step` 段 | 全字段 → NONE |
+| `.ai/state.md > Next step` 段 | 全字段 → NONE, 可粘贴 prompt body → 单行 `NONE` |
+| `.ai/state.md > Blockers` | → "无" |
+| `.ai/state.md > Notes` 段 | **保留** epic merge commit + outcome + long-term follow-up; **清掉** epic 内临时上下文 (working state) + 已失效路径引用 (scratch/*) |
+| `.ai/scratch/oc-helper/req-<epic>-*.md` | 选项 A 直接 rm / **选项 B (默认)** 先 cp 到 `.ai/logs/archived/<epic-id>/scratch/` 再 rm |
+| `.ai/scratch/oc-helper/out-<epic>-*.md` | 同上 |
+| `.ai/scratch/oc-helper/gitnexus-<epic>-*.md` | 同上 (v0.2 F04 双路并行产物) |
+| `.ai/scratch/oc-impl-package-<epic>-*.md` | 同上 (v0.2 F14 落档纪律) |
+
+**保留** state.md 静态结构: 字段完整性硬约束段 / 维护规则段 / Pattern A/B 安全栏段 / multi-line HTML 注释段闭合 (v0.4 F06-self 硬约束)。
+
+### 📌 留 (持久 / 审计追溯)
+
+| 文件 | 收口操作 |
+|------|---------|
+| `.ai/progress.md` | append `## <epic-id> · DONE` 段 (含 merge commit / 流转 / follow-up / framework finding 产出 / 强约束生效清单) |
+| `.ai/decisions.md` | 不动, ADR 永久保留 |
+| `.ai/review.md` | RV finding status 翻 `verified` (Human accepted + verifier 签字) 或 `closed` (defer not addressed); 不删行; defer → Human 的标 `→ Human` 保留 open + 显式 reason |
+| `.ai/architecture.md` / `.ai/context.md` | 不动 (本 epic 引入 architecture 变化才更新) |
+| `.ai/tasks/<完成 task>.md` | 默认保留 (epic 文档); ≥ 1 月后归档可 mv 到 `.ai/logs/archived/<epic-id>/` |
+| `AGENTS.md > Known Sharp Edges` | 评估 dogfood 触发的工具/环境/平台特定经验, append 一条 (lite framework finding 不放这里, 落 inbox) |
+| `.ai/logs/pending-findings/from-self/` 或 `from-<project>/` | append 新 finding (getting-started §〇 双写约定), 不清 |
+
+### 可选清理
+
+- T1-T4 chat sessions: 本 epic 用完关掉, 下个 epic 开**全新** chat session (workflow §0 "epic 间清零" 强约束)
+- Codex Desktop / OpenCode Desktop chat 历史: 删本 epic session 释放 token context
+
+### 收口验证 (机器化 · 硬门槛)
+
+```bash
+EPIC_ID=<your-epic-id>
+
+# 1. state.md 三段已重置 (≥ 14 个 NONE)
+grep -c 'NONE' .ai/state.md  # 应 ≥ 14
+
+# 2. state.md HTML 注释段闭合 (v0.4 F06-self 加)
+OPEN=$(grep -c '<!--' .ai/state.md)
+CLOSE=$(grep -c '\-\->' .ai/state.md)
+[ "$OPEN" = "$CLOSE" ] && echo "comments balanced" || echo "FAIL: $OPEN open vs $CLOSE close"
+
+# 3. scratch 清空 (本 epic 残留 = 0)
+find .ai/scratch -type f -name "*${EPIC_ID}*" 2>/dev/null | wc -l  # 应 = 0
+
+# 4. progress.md 含 epic DONE 段
+grep -q "^## ${EPIC_ID} · DONE" .ai/progress.md && echo "PASS" || echo "FAIL"
+
+# 5. review.md 无 P0/P1 open (P3 defer to Human 例外)
+grep -c 'Severity:.*P[01]\b' .ai/review.md  # 配合 Status: open 同行/相邻检查
+```
+
+### Codex 09-closeout 协助 (v0.4 新增)
+
+Human 不想手动跑 checklist? 喂 `.ai/prompts/09-codex-closeout.md` 契约给 T1 Codex:
+
+```text
+你是 Codex。按 .ai/prompts/09-codex-closeout.md 契约执行 epic 收口.
+epic: <epic-id> 完了, merge commit <hash>, outcome: <一句话>.
+按 4 步流: Step 1 验证前置条件 → Step 2 清 → Step 3 留 → Step 4 收口验证.
+```
+
+Codex 跑完, 5 项机器化 verify 全 PASS 即收口完成。
 
 ## 7. Worktree convention(沿用 main)
 

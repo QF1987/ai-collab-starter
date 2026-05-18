@@ -9,7 +9,7 @@ target:
   - .ai/oc-code-quality-rubric.md (B7 验证段同步加)
   - .ai/state.md (维护规则加"刷 state.md 后必须自跑 B7 verify")
   - 新 .ai/scripts/verify-state-md.sh (机器化 B7 一键 verify 脚本)
-status: pending
+status: implemented-in-v0.4.0-lite-rc1
 related: [F02, F08]
 ---
 
@@ -164,3 +164,12 @@ STATE_MD="${1:-.ai/state.md}"
 - 与 **F02** (state.md 字段漂移) 同根: F02 是 condensed 字段, F06-self 是 HTML 注释段闭合
 - 与 **F08** (B7 加 state.md 完整性检查) 同根: F08 引入 B7, F06-self 扩展 B7 验证方法 + 加自审钩子
 - 与 **F05-self** (子任务包必做段 override 03b 契约) 同形态: 都是"契约盲区导致 Agent 个体行为不可预测"; 本次 dogfood 同一 epic 触发两条
+
+---
+
+## v0.4.0-lite-rc1 实施记录 (2026-05-18)
+
+- **release**: v0.4.0-lite-rc1
+- **触发来源**: lite-self dogfood (smart-uite v0.3.0-lite-rc1 daemon-business-manager-not-started bug epic 跑完 lite v0.3 全流程 + Human 修正 Desktop UI 模型 + 主动询问 closeout 纪律)
+- **实施摘要**: 详见 `CHANGELOG.md > [v0.4.0-lite-rc1]` Added/Changed 段, 本 finding (F06-self) 落入对应分组
+- **archive 路径**: `.ai/logs/archived/v0.4-released/lite-v0.3-finding-06-b7-html-comment-closure-self-verify.md`

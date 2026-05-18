@@ -1,4 +1,4 @@
-# Prompt: Codex 调度 (lite v0.2.0-lite · 03a 拆任务 + 03c 验收)
+# Prompt: Codex 调度 (lite v0.4.0-lite-rc1 · 03a 拆任务 + 03c 验收)
 
 ## 角色
 
@@ -58,7 +58,36 @@
 
 ## 实施要求 (严格按下方执行, 任何偏离请输出原因不要自作主张)
 
-### 必做
+### 必做 (Codex 03a 写本段时遵守 · v0.4 · F05-self)
+
+**禁止把以下事项写入"必做"段** (这些是 03b 契约硬约束 OC-impl 不该做的事, 由 Codex 03c 刷 / 其它 prompt 处理):
+
+- ❌ 刷 state.md (Codex 03c 的活, 03b 契约 `> 收尾必做 > 不刷 state.md` 明确禁止)
+- ❌ 写"下一步提示词" (Codex 03c 的活)
+- ❌ 写 ADR / 改 `.ai/decisions.md` (Codex 02 的活)
+- ❌ 写 review finding / 改 `.ai/review.md` (OC-review 04 的活)
+- ❌ 跑 04 自审 / 翻 finding status (OC-review 04 的活)
+- ❌ 决定下一个 epic / 拆新 task (Human + Codex 01-intake / 02 的活)
+- ❌ append `.ai/progress.md` 跨 epic 收口总结 (本 epic 单条 03b 执行记录 OK, 但不能收口)
+
+**只允许把以下事项写入"必做"段**:
+
+- ✅ 改具体业务代码文件 (paths 二组分内)
+- ✅ 写测试 / 新增测试文件
+- ✅ 跑测试命令验证 PASS
+- ✅ 改 `.ai/progress.md` **当前 epic 单条 03b 执行记录** (e.g. "03b 完成 X, 跑测试 Y PASS")
+- ✅ 改文档 (README / 注释) 在 paths 列表内
+
+**必做段示例 (v0.4)**:
+1. ✅ 把 `Daemon/config/Daemon.ini` 的 `DaemonName` 改为 `DcBusinessManager.exe`
+2. ✅ 新增 `Daemon/test/X.ps1`, 含 P0-P5 检查链
+3. ✅ 跑 `prlctl exec ... build.ps1` + `prlctl exec ... X.ps1`, 拿 PASS 证据
+4. ✅ 在 `.ai/progress.md` 追加一条"03b 完成 X" 单行记录 (不收口本 epic)
+
+**反例 (v0.3 dogfood · F05-self 触发)**:
+1. ❌ 在 `.ai/state.md` 刷到 03b-impl 完成后等待 Codex 03c — **越界**, 03b 契约禁止 OC-impl 刷 state.md, 应由 Codex 03c 接手刷
+
+模板示例:
 1. ...
 2. ...
 
@@ -266,8 +295,10 @@ Tokens: in=<n> out=<n> total=<n>
 #### state.md 覆盖前必读 (硬约束 · v0.2.0 · F02)
 
 覆盖写入 state.md 前**必须先 Read 当前文件 + 复制完整 template 结构**。
-禁止: condensed 字段 / 重命名字段 / 删除 template 顶部说明段 / 删除维护规则段 / 删除 Pattern A/B 段 / 简化主标题。
+禁止: condensed 字段 / 重命名字段 / 删除 template 顶部说明段 / 删除维护规则段 / 删除 Pattern A/B 段 / 简化主标题 / 简化 multi-line HTML 注释为 single-line (v0.4 · F06-self)。
 只覆盖动态字段值, template 标题 / 注释 / 字段名称 / 校验规则段全部保留原文。
+
+**刷完后必跑 B7 self-verify** (v0.4 · F06-self): 见 `04-opencode-review.md > 3b · B7` 段 6 项机器化检测. 任一 fail → 立即修复 + 重 commit, 不算 03c 完成.
 违反 → OC-review 04 第三步 B7 catch + 升 Human。
 
 

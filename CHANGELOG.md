@@ -12,6 +12,151 @@ fork 起点见 v0.1.0 段。
 
 ---
 
+## [v0.4.0-lite-rc1] — 2026-05-18
+
+> ⚠️ **Release candidate · 待 ≥ 1 个独立真实 epic dogfood 验证 v0.4 新能力后翻 stable**。
+> (rc1 理由: 主要新能力 09-codex-closeout / B8 / B7 扩展 验证方法本身没跑过独立 dogfood — smart-uite 本次 closeout 是我半手动跑的, 不是 Codex 09-closeout prompt 跑的)
+
+### TL;DR
+
+- **6 条 lite-self finding 全消化** (3×P2 + 3×P3, 来源 lite v0.3.0-lite-rc1 dogfood 反思)
+- **新能力 09-codex-closeout**: Codex 协助 epic 收口 (Human 一句话触发, 4 步流 · 前置验证 → 清 → 留 → 收口验证 5 项机器化 PASS)
+- **新形态文档**: Desktop app + tmux + iTerm 三入口 (workflow §0 加 Track ↔ UI 对照表, getting-started §一 Step 3 重写 3 形态)
+- **新硬约束**: 03b 契约优先级 > 子任务包必做段 (F05-self), B7 验证扩展含 HTML 注释闭合 + 阶段枚举完整性 (F06-self), 01-intake 新 Step 1.5 evidence ingestion (F04-self)
+- **新自审钩子**: 所有刷 state.md 的 Agent (Codex 03c / OC-review / Codex 09-closeout) 收尾必跑 B7 self-verify
+- **新 B8 自审盲点**: 04 review 3b 加 B8 子任务包必做段 override 03b 契约检测
+- **2 条 main-era 遗留 finding rejected** (payment-recon-demo 来源 02-claude-plan, 不适用 lite, 移到 rejected-lite-v0.4/)
+- 无 breaking change · v0.3 旧 prompt / state.md / 子任务包契约仍合法, v0.4 是增量 best practice + 新能力
+
+### 触发数据
+
+- **来源**: lite v0.3.0-lite-rc1 dogfood — smart-uite `daemon-business-manager-not-started` P0 bug epic
+- **完整跑通**: 01-intake (新能力) → 02 (5 alternatives 含 UX) → 03a (F16 7 类教科书 checklist) → 03b (F10 两阶段证据) → 03c verify (PASS 20/24 后修正 19/24) → 04 (PATCH 4 finding) → 04-fix-loop → 04 re-review (PASS) → Human merge → epic closeout
+- **dogfood 触发反思** (本次 release 消化):
+  - Human 问"怎么清空 lite 框架" → 暴露 F01-self (epic 收口纪律分散三处)
+  - Human 修正"Codex/OpenCode Desktop 是 sessions 不是 windows" → 暴露 F02/F03-self (UI 形态偏见)
+  - 01-intake 第一次 fallback (sync gap) 第二次真契约 → F04-self (evidence ingestion 靠 Codex 个体守约)
+  - OC-impl 03b 越权刷 state.md → F05-self (03a 必做段 override 03b 契约)
+  - OC-review re-review 自刷 state.md 简化注释 → F06-self (B7 漏检 HTML 注释闭合 + re-review 不自审)
+
+### Added · 新增能力
+
+#### 新 prompt: `.ai/prompts/09-codex-closeout.md` (F01-self)
+- Codex 主导 4 步 epic 收口: 验证前置条件 → 清 ephemeral → 留持久 → 收口验证 (5 项机器化 PASS)
+- 前置条件硬约束: review.md 无 P0/P1 open + merge commit 存在 + state.md task 字段匹配 + working tree clean
+- 清: state.md 三段重置 / scratch 备份到 archived + rm / Notes 段按 F01-self 纪律清理 (清掉临时上下文, 保留 epic 总结 + follow-up)
+- 留: progress.md append DONE 段 / review.md status 翻转 / AGENTS.md Known Sharp Edges 评估
+- 收口验证 5 项: state NONE 计数 / HTML 注释闭合 / scratch 清空 / DONE 段存在 / review P0/P1 无 open
+
+#### `workflow.md > §9 Epic closeout (收口)` 新增段 (F01-self)
+- 完整 checklist (清 ephemeral + 留持久 + 可选清理 + 机器化验证 5 项)
+- Codex 09-closeout 协助入口
+
+#### `workflow.md > §0 Track ↔ UI 对照表` (F03-self)
+- 4 Track × 3 形态 (Desktop / tmux / iTerm) 对照矩阵
+- "T 是 Track 不是 Terminal" 语义澄清
+
+#### `getting-started.md > §一 Step 3 重写 3 形态` (F02-self)
+- 形态 A · Desktop app (推荐): Codex Desktop 1 session + OpenCode Desktop 3 独立 sessions
+- 形态 B · tmux 4 panes (CLI/TUI)
+- 形态 C · iTerm 4 tabs (macOS CLI/TUI)
+
+#### `getting-started.md > §四 Epic 收口` 新段 (F01-self)
+- 入口 A: Human 手动跑 workflow §9 checklist
+- 入口 B (推荐): 喂 09-codex-closeout.md 给 Codex 自动跑
+
+#### `01-codex-intake.md > Step 1.5 Evidence ingestion` (F04-self)
+- 反问前必跑: 若 Human 一句话含 evidence 路径 (文件 / log / commit / URL / 截图 / 错误码), 主动 Read / Fetch
+- chat 输出格式 "## evidence ingested" 段 + 1-2 句关键信号
+- 反问基于 evidence 收敛, 不再问已有答案的项
+
+#### `04-opencode-review.md > 3b · B8` 新自审盲点 (F05-self)
+- 检测子任务包"必做"段是否含 03b 禁止项 (刷 state.md / 写下一步 / 写 ADR / 改 review.md / 跑 04 自审 / 跨 epic 总结)
+- 命中信号: state.md `Last completed.Agent = OC-impl` 且填了完整字段 (在 03b 阶段而非 04-fix-loop)
+- P2 升 Human
+
+### Changed · 适配性改动
+
+#### `03-codex-orchestrate.md > 03a 子任务包模板 > 必做` (F05-self)
+- 禁止项 7 条 (刷 state.md / 写下一步 / 写 ADR / 改 review.md / 跑 04 自审 / 决定下个 epic / 跨 epic 总结)
+- 允许项 5 条 (改业务代码 / 写测试 / 跑测试 / 改 progress.md 单条记录 / 改 paths 内文档)
+- 反例: v0.3 dogfood F05-self 触发
+
+#### `03b-opencode-impl.md > 收尾必做 > 不刷 state.md` (F05-self 强化)
+- 加契约优先级 "03b prompt 契约 > 子任务包必做段"
+- OC-impl 看到子任务包必做含越权指令 → 跳过 + chat 警告 "已跳过, 等 Codex 03c 修 03a 必做段"
+- 例外: 04-fix-loop 阶段允许 OC-impl 刷 state.md (review→fix→review 循环修方报告自然)
+
+#### `oc-code-quality-rubric.md > H1` (F05-self)
+- 加子项: 子任务包必做段 override 03b 契约检测 → H1 直接 fail
+
+#### `04-opencode-review.md > 3b · B7` 验证方法扩展 (F06-self)
+- 加 HTML 注释开闭配对检测 (`grep -c '<!--'` = `grep -c '\-\->'`)
+- 加 13 个阶段枚举完整性检测 (v0.4 起 01-intake/01-intake-done/02-plan/02-plan-refine/03a-decompose/03a-prep/03b-impl/03b-retry/03c-verify/04-review/04-fix-loop/merge/<stage>-human-gate)
+
+#### `04-opencode-review.md > 收尾必做 > B7 self-verify` (F06-self)
+- OC-review 刷 state.md 后必跑 B7 6 项检测, 任一 fail → 立即修复 + 重 commit
+- 反例: v0.3 dogfood F06-self 触发 (re-review 自刷时简化 multi-line 注释)
+- 同样适用其它刷 state.md 的 Agent (Codex 03c / Codex 09-closeout)
+
+#### `03-codex-orchestrate.md > 03c 收尾必做` (F06-self 协同)
+- 加 "刷完 state.md 必跑 B7 self-verify" 钩子, 跟 04 一致
+
+#### `state.md > 维护规则 4` (F01-self)
+- 任务整体完成 → **走 workflow.md §9 完整 checklist** (不只是清三段, 还含 scratch 清理 / progress.md DONE 段 / review.md status 翻转 / B7 self-verify), 推荐喂 09-codex-closeout.md
+
+### Removed · 删除
+
+无 · 全部增量改动。
+
+#### Rejected (移出 inbox)
+
+- `starter-v2-finding-11-two-group-paths-insufficient-java-layers.md` (main 02-claude-plan contract, 不适用 lite)
+- `starter-v2-finding-16-mockito-inline-vs-scope.md` (同上)
+
+两条移到 `.ai/logs/rejected-lite-v0.4/from-payment-recon-demo/`, frontmatter 加 `status: rejected-not-applicable-to-lite` + reason。lite v0.1.0 fork 时遗留 inbox 未 triage, 本次正式 reject。
+
+### Breaking changes
+
+无 · MINOR release。v0.3 旧契约仍合法, v0.4 是增量 best practice + 新能力。
+
+### 升级指南 (derived 项目 sync v0.4)
+
+```bash
+cd <derived-project-root>
+
+# 1. rsync prompts (含新 09-codex-closeout.md)
+rsync -av --exclude='.git' /path/to/ai-collab-starter-lite/.ai/prompts/ .ai/prompts/
+
+# 2. rsync key docs
+rsync -av /path/to/ai-collab-starter-lite/.ai/workflow.md .ai/
+rsync -av /path/to/ai-collab-starter-lite/.ai/getting-started.md .ai/
+rsync -av /path/to/ai-collab-starter-lite/.ai/oc-code-quality-rubric.md .ai/
+
+# 3. state.md surgical merge (维护规则 4 改链接到 workflow §9; HTML 注释段保留)
+diff .ai/state.md /path/to/ai-collab-starter-lite/.ai/state.md
+
+# 4. stamp version (rc 默认不强推, 但本次包含真实 dogfood 反思可考虑同步)
+echo "v0.4.0-lite-rc1  · synced $(date +%Y-%m-%d)" > .ai/STARTER_VERSION
+echo "- $(date +%Y-%m-%d) · lite v0.4.0-lite-rc1 同步, 详见 ai-collab-starter-lite CHANGELOG" >> .ai/progress.md
+```
+
+**测试 v0.4 新能力**: 下个 epic 收口时喂 09-codex-closeout.md 给 Codex, 验证 4 步流 + 5 项机器化 verify 全 PASS, 则可触发 v0.4 翻 stable。
+
+### lite → main sync 候选
+
+本次 6 条 from-self finding 大部分**不适合** sync 到 main (因为 main 是 Claude 主导, lite 是 Codex 主导, 形态差异大):
+
+- **F01-self (epic-closeout-checklist)**: 普适, main 也应有 closeout 协议, 但 main owner 可考虑 Claude 主导版的 closeout prompt (类似 09-codex-closeout)
+- **F04-self (intake evidence ingestion)**: main 已有 `intake` 技能 Claude 主导, 本 finding 的 evidence 主动 ingest 思路普适, main 可考虑加
+- **F05-self (子任务包必做 override 03b 契约)**: 普适, main 也有类似契约边界问题 (Claude 02 / Codex 03 实施 / OC review 边界), main 可考虑加 review 自审盲点
+- **F06-self (B7 验证扩展 + 自审钩子)**: 普适, main state.md 也有 HTML 注释段, 自审钩子设计可借鉴
+
+**lite-specific (不 sync)**:
+- F02-self / F03-self (Desktop UI doc): lite-specific 4 Track 模型, main 拓扑不同
+
+---
+
 ## [v0.3.0-lite-rc1] — 2026-05-18
 
 > ⚠️ **Release candidate · 待 ≥ 1 个真实 epic dogfood 验证 01-intake 流后翻 stable**。

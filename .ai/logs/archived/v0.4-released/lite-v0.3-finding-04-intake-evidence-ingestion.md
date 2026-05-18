@@ -6,7 +6,7 @@ source-project: lite-self (v0.3.0-lite-rc1 dogfood · daemon-business-manager-no
 discovered: 2026-05-18
 target:
   - .ai/prompts/01-codex-intake.md (新增 Step 1.5 evidence ingestion 段)
-status: pending
+status: implemented-in-v0.4.0-lite-rc1
 related: [F01-self, F-DOGFOOD-1]
 ---
 
@@ -105,3 +105,12 @@ Step 1 类型识别后, Step 2 反问前, 单段:
 - 与 **F11** (OC-helper 第三方过滤) 同形态: 都是"靠 Agent 默契 → 契约 force" 升级
 - 与 **F07** (复现未确认纪律) 协同: F07 force "Q1 必须问 Reproduction 是否已确认", F04-self force "evidence 主动 read"。两者一起把 intake 阶段的反问质量稳定性补全
 - 与 **F01-self** (epic-closeout-checklist) 弱关联: 都是 v0.3 release 时识别的 contract 盲区, 一并 v0.4 消化
+
+---
+
+## v0.4.0-lite-rc1 实施记录 (2026-05-18)
+
+- **release**: v0.4.0-lite-rc1
+- **触发来源**: lite-self dogfood (smart-uite v0.3.0-lite-rc1 daemon-business-manager-not-started bug epic 跑完 lite v0.3 全流程 + Human 修正 Desktop UI 模型 + 主动询问 closeout 纪律)
+- **实施摘要**: 详见 `CHANGELOG.md > [v0.4.0-lite-rc1]` Added/Changed 段, 本 finding (F04-self) 落入对应分组
+- **archive 路径**: `.ai/logs/archived/v0.4-released/lite-v0.3-finding-04-intake-evidence-ingestion.md`

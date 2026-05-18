@@ -3,6 +3,11 @@ finding: 11
 slug: two-group-paths-insufficient-java-layers
 phase: 02-claude-plan
 date: 2026-05-13
+status: rejected-not-applicable-to-lite
+rejection-reason: |
+  本 finding 来源 main 产品线 02-claude-plan contract (Claude 主导). lite 是独立产品线
+  (02-codex-plan, Codex 主导), contract 形态不同. v0.4 升级仪式 triage 决定 reject,
+  不适用 lite. 信息保留作历史参考, 不在 lite inbox.
 severity: low
 ---
 

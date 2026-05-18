@@ -103,7 +103,7 @@ NONE
 1. 每次 Agent 完成时**覆盖**本文件(不是 append);旧快照已在 `progress.md` 流水账里。
 2. `Next step` 的可粘贴 prompt 必须由 Agent 在自己的 `## 下一步提示词` 段产出后**抄进**这里。
 3. session 中断后回来——**Pattern A**:你(Human)用眼读本文件 → 复制 `Next step.可粘贴 prompt` → 粘给对应终端。Agent **不读** state.md(它收到的 prompt 已自带完整上下文)。
-4. 任务整体完成(merge + 文档收口都做完):清空 `Active task / Last completed step / Next step`,仅保留 `Notes` 给下个任务参考。
+4. 任务整体完成(merge + 文档收口都做完):**走 `workflow.md §9 Epic closeout` 完整 checklist** (v0.4 加 · F01-self), 不只是清空 `Active task / Last completed step / Next step` 三段, 还涉及 `.ai/scratch/` 清理 + `progress.md` append DONE 段 + `review.md` status 翻转 + `state.md` HTML 注释段闭合 self-verify (F06-self) 等。推荐喂 `.ai/prompts/09-codex-closeout.md` 让 Codex 协助。
 5. 多个并行任务:本文件**只**追当前活跃任务;其它任务用各自的 task 文件 `Handoff state` 段记录。
 
 ## Human vs Agent · 谁该读 state.md

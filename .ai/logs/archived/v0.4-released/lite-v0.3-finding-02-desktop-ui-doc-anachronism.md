@@ -7,7 +7,7 @@ discovered: 2026-05-18
 target:
   - .ai/getting-started.md (§一 Step 3 重写, 加 Desktop 模式)
   - .ai/workflow.md (§0 4 终端拓扑图说明 加 "Desktop app sessions 等效")
-status: pending
+status: implemented-in-v0.4.0-lite-rc1
 related: [F03-self]
 ---
 
@@ -103,3 +103,12 @@ tmux new -s lite-epic-<name>
 ## 关联与对照
 
 - 与 **F03-self** (workflow.md §0 4 终端拓扑图 implicit 假设终端) 同根: F02 修 getting-started 用户入口, F03 修 workflow 概念图。两者一起 sync 才完整覆盖 Desktop 形态
+
+---
+
+## v0.4.0-lite-rc1 实施记录 (2026-05-18)
+
+- **release**: v0.4.0-lite-rc1
+- **触发来源**: lite-self dogfood (smart-uite v0.3.0-lite-rc1 daemon-business-manager-not-started bug epic 跑完 lite v0.3 全流程 + Human 修正 Desktop UI 模型 + 主动询问 closeout 纪律)
+- **实施摘要**: 详见 `CHANGELOG.md > [v0.4.0-lite-rc1]` Added/Changed 段, 本 finding (F02-self) 落入对应分组
+- **archive 路径**: `.ai/logs/archived/v0.4-released/lite-v0.3-finding-02-desktop-ui-doc-anachronism.md`

@@ -1,4 +1,4 @@
-# Prompt: Codex 01-intake · 一句话粗需求 → brief (lite v0.3.0-lite-rc1)
+# Prompt: Codex 01-intake · 一句话粗需求 → brief (lite v0.4.0-lite-rc1)
 
 ## 角色
 
@@ -26,6 +26,40 @@
 - **chore** (杂务): 依赖升级 / CI 调整 / lint 修复
 
 若无法判定 (≥ 2 类同样合理), 把"类型判定"列入 Step 2 反问清单第一个。
+
+### Step 1.5: Evidence ingestion (v0.4 · F04-self · 反问前必跑)
+
+若 Human 一句话中含**具体 evidence 路径** (任一):
+- 文件路径 (绝对 / 相对 / Windows `X:\...` / Unix `/...`)
+- log 文件 (`.log` / `.txt` 含 "log" 字样)
+- commit hash (git commit ID)
+- URL (`http(s)://` 链接)
+- 截图路径 (`.png` / `.jpg` / 含 "screenshot" 字样)
+- 错误码 / stack trace 引用
+
+**必须**:
+1. 主动 Read / Fetch / 查看这些 evidence (相应 tool: Read 文件 / WebFetch URL / Bash `git show <commit>`)
+2. evidence 内容**不在 chat 完整复述** (token 浪费), 只在 chat 摘要 1-2 句: "读了 X 日志, 关键信号: <一句话>"
+3. Step 2 反问基于 evidence 收敛, 不再问 evidence 里已经有答案的项 (e.g. 日志已显示 CreateProcess 失败错误码, Q5 hypothesis 候选可直接列具体的, 不再问 "你猜原因")
+
+**禁止**:
+- 跳过 evidence 主动 ingest 进 Step 2 (会被 F04-self 兜底 catch)
+- 把 evidence 完整复述在 chat (token 浪费 + 干扰 Human 答 Q1-Q5)
+- 把 evidence ingestion 当 Q1 反问 ("我能读一下日志吗?" — Human 一句话已经给了路径就是邀请, 不需再问)
+
+#### Evidence ingest 输出格式 (chat, Step 1 后 / Step 2 前单段)
+
+```
+## evidence ingested (v0.4 · F04-self)
+- <evidence-1 path/URL>: <一句话关键信号>
+- <evidence-2 path/URL>: <一句话关键信号>
+- (若 evidence 不可访问 / 路径错: "<path> not accessible: <reason>", 仍进 Step 2 反问, 把 evidence 不可达列为 Q1)
+```
+
+#### 触发边界
+
+- Human 一句话**不含**任何 evidence 路径 → 跳过 Step 1.5, 直接 Step 2 反问
+- Human 一句话**只含模糊引用** (e.g. "我之前看到一个 log 不记得路径") → Q1 反问 "evidence 路径是?", 不主动猜路径
 
 ### Step 2: 反问澄清问题 (≤ 5 个, 单轮一次性出完)
 

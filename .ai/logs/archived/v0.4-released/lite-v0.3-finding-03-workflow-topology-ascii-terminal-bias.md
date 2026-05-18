@@ -6,7 +6,7 @@ source-project: lite-self (v0.3.0-lite-rc1 dogfood · smart-uite Human 修正)
 discovered: 2026-05-18
 target:
   - .ai/workflow.md (§0 4 终端拓扑图说明)
-status: pending
+status: implemented-in-v0.4.0-lite-rc1
 related: [F02-self]
 ---
 
@@ -80,3 +80,12 @@ related: [F02-self]
 
 - 与 **F02-self** (getting-started §一 Step 3 tmux hint) 同根: F02 修用户入口, F03 修概念图。两者一起 sync 完整覆盖
 - 长期 v1.0 stable 可考虑: 把 T1-T4 命名改成 "Track 1-4" / "Session 1-4" 彻底去终端味儿, 但这是 MAJOR breaking, 留 v1.0 决策
+
+---
+
+## v0.4.0-lite-rc1 实施记录 (2026-05-18)
+
+- **release**: v0.4.0-lite-rc1
+- **触发来源**: lite-self dogfood (smart-uite v0.3.0-lite-rc1 daemon-business-manager-not-started bug epic 跑完 lite v0.3 全流程 + Human 修正 Desktop UI 模型 + 主动询问 closeout 纪律)
+- **实施摘要**: 详见 `CHANGELOG.md > [v0.4.0-lite-rc1]` Added/Changed 段, 本 finding (F03-self) 落入对应分组
+- **archive 路径**: `.ai/logs/archived/v0.4-released/lite-v0.3-finding-03-workflow-topology-ascii-terminal-bias.md`

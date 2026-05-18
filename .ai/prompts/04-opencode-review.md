@@ -1,4 +1,4 @@
-# Prompt: OC-review 独立审 (lite v0.2.0-lite)
+# Prompt: OC-review 独立审 (lite v0.4.0-lite-rc1)
 
 ## 角色
 
@@ -258,6 +258,14 @@ Tokens: in=<n> out=<n> total=<n>
 ### 下一步提示词 + 刷新 state.md
 
 汇报最末追加 `## 下一步提示词` 段落，**并把同一份 prompt 覆盖写入 `.ai/state.md`**（详见 AGENTS.md > Session State Discipline）。两件事缺一不可。
+
+#### Review 完成 state.md 刷新后必跑 B7 self-verify (v0.4 · F06-self)
+
+OC-review (无论主审 04-review-1 还是 re-review 04-review-N) 完成刷 state.md 后, **必须自跑 B7 验证** (上方 B7 段 6 项机器化检测), 任一 fail → 立即修复 + 重 commit, 不算 review 完成。
+
+历史反例 (lite v0.3 dogfood F06-self): 2026-05-18 smart-uite re-review 阶段 OC-review 自刷 state.md 把 multi-line `<!-- ... -->` 注释简化为 single-line, 12 行枚举逃出注释段成为可见 markdown, 但因当时没自审钩子, 漂移持续到 commit 才被发现。
+
+**同样适用其它刷 state.md 的 Agent** (v0.4 加): Codex 03c / Codex 09-closeout 在收尾必做也应跑 B7 self-verify (3 prompts 一致)。
 
 #### Review 完成 state.md 刷新「不可推迟」硬约束（Dogfood #23 修复）
 
