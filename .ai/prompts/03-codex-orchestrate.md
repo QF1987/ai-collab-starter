@@ -1,4 +1,4 @@
-# Prompt: Codex 调度 (lite v0.1.0 · 03a 拆任务 + 03c 验收)
+# Prompt: Codex 调度 (lite v0.2.0-lite · 03a 拆任务 + 03c 验收)
 
 ## 角色
 
@@ -38,7 +38,23 @@
 - pre-decisions 摘要: D1=..., D2=..., D3=...
 - 本子任务涉及的 paths (核心): file1, file2
 - 本子任务涉及的 paths (连带, 允许小改): file3
-- 严禁动的 paths: 其余全部
+- **严禁动的高风险 paths** (v0.2.0 · F15 · 必须列 ≥ 1 条具体路径 + 一句话理由, 禁止只写"其余全部"):
+
+  Codex 03a 写本段时, 必须**逐类**核对下列 7 大高风险类别 (v0.2.0 · F16), 列出本子任务下 ≥ 1 条具体路径 + 理由 (若该类不适用, 标 N/A):
+
+  | 类别 | 典型路径模式 | 列严禁动的理由 |
+  |------|------------|----------------|
+  | **构建配置** | CMakeLists.txt / build.gradle / package.json / Cargo.toml / Makefile / *.vcxproj | 改它影响整个子项目编译 / 引入新依赖 / 改 ABI |
+  | **运行时配置** | config/*.ini / *.yaml / *.json / .env / application*.properties | OC-impl 跑测试时撞配置缺失常顺手改 — 实战重灾区 (F16 触发本类) |
+  | **schema / migration** | migration/*.sql / schema/*.sql / *.proto / *.thrift / db/migrate/* | 改它影响 DB 状态 / 跨服务协议契约 |
+  | **公共 header / ABI** | include/* / public/* / api/* / *.h (公共 export) | 改它跨子项目 ABI 影响 |
+  | **CI / 部署脚本** | .github/workflows/* / .gitlab-ci.yml / scripts/deploy.sh / Dockerfile | 改它影响发布流程 / 跑测试时容易撞 |
+  | **第三方依赖** | vendor/ / 3rdLibraries/ / third_party/ / external/ / node_modules/ | 跟 F11 OC-helper 第三方过滤呼应 |
+  | (其它) | 项目特定 | e.g. legacy_module / generated_code / fixtures |
+
+  - <具体路径 1> · 类别: <构建配置 / 运行时配置 / ...> · 理由: <一句话>
+  - <具体路径 2> · 类别: ... · 理由: ...
+  - 其余全部 (兜底)
 
 ## 实施要求 (严格按下方执行, 任何偏离请输出原因不要自作主张)
 
@@ -68,11 +84,28 @@
 - 输出 "done, 见 git diff" 即可, 不要总结自己改了什么 (Codex 自己看 diff)
 ```
 
-### 03a 输出哪里
+### 03a 输出哪里 (v0.2.0 双输出强约束 · F14)
 
-- 把每个子任务包**作为完整 code block 输出在 chat 里**, Human 复制粘贴到 T3
-- 同时刷 state.md: `Next step.Agent = OC-impl`, Prompt 模板 = 子任务包 (而不是 `03b-opencode-impl.md`,后者是 OC-impl session 的契约文件; 子任务包是具体输入)
-- 收尾必做的"可粘贴 prompt"字段填**子任务包正文**
+每个 OC-impl 子任务包必须**双输出**:
+
+1. **chat 输出** (Human 复制到 T3 OC-impl 用):
+   - 完整 markdown code block, 子任务包模板见上方
+   - 写在 chat 末尾, 加 `--- 子任务包结束 ---` 分隔符方便复制
+
+2. **同步落档到文件** (Pattern A 重建 + Human 审 + 后续追溯用):
+   - 路径: `.ai/scratch/oc-impl-package-<task-id>-<n>.md`
+   - 内容: **chat 输出原文 1:1 同步**, 不允许任何文字差异
+   - 文件首行: `# OC-impl 子任务包 <task-id>-<n>` 标题
+   - 文件末尾追加: `## 落档说明` 段, 说明 chat 与文件内容一致
+
+state.md 同步刷:
+- `Last completed step.产出` 列子任务包文件路径
+- `Next step.可粘贴 prompt`: 若 Next.Agent = OC-impl, 字段填子任务包正文 (chat 原文); 若 Next.Agent = Human (审查 gate), 字段填审查 prompt + **必须**在 prompt 中显式引用子任务包文件路径
+
+禁止:
+- chat 输出但不落档
+- 落档但与 chat 不一致 (任何文字差异)
+- 修订子任务包却不另起版本号 — 出新版应另起文件名 (-2, -3 ...) 而非 silent 覆盖第一版
 
 ### 03a 决定何时拆细 vs 拆粗
 
@@ -110,7 +143,11 @@
 - [ ] **H1**: pre-decisions (brief frontmatter) 无一条被违反
   - 验证方法: 对 frontmatter 每条 D 找 diff 中是否动了相关代码 / 接口 / 决策
 - [ ] **H2**: paths 二组分: OC-impl 只动了"核心 paths" + 子任务包明确许可的"连带 paths"
-  - 验证方法: `git diff --stat`, 逐行核对每个文件路径都在子任务包 paths 列表内
+  - 验证方法 (v0.2.0 依 git 拓扑分场景 · F09):
+    - **单 git 场景**: `git diff --cached --stat` 在主仓跑, 逐行核对
+    - **umbrella + 子 git 场景** (e.g. smart-uite): 在 umbrella 顶层跑 `git diff --cached --stat` 核对追踪 paths (通常仅 `.ai/` `AGENTS.md`); 对每个涉及的子仓 `cd <子仓> && git diff --cached --stat` 核对子仓内 paths
+    - **跨仓场景** ($REPO_MAIN + $REPO_X): 在每个 repo cwd 内分别跑
+  - **额外核对** (v0.2.0 · F15): 没动子任务包"严禁动的高风险 paths"列表中任一条; 触及任一 → H2 直接 fail
 - [ ] **H3**: 编译 / lint / typecheck 通过
   - 验证方法: Codex 本机跑 `<test cmd>`
 - [ ] **H4**: 现有测试不退化 (新增测试可以失败但旧测试不能挂)
@@ -224,7 +261,16 @@ Tokens: in=<n> out=<n> total=<n>
 
 ### 下一步提示词 + 刷新 state.md
 
-每次 03a / 03c 完成,刷 state.md:
+每次 03a / 03c 完成,刷 state.md。
+
+#### state.md 覆盖前必读 (硬约束 · v0.2.0 · F02)
+
+覆盖写入 state.md 前**必须先 Read 当前文件 + 复制完整 template 结构**。
+禁止: condensed 字段 / 重命名字段 / 删除 template 顶部说明段 / 删除维护规则段 / 删除 Pattern A/B 段 / 简化主标题。
+只覆盖动态字段值, template 标题 / 注释 / 字段名称 / 校验规则段全部保留原文。
+违反 → OC-review 04 第三步 B7 catch + 升 Human。
+
+
 
 #### 03a 完成后
 

@@ -8,7 +8,7 @@ target:
   - .ai/workflow.md (§8 共享文件协议段)
   - .ai/prompts/02-codex-plan.md (§7 OC delegation candidates 段)
   - .ai/getting-started.md (§三 bug 流速记 加 L2 摸排子段)
-status: pending
+status: implemented-in-v0.2.0-lite-rc1
 related: [03]
 ---
 
@@ -66,3 +66,13 @@ related: [03]
 
 ## SemVer 影响
 **MINOR** (新增能力 · 双路 L2 模式)。
+
+---
+
+## v0.2.0-lite-rc1 实施记录 (2026-05-18)
+
+- **release**: v0.2.0-lite-rc1
+- **触发来源**: smart-uite epic (Daemon 单例 bug, commit 9afc2f7) 实战 dogfood 反馈 — lite v0.1 首次真实大型项目接入
+- **实施摘要**: 见 `CHANGELOG.md > [v0.2.0-lite-rc1]` 段, 本 finding (F04) 落入对应分组 (group A/B/C/D/E/F/G), 详见 CHANGELOG `### Why these changes` 段
+- **关联 commit**: 见 `git log --oneline v0.1.0-lite-rc1..v0.2.0-lite-rc1` (release 提交 hash 由 Step 6 tag 后填入)
+- **archive 路径**: `.ai/logs/archived/v0.2-released/lite-v0.1-finding-04-l2-dual-path.md`

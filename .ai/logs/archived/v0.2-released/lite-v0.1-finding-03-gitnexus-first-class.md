@@ -9,7 +9,7 @@ target:
   - .ai/prompts/02-codex-plan.md (§6 锁定符号名前 grep 同包预检)
   - .ai/workflow.md (§8 共享文件协议段加 GitNexus 并行说明)
   - 新增 .ai/gitnexus-integration.md (可选接入指南)
-status: pending
+status: implemented-in-v0.2.0-lite-rc1
 related: [04]
 ---
 
@@ -56,3 +56,13 @@ related: [04]
 
 ## SemVer 影响
 **MINOR** (新增能力 · GitNexus 一等公民; 不接的项目不受影响, 向后兼容)。
+
+---
+
+## v0.2.0-lite-rc1 实施记录 (2026-05-18)
+
+- **release**: v0.2.0-lite-rc1
+- **触发来源**: smart-uite epic (Daemon 单例 bug, commit 9afc2f7) 实战 dogfood 反馈 — lite v0.1 首次真实大型项目接入
+- **实施摘要**: 见 `CHANGELOG.md > [v0.2.0-lite-rc1]` 段, 本 finding (F03) 落入对应分组 (group A/B/C/D/E/F/G), 详见 CHANGELOG `### Why these changes` 段
+- **关联 commit**: 见 `git log --oneline v0.1.0-lite-rc1..v0.2.0-lite-rc1` (release 提交 hash 由 Step 6 tag 后填入)
+- **archive 路径**: `.ai/logs/archived/v0.2-released/lite-v0.1-finding-03-gitnexus-first-class.md`

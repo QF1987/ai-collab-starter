@@ -1,4 +1,4 @@
-# Prompt: OC-impl 写代码 (lite v0.1.0 · 03b)
+# Prompt: OC-impl 写代码 (lite v0.2.0-lite · 03b)
 
 ## 角色
 
@@ -35,21 +35,51 @@
 - 单文件 diff > 200 行 → **停下来问 Human**(子任务包颗粒度有问题, 不要硬干)
 - 完成后不要在 chat 输出 markdown 总结 / 改动清单——Codex 看 git diff 即可
 
-## Scope 强约束 (实施前必跑)
+## Scope 强约束 (实施前必跑 · v0.2.0 双层验证 · F09 + F15)
 
-改动后、测试前, 跑:
+改动后、测试前, 跑 (依 git 拓扑分场景 · F09):
 
 ```bash
+# 单 git 场景 (lite 主力路径)
 git diff --cached --stat
+
+# umbrella + 子 git 场景 (e.g. smart-uite · F01)
+# 在 umbrella 顶层 + 每个改动子仓各跑一次
+git diff --cached --stat              # umbrella 顶层 (通常仅 .ai/ + AGENTS.md)
+cd <子仓> && git diff --cached --stat # 每个改动子仓
+
+# 跨仓场景 ($REPO_MAIN + $REPO_X)
+# 在每个 repo cwd 各跑一次
 ```
 
-逐行核对每个文件路径都在子任务包 paths 列表内。出现 paths 外文件 → 立即停下回退(unstage 或恢复), **不要**先跑测试再说。
+逐行核对:
+1. 每个文件路径都在子任务包 paths 列表内 (核心 + 连带)
+2. **没动子任务包"严禁动的高风险 paths"列表** (v0.2.0 · F15)
+
+任一未通过 → 立即停下回退 (unstage 或恢复), **不要**先跑测试再说。出现 paths 外文件或触碰严禁动 → 立即输出 "撞墙: 触及严禁动 paths X" / "撞墙: paths 越界 X" + stop。
 
 例外(允许的"顺带改动"):
 - ≤ 3 行 且 是 Expected fix 自然延伸 (如 import 清理、typo 修正)
 - 已 staged 但漏掉的 docstring / 注释
 
 此时在 commit message 注明"顺带改进: XXX"。
+
+## bug 任务专属 (v0.2.0 · F10)
+
+若子任务包标记 task 为 bug 类型 (frontmatter `severity: P0-P3`), 在标准 03b 流之上额外要求:
+
+1. **测试必须先写, 后改代码** (TDD-for-bug):
+   - 写复现测试 / 单测, 跑一次, 确认 FAIL (复现 bug)
+   - 改业务代码
+   - 重跑测试, 确认 PASS
+2. **完成产出加证据**:
+   - 输出 "done, 见 git diff" 之外, chat 加一段:
+     ```
+     ## bug 测试两阶段证据
+     pre-patch (测试单独 + 主代码旧): <test cmd> 输出 FAIL <关键断言失败行>
+     post-patch (测试 + 主代码新): <test cmd> 输出 PASS
+     ```
+3. **若不能两阶段验证** (e.g. 测试与主代码原子提交分不开), 必须在 chat 标"两阶段证据不可分", Codex 03c 决定是否退回拆 commit
 
 ## 撞墙时的正确处理
 

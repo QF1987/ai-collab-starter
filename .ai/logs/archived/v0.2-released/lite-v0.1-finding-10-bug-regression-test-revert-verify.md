@@ -8,7 +8,7 @@ target:
   - .ai/prompts/03b-opencode-impl.md (bug 任务专属段)
   - .ai/oc-code-quality-rubric.md (D3 测试质量)
   - .ai/prompts/04-opencode-review.md (Small Task Shortcut + 三步法)
-status: pending
+status: implemented-in-v0.2.0-lite-rc1
 related: [07]
 ---
 
@@ -80,3 +80,13 @@ lite 把 bug 任务专属纪律放在 getting-started.md §三 (Human 写 brief 
 
 ## SemVer 影响
 **PATCH** (现有 prompt 加 bug 专属段, 不破坏其他任务流程)。
+
+---
+
+## v0.2.0-lite-rc1 实施记录 (2026-05-18)
+
+- **release**: v0.2.0-lite-rc1
+- **触发来源**: smart-uite epic (Daemon 单例 bug, commit 9afc2f7) 实战 dogfood 反馈 — lite v0.1 首次真实大型项目接入
+- **实施摘要**: 见 `CHANGELOG.md > [v0.2.0-lite-rc1]` 段, 本 finding (F10) 落入对应分组 (group A/B/C/D/E/F/G), 详见 CHANGELOG `### Why these changes` 段
+- **关联 commit**: 见 `git log --oneline v0.1.0-lite-rc1..v0.2.0-lite-rc1` (release 提交 hash 由 Step 6 tag 后填入)
+- **archive 路径**: `.ai/logs/archived/v0.2-released/lite-v0.1-finding-10-bug-regression-test-revert-verify.md`

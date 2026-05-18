@@ -8,7 +8,7 @@ target:
   - .ai/prompts/03-codex-orchestrate.md (03a 子任务包模板)
   - .ai/prompts/03b-opencode-impl.md (Scope 强约束段)
   - .ai/oc-code-quality-rubric.md (H2 验证段加"严禁动 paths"显式核对)
-status: pending
+status: implemented-in-v0.2.0-lite-rc1
 related: [09, 14]
 ---
 
@@ -110,3 +110,13 @@ cd <子项目根> && git diff --cached --stat
 ## 关联与对照
 - 与 **F09** (rubric H2 多 git paths 验证) 关联: F09 修验证 cwd 范围, F15 修验证内容 (加"严禁动核对")
 - 与 **F14** (03a 子任务包落档) 关联: F14 让子任务包跨 session 可见, F15 让子任务包内容更 force; 都是 03a 阶段 quality 强化
+
+---
+
+## v0.2.0-lite-rc1 实施记录 (2026-05-18)
+
+- **release**: v0.2.0-lite-rc1
+- **触发来源**: smart-uite epic (Daemon 单例 bug, commit 9afc2f7) 实战 dogfood 反馈 — lite v0.1 首次真实大型项目接入
+- **实施摘要**: 见 `CHANGELOG.md > [v0.2.0-lite-rc1]` 段, 本 finding (F15) 落入对应分组 (group A/B/C/D/E/F/G), 详见 CHANGELOG `### Why these changes` 段
+- **关联 commit**: 见 `git log --oneline v0.1.0-lite-rc1..v0.2.0-lite-rc1` (release 提交 hash 由 Step 6 tag 后填入)
+- **archive 路径**: `.ai/logs/archived/v0.2-released/lite-v0.1-finding-15-subtask-package-strict-forbidden-paths.md`

@@ -1,4 +1,4 @@
-# Prompt: OC-review 独立审 (lite v0.1.0)
+# Prompt: OC-review 独立审 (lite v0.2.0-lite)
 
 ## 角色
 
@@ -42,6 +42,8 @@ Small Task 精简 review 步骤:
 
 Small Task review **不**需要 ADR Data Contract L1-L5 对齐、Codex 自审盲点专项、完整 commit 状态检查。
 
+**bug 任务不适用 Small Task Shortcut** (v0.2.0 · F10): bug 任务必须跑完整三步法以验证回归测试有效性 (pre-patch fail / post-patch pass 两阶段证据, 见三步法 3a · bug 任务专项)。
+
 Verdict 路径(lite):
 - `PASS → Human merge`
 - `PATCH → OC-impl(同 epic 内 T3, 同 session 继续)`
@@ -84,6 +86,8 @@ Verdict 路径(lite):
 - correctness / missing tests / docs drift / style consistency
 - 字段语义滥用 (如 success 路径写 errorMessage)
 - 写完又读的无谓 round-trip
+- **bug 任务专项** (v0.2.0 · F10): 若 task 是 bug, 检查 chat 历史 / progress.md 是否有"pre-patch fail / post-patch pass"两阶段证据
+  - 命中信号: 只有 post-patch PASS, 无 pre-patch FAIL 证据 → 测试可能假, 升 Human
 
 #### 3b · Codex 自审盲点专项 checklist (lite 特有)
 
@@ -106,6 +110,18 @@ Verdict 路径(lite):
 - [ ] **B6**. Codex 03c 验收是否被 `human-override-codex-fix` 路径绕过(3 轮 fail 后 Codex 接手写)
   - 验证方法: progress.md / state.md 找 `human-override-codex-fix` 标记
   - 若有: 重点审 Codex 临时写的代码段是否守 scope (Codex 写代码倾向越界)
+- [ ] **B7** (v0.2.0 · F08). state.md 字段完整性: 当前 state.md 按 lite template 完整保留所有字段名 + 维护规则段 + Pattern A/B 段
+  - 验证方法 (机器化):
+    ```bash
+    # 字段名应存在 (≥ 8 个核心字段名)
+    grep -c '当前阶段\|Last completed step.Agent\|Last completed step.Step\|Last completed step.产出\|Next step.Prompt 模板\|Next step.触发来源\|Next step.触发条件\|Next step.输入' .ai/state.md
+    # 维护规则段应存在 (应 = 3)
+    grep -c '## 维护规则\|## Human vs Agent\|### Pattern B 的安全栏' .ai/state.md
+    # state.md 总行数应接近 template (105 行 ± 5)
+    wc -l .ai/state.md
+    ```
+  - 命中信号: 字段名漂移 (e.g. "Next step.输入" 被改成 "关键输入") / 头部标题被简化 / 维护规则段被删 / state.md < 80 行
+  - 严重度: P2 (lite 系统级风险), 升 Human
 
 **重要**: 自审盲点专项不替代 quality 通用项, 是补充。两段都跑。
 

@@ -8,7 +8,7 @@ target:
   - .ai/prompts/03-codex-orchestrate.md (03a 输出哪里段)
   - .ai/workflow.md (§8 共享文件协议段补 OC-impl 子任务包落档约定)
   - .ai/state.md (template Last completed step.产出 字段示例补"子任务包文件路径")
-status: pending
+status: implemented-in-v0.2.0-lite-rc1
 related: [02, 13]
 ---
 
@@ -106,3 +106,13 @@ state.md 同步刷:
 ## 关联与对照
 - 与 **Finding 02** (state.md 字段漂移) 关联: F02 修字段名, F13 修阶段枚举值, F14 修产出落档纪律 — 三者一起把 state.md 跨 session 完整性补全
 - 与 **Finding 13** (state.md 阶段枚举漂移) 关联: F13 的 `03a-prep` / `02-plan-refine` 中间态扩展 + F14 的落档纪律, 共同覆盖"复杂 02-03 流转"场景
+
+---
+
+## v0.2.0-lite-rc1 实施记录 (2026-05-18)
+
+- **release**: v0.2.0-lite-rc1
+- **触发来源**: smart-uite epic (Daemon 单例 bug, commit 9afc2f7) 实战 dogfood 反馈 — lite v0.1 首次真实大型项目接入
+- **实施摘要**: 见 `CHANGELOG.md > [v0.2.0-lite-rc1]` 段, 本 finding (F14) 落入对应分组 (group A/B/C/D/E/F/G), 详见 CHANGELOG `### Why these changes` 段
+- **关联 commit**: 见 `git log --oneline v0.1.0-lite-rc1..v0.2.0-lite-rc1` (release 提交 hash 由 Step 6 tag 后填入)
+- **archive 路径**: `.ai/logs/archived/v0.2-released/lite-v0.1-finding-14-03a-package-chat-only-no-file.md`

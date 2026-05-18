@@ -8,7 +8,7 @@ target:
   - .ai/oc-code-quality-rubric.md (H2 paths 二组分 验证段)
   - .ai/prompts/03b-opencode-impl.md (Scope 强约束段)
   - .ai/prompts/03-codex-orchestrate.md (03c 验收流程)
-status: pending
+status: implemented-in-v0.2.0-lite-rc1
 related: [01]
 ---
 
@@ -78,3 +78,13 @@ umbrella + 子 git 场景: paths 必须用 "子仓名/相对路径" (Daemon/Daem
 
 ## SemVer 影响
 **MINOR** (rubric H2 / 多 prompt 改成分场景, 新增能力; 单 git 场景行为不变)。
+
+---
+
+## v0.2.0-lite-rc1 实施记录 (2026-05-18)
+
+- **release**: v0.2.0-lite-rc1
+- **触发来源**: smart-uite epic (Daemon 单例 bug, commit 9afc2f7) 实战 dogfood 反馈 — lite v0.1 首次真实大型项目接入
+- **实施摘要**: 见 `CHANGELOG.md > [v0.2.0-lite-rc1]` 段, 本 finding (F09) 落入对应分组 (group A/B/C/D/E/F/G), 详见 CHANGELOG `### Why these changes` 段
+- **关联 commit**: 见 `git log --oneline v0.1.0-lite-rc1..v0.2.0-lite-rc1` (release 提交 hash 由 Step 6 tag 后填入)
+- **archive 路径**: `.ai/logs/archived/v0.2-released/lite-v0.1-finding-09-rubric-h2-multi-git-paths.md`

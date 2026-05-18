@@ -6,7 +6,7 @@ source-project: smart-uite
 discovered: 2026-05-18
 target:
   - .ai/prompts/oc-helper.md (执行规则 grep 段 + req 文件格式 默认字段)
-status: pending
+status: implemented-in-v0.2.0-lite-rc1
 related: []
 ---
 
@@ -94,3 +94,13 @@ grep -rn -C <context_lines> "<pattern>" <path> \
 
 ## SemVer 影响
 **PATCH** (现有 oc-helper.md 加默认过滤 + 可选字段, 现有 req 不写新字段仍兼容)。
+
+---
+
+## v0.2.0-lite-rc1 实施记录 (2026-05-18)
+
+- **release**: v0.2.0-lite-rc1
+- **触发来源**: smart-uite epic (Daemon 单例 bug, commit 9afc2f7) 实战 dogfood 反馈 — lite v0.1 首次真实大型项目接入
+- **实施摘要**: 见 `CHANGELOG.md > [v0.2.0-lite-rc1]` 段, 本 finding (F11) 落入对应分组 (group A/B/C/D/E/F/G), 详见 CHANGELOG `### Why these changes` 段
+- **关联 commit**: 见 `git log --oneline v0.1.0-lite-rc1..v0.2.0-lite-rc1` (release 提交 hash 由 Step 6 tag 后填入)
+- **archive 路径**: `.ai/logs/archived/v0.2-released/lite-v0.1-finding-11-oc-helper-3rd-party-filter.md`

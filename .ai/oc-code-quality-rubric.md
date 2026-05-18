@@ -1,4 +1,4 @@
-# OC 代码质量 rubric (lite v0.1.0)
+# OC 代码质量 rubric (lite v0.2.0-lite)
 
 ## 用途
 
@@ -30,8 +30,15 @@ Codex 03c 验收 OC-impl 产出时, 按本 rubric 打分。
   - 验证方法: 对 frontmatter 每条 D 找 diff 中是否动了相关代码 / 接口 / 决策
   - 典型 fail 信号: D2 锁"不引入新依赖", OC-impl 在 package.json 加了 lodash
 - [ ] **H2**. paths 二组分: OC-impl 只动了"核心 paths" + 子任务包明确许可的"连带 paths"
-  - 验证方法: `git diff --cached --stat`, 逐行核对每个文件路径都在子任务包 paths 列表内
-  - 典型 fail 信号: 改了 `src/utils/format.ts` 但子任务包 paths 没列
+  - 验证方法 (v0.2.0 · F09 依 git 拓扑分场景):
+    - **单 git 场景**: `git diff --cached --stat` 在主仓跑, 逐行核对
+    - **umbrella + 子 git 场景** (e.g. smart-uite · 顶层 .git 只追 .ai/ + AGENTS.md, 子目录各有独立 .git):
+      1. 在 umbrella 顶层跑 `git diff --cached --stat` (核对 .ai/ + AGENTS.md 是否动过)
+      2. 对每个涉及的子仓: `cd <子仓> && git diff --cached --stat`, 核对子仓内 paths
+      3. 若 OC-impl 改了未列子仓的文件 → H2 fail
+    - **跨仓场景** ($REPO_MAIN + $REPO_X): 在每个 repo cwd 内分别跑 git diff
+  - **额外核对** (v0.2.0 · F15): 没动子任务包"严禁动的高风险 paths"列表中任一条; 触及任一 → H2 直接 fail
+  - 典型 fail 信号: 改了 `src/utils/format.ts` 但子任务包 paths 没列; 改了未列子仓的文件 (e.g. 子任务包只列 Daemon/, 但 diff 显示 MsgTransManager/ 也改了); 改了"严禁动"列表中的 `Daemon/config/Daemon.ini` 等高风险文件
 - [ ] **H3**. 编译 / lint / typecheck 通过 (Codex 本机跑)
   - 验证方法: 跑子任务包"测试要求"段指定的命令
 - [ ] **H4**. 现有测试不退化 (新增测试可以失败, 但旧测试不能挂)
@@ -45,6 +52,7 @@ Codex 03c 验收 OC-impl 产出时, 按本 rubric 打分。
 | **D1. brief 完成度** | 漏关键需求 | 完成 60-80% | 100% | 100% + 边界全覆盖 |
 | **D2. 代码可读性** | 命名/结构混乱 | 能读懂但啰嗦 | 清晰直接 | 简洁且自解释 |
 | **D3. 测试质量** | 无/假测试 | 只 happy path | + 1-2 边界 | + 错误路径 |
+| **D3 bug 任务专项** (v0.2.0 · F10) | 测试存在但无证据 revert patch 后 fail | 测试存在 + 假装 fail (没真跑 pre-patch) | 测试存在 + chat 有两阶段证据 (pre-patch FAIL / post-patch PASS) | 测试存在 + 两阶段证据 + revert 自动化测试 (CI 跑) |
 | **D4. 边界/错误处理** | 未处理 | 部分处理 | 关键边界处理 | 显式 + 注释了为什么 |
 | **D5. 不越界** | 大量无关改动 | 1-2 处可疑 | 紧贴 brief | + 删了死代码 |
 | **D6. 注释克制** | 过度/废话注释 | 略多 | 只在 why 不明显处加 | 零废话注释 |
@@ -95,6 +103,8 @@ Verify 不通过. 原因:
 - 单文件 diff 行数远超合理估计 (e.g. 改一个函数动了 100 行)
 - 动了 brief 没列的 import / package 重排
 - "顺手"重命名了无关变量
+- (v0.2.0 · F16) **改了 config/*.ini / .env / config.yaml 等运行时配置**: OC-impl 跑测试撞墙顺手改, 是 lite v0.1 实战重灾区 (smart-uite Daemon 单例 bug 03b 第 1 轮就因此 fail)
+- (v0.2.0 · F16) **改了 *.proto / migration/*.sql / 公共 header**: 架构敏感, 应升 Codex 02 重切
 
 ### D6 fail 信号
 - 注释 `// increment i` 在 `i++` 旁边

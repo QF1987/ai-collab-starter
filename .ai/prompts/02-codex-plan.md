@@ -1,4 +1,4 @@
-# Prompt: Codex 架构与切片 (lite v0.1.0)
+# Prompt: Codex 架构与切片 (lite v0.2.0-lite)
 
 ## 角色
 
@@ -39,7 +39,20 @@
 
 - 写「或」字给下游 OC-impl 选择 (如「设置 cancelled_at 或复用 FailedAt」)
 - 写「让 OC-impl 决定」/「让实施者判断」/「视情况而定」
+- (v0.2.0 · F12) 写「或等价 / 或类似」(or-equivalent: "用 X 或等价机制" / "用 X 或类似 Y 的方案")
+- (v0.2.0 · F12) 写「仅当 X 时 / 仅在 Y 场景 / 仅当需要」(conditional-trigger: 把"是否启用"判断推下游)
+- (v0.2.0 · F12) 写「若有必要 / 如有需要 / 按需」(if-needed: "若有必要可补单测" → 直接 "本次补单测覆盖 X" 或 "本次不补单测 · 理由: ...")
+- (v0.2.0 · F12) 写「可考虑 / 可以选用」(suggestion: "可考虑用 A 或 B" → 直接给胜出方案 + Alternatives 段列被拒方案)
 - 把架构选择推给下游
+
+#### 反例 (dogfood 留底 · v0.2.0)
+
+- ❌ "可选用 PID 文件或等价机制保证单例" — 既"或"又"等价", 双重模糊
+- ✅ "本次用 Win32 CreateMutex 保证单例, 不走 PID 文件 · 理由: Daemon 是纯 Win32 程序, CreateMutex 是 OS 原语零依赖"
+- ❌ "仅当跨进程通知时再走 SendMessage" — 把启用判断推给 OC-impl
+- ✅ "本次启用 SendMessage 跨进程唤窗 · 理由: 用户体验需求 (已唤窗) 在 Decision 段已锁"
+- ❌ "若有必要可补 .ps1 测试后备" — 是 OC-impl 撞墙了再补吗?
+- ✅ "本次补 .ps1 测试后备 (路径 .../tests/daemon_singleton.ps1) · 不补 GTest · 理由: 本子项目无 GTest 基建, 改 CMakeLists 是 H2 越界"
 
 如果你确实拿不准, **正确做法**是:
 
@@ -68,12 +81,20 @@
 
 ## 强约束 7 条 (任一不满足 → task brief 视为 invalid, 强制返工)
 
-### 1. Alternatives considered 段不可少于 2 个方案
+### 1. Alternatives considered 段不可少于 2 个方案 (v0.2.0 加 UX 维度 · F05)
 
 - 至少列 2 个被拒方案 + 各自被拒理由
 - 拒绝理由**不能是** "X 不好"; 必须是 "X 在本场景下因 Y 不适合"(具体)
 - 反例: ❌ "用 enum 不够灵活" → 太抽象
 - 正例: ✅ "用 enum: DB schema 已固化为 VARCHAR, enum 序列化会引入 migration 工作, 本 task 时间窗内不值得"
+
+#### 必须覆盖的对比维度 (v0.2.0 · 任一维度漏掉 → alternatives 不充分)
+
+- **技术等价**: 至少一组功能相同但实现不同的方案 (e.g. PID 文件 vs CreateMutex vs Windows Service SCM)
+- **UX / 行为等价** (v0.2.0 新增): 至少一组用户层面感知不同的方案 (e.g. 严格拒绝第二实例 vs 唤起已存在实例 vs 静默退出 vs 弹窗提示)
+- (bug 任务专属) 修复策略: minimal patch vs refactor-with-fix vs defer + workaround (见 §三 差异 2)
+
+反例 (dogfood 留底 · v0.2.0): ❌ Daemon 单例 bug 只列 PID vs CreateMutex (技术维度), 漏 "严格单例 vs 杀旧唤窗" (UX 维度), 导致修完用户反馈"双击不再唤窗"
 
 ### 2. Data Contract 五级分级
 
@@ -164,18 +185,27 @@ src/api/types.ts:
 - 冻结: 所有 Release* 类型已在 Slice 1 写入, 禁止改动
 ```
 
-### 6. 锁定新增符号名前必须 grep 同包预检
+### 6. 锁定新增符号名前必须 grep 同包预检 (v0.2.0 工具优先级 · F03)
 
-在 task brief 中**锁定具体函数 / 方法 / 变量名**时, 必须**在最终化 brief 前**对目标 package 跑同名符号 grep, 避免与现有代码冲突:
+在 task brief 中**锁定具体函数 / 方法 / 变量名**时, 必须**在最终化 brief 前**对目标 package 跑同名符号 grep, 避免与现有代码冲突。
+
+#### 工具优先级 (从高到低 · v0.2.0)
+
+1. **GitNexus 符号级** (若项目已接 GitNexus 索引 · 见 `.ai/gitnexus-integration.md`):
+   用 `mcp__gitnexus__query` / `mcp__gitnexus__cypher` 查同名符号 / 跨子项目调用链
+   优势: 符号级精准, 无 false positive, 跨子项目 / 跨语言追踪
+2. **OC-helper 文本级** (若未接 GitNexus 或 grep 全仓):
+   写 `req-<epic>-N.md` 让 OC-helper 跑 (req 必须含 `--exclude-dir` 第三方过滤, OC-helper v0.2 默认带)
+3. **Codex 自己** (有限范围 grep): 嫌疑 ≤ 3 文件且路径已知
 
 ```bash
-# 对目标 package 路径 grep 拟锁定的标识符
+# 退化场景 (无 GitNexus, 有限范围): Codex 自己跑
 grep -rn "^func uploadFile\b\|^func (.*) uploadFile\b" <target-package>
 grep -rn "^var uploadFile\b\|^const uploadFile\b" <target-package>
 ```
 
-**注**: 此 grep 若是**全仓**(无 path 限制 / path 是 repo 根)→ 走 OC-helper。
-有限范围(指定 `<target-package>`)Codex 自己跑。
+**注**: 全仓 grep (无 path 限制 / path 是 repo 根) → 走 OC-helper。
+有限范围 (指定 `<target-package>`) Codex 自己跑。
 
 若 grep 命中已有同名符号:
 - 选项 A: **改名** (brief 中直接给定无冲突名)
@@ -183,20 +213,37 @@ grep -rn "^var uploadFile\b\|^const uploadFile\b" <target-package>
 
 **禁止**: brief 锁定一个不验证是否冲突的符号名, 把发现冲突的责任推给 OC-impl 实施期。
 
-### 7. OC delegation candidates 段
+### 7. OC delegation candidates 段 (v0.2.0 双路 · F04)
 
-在 brief 末尾标 `OC delegation candidates`, 列两类:
+在 brief 末尾标 `OC delegation candidates`, 列**三类** (v0.2.0 拆 OC-helper / GitNexus):
 
 ```markdown
 ## OC delegation candidates
 
-### OC-helper 任务 (Codex 02 / 03a 时用)
+### OC-helper 任务 (文本级, Codex 02 / 03a 时用)
 - T2-helper-1: 扫 internal/ 定位现有 Mapper 实现 (req-<epic>-1.md)
 - T2-helper-2: 全仓 grep "uploadFile" 同名冲突预检 (req-<epic>-2.md)
+  注: 若目标是 umbrella git 下子仓 (F01), req 必须显式给 `cd <子仓相对路径>` 前置命令, 否则 umbrella 顶层 git log 返回空, OC-helper 误判"无 commit"
 
-### OC-impl 子任务包 (03b 时用)
+### GitNexus 符号级查询 (Codex 自跑 MCP 工具, v0.2.0 新增 · F04)
+- mcp__gitnexus__query: 入口符号定位 (e.g. main / *::start)
+- mcp__gitnexus__impact: call chain / 影响面
+- mcp__gitnexus__api_impact: 跨 repo export 影响
+- mcp__gitnexus__cypher: 自定义符号 / 关系查询 (fallback)
+  落档: `.ai/scratch/oc-helper/gitnexus-<epic>-N.md`
+
+两类可并行 (F04 · L2 双路并行), 写不同 scratch 文件, finalize 时 Codex 双源汇总。
+
+### OC-impl 子任务包 (03a 时展开)
 - T3-impl-1: 实现 Service.create() 含错误分支 (子任务包模板见 03-codex-orchestrate.md)
 - T3-impl-2: 加单测覆盖 happy path + 2 边界
+
+**03a 严禁动候选 (v0.2.0 · F16 预审)**: 本 task 涉及子项目是否含下列高风险类目录? 列出具体路径让 03a 阶段不漏列严禁动:
+- 构建配置 (CMakeLists.txt / package.json / build.gradle / *.vcxproj)
+- 运行时配置 (config/*.ini / *.yaml / .env / application*.properties)
+- schema / migration / proto / 公共 header / CI 脚本 / 第三方依赖
+
+任一类适用 → 在本段列具体路径, 03a 子任务包"严禁动 paths"段必须列出。
 ```
 
 这一段让 OC 04 review 时能预期 OC 调用频率, 反查异常。
@@ -278,6 +325,29 @@ created: YYYY-MM-DD
 ## Decision record (ADR-YYYYMMDD-NN)
 ```
 
+## bug 任务专属强约束 (v0.2.0 · F07)
+
+bug 任务在通用 7 条强约束之上, 额外要求:
+
+### B-1. 复现路径处理 (Reproduction 段)
+
+- 若 Reproduction = "已确认" → 标准流程
+- 若 Reproduction = "未确认 + N 条嫌疑" → 触发 L2 摸排强制路径:
+  - 不能直接出 Decision, 必须先让 OC-helper + GitNexus 双路 (F04) 把嫌疑 N 条收敛到 confirmed ≥ 1 条
+  - 02 brief 末尾必须含 "复现验证产出" 段, 列具体复现脚本路径 + pre-patch 测试预期 fail 行为
+  - 03c rubric D3 + 04 OC-review 第三步必须验证 "revert patch 后测试确实 fail" (F10)
+
+### B-2. 修复策略三选 (Decision 段)
+
+- minimal patch / refactor-with-fix / defer + workaround 三选一明确 (见 §三 差异 2)
+- 紧急 P0 默认 minimal + workaround
+
+### B-3. pre-decisions 锁定 (bug 专属)
+
+- 必含: "回归测试: pre-patch fail / post-patch pass" 验证流水
+- 必含: "不顺手 refactor 相邻代码"
+- 必含: "改动范围限定 Affected subprojects"
+
 ## 触发 Human 升级路径 (lite 特有)
 
 若 Codex 02 自觉本 task 超能力, 在 frontmatter 加 `human-escalation-suggested: true`,
@@ -305,6 +375,19 @@ Tokens: in=<n> out=<n> total=<n>
 ### 下一步提示词 + 刷新 state.md
 
 汇报最末追加 `## 下一步提示词` 段落, **并把同一份 prompt 覆盖写入 `.ai/state.md`** (详见 AGENTS.md > Session State Discipline)。两件事缺一不可。
+
+#### state.md 覆盖前必读 (硬约束 · v0.2.0 · F02)
+
+覆盖写入 state.md 前**必须先 Read 当前文件 + 复制完整 template 结构**。
+
+禁止:
+- condensed 字段 (保留 template 全部字段名, 即使值为空填 `NONE`)
+- 重命名字段 (e.g. "Next step.输入" 不可改成 "关键输入")
+- 删除 template 顶部说明段 / 维护规则段 / Pattern A/B 安全栏段
+- 简化标题 (e.g. "# Session State (lite vX.Y.Z)" 不可改成 "# State")
+
+只覆盖**动态字段值**, template 标题 / 注释 / 字段名称 / 校验规则段全部保留原文。
+违反 → OC-review 04 第三步 B7 会 catch + 升 Human。
 
 #### 统一格式 (硬约束)
 

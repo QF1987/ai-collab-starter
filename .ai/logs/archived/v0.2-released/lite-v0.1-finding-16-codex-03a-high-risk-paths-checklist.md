@@ -7,7 +7,7 @@ discovered: 2026-05-18
 target:
   - .ai/prompts/03-codex-orchestrate.md (03a 子任务包 "严禁动" 段加高风险类别 checklist)
   - .ai/prompts/02-codex-plan.md (§7 OC delegation candidates 段加"高风险 paths 预审"提醒)
-status: pending
+status: implemented-in-v0.2.0-lite-rc1
 related: [15, 09]
 ---
 
@@ -94,3 +94,13 @@ Finding 15 已经修了"Codex 必须列 ≥ 1 条具体路径", 但**没指导 C
 - **F09** 修"H2 验证 cwd 范围 (多 git)"; **F15/F16** 修"H2 验证内容 (严禁动列表)" — 三者一起把 paths 验证补全
 - **F11** OC-helper 第三方过滤 + **F16** 严禁动列第三方依赖类 — 双层防 OC 漫游第三方
 - **F14** 03a 落档 + **F15/F16** 落档内容更 force — 03a quality 强化矩阵
+
+---
+
+## v0.2.0-lite-rc1 实施记录 (2026-05-18)
+
+- **release**: v0.2.0-lite-rc1
+- **触发来源**: smart-uite epic (Daemon 单例 bug, commit 9afc2f7) 实战 dogfood 反馈 — lite v0.1 首次真实大型项目接入
+- **实施摘要**: 见 `CHANGELOG.md > [v0.2.0-lite-rc1]` 段, 本 finding (F16) 落入对应分组 (group A/B/C/D/E/F/G), 详见 CHANGELOG `### Why these changes` 段
+- **关联 commit**: 见 `git log --oneline v0.1.0-lite-rc1..v0.2.0-lite-rc1` (release 提交 hash 由 Step 6 tag 后填入)
+- **archive 路径**: `.ai/logs/archived/v0.2-released/lite-v0.1-finding-16-codex-03a-high-risk-paths-checklist.md`

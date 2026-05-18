@@ -12,6 +12,217 @@ fork 起点见 v0.1.0 段。
 
 ---
 
+## [v0.2.0-lite-rc1] — 2026-05-18
+
+> ⚠️ **Release candidate · 待 ≥ 1 个独立真实 epic dogfood 验证 v0.2 强约束后翻 stable**。
+> (rc1 理由: 本次升级是消化 smart-uite v0.1 反馈, 而非又跑了一轮独立的大型 epic 验证 v0.2 自身)
+
+### TL;DR
+
+- **16 条 finding 全消化** (1×P1 + 8×P2 + 7×P3, 来源 smart-uite 首次大型真实 dogfood)
+- **新一等公民: GitNexus 符号级 L2 摸排** — 与 OC-helper 文本级并行, 大型项目 (≥ 50 KLOC / 多子项目) 神器
+- **新形态指导: umbrella git + 子 git 拓扑** — 顶层 .git 只追 lite 元数据, 子目录各自独立 git (smart-uite 30 子项目 C++ 系统形态)
+- **bug 任务专属强约束** — 复现路径未确认处理 / 修复策略三选 / TDD-for-bug / 两阶段证据 / Small Task Shortcut 不适用 bug
+- **03a 子任务包硬约束** — 双输出 (chat + 落档 1:1) / 严禁动 paths 必列 ≥ 1 条具体 + 7 类高风险 checklist
+- **rubric H2 多 git 分场景** — 单 git / umbrella + 子 git / 跨仓三场景各自的 git diff cwd
+- **state.md 字段完整性** — 硬约束 + OC-review B7 兜底 + 阶段枚举扩展 (5 个过渡态)
+- **02 brief 软措辞清单扩展** — 禁"或等价 / 仅当 / 若有必要 / 可考虑" 等 force trade-off 漏洞
+- 无 breaking change · 旧 v0.1 brief / 子任务包 / state.md 仍合法, v0.2 是增量 best practice
+
+### 实战数据
+
+- **触发**: smart-uite 项目 (Windows + Linux 终端多程序 C++ 系统, umbrella git + 30 子 git 物理拓扑) 是 lite v0.1.0-rc1 首次真实大型 dogfood
+- **epic**: Daemon 守护进程单例 bug 修复 (用户反馈 "守护进程启可以启动多个") — merge commit `9afc2f7`
+- **跑通验证**: 02 双路 L2 (OC-helper + GitNexus) + 03 三段式 + 04 三步法全跑通; 03b 第 1 轮因 config/Daemon.ini 越界触发 H2 fail (本 release F16 高风险类别 checklist 修)
+- **inbox 累积速度**: 单 epic 14 天累计 15 条 finding (远超 ≥ 5 阈值, 含 1×P1 触发"高紧迫度") + F12 跳号 (本次补落)
+
+### Added · 新增能力
+
+#### 新文件: `.ai/gitnexus-integration.md` (F03)
+- GitNexus 一等公民可选接入手册: 何时接 / 接入步骤 / 5 条试探 query / 4 种使用模式 (符号级预检 / L2 双路 / 影响面 / 跨 repo API impact) / 与 OC-helper 对比表 / 维护更新
+- 项目 ≥ 50 KLOC / 多语言 / 跨 ≥ 5 子项目 / 复杂 call chain 建议接入
+
+#### `getting-started.md > §一bis · git 拓扑选择` (F01)
+- 三种 git 拓扑显式定义: 单仓 / umbrella + 子 git / 跨仓
+- umbrella + 子 git 场景白名单 .gitignore 模板 (`/*` + `!.ai/` + `!AGENTS.md`)
+- 每种拓扑的 git 操作 cwd 边界约束
+
+#### `getting-started.md > §一 Step 4.5 GitNexus 接入` (F03)
+- bootstrap 阶段可选 GitNexus 接入步骤 (单仓 npx analyze / 多仓 mcp__group_sync)
+- 5 条试探 query 验证接入
+
+#### `workflow.md > §0 git 拓扑维度` (F01)
+- 4 终端拓扑外加 git 拓扑维度 (单仓 / umbrella+子git / 跨仓) 三场景对照表
+
+#### `workflow.md > §0 阶段流转图` (F13)
+- ASCII 阶段流转图: 主线 6 阶段 + 5 个过渡态 (02-plan-refine / 03a-prep / 03b-retry / 04-fix-loop / <stage>-human-gate)
+
+#### `workflow.md > §8.4 OC-impl 子任务包文件` (F14)
+- 03a 子任务包必须双输出 (chat + `.ai/scratch/oc-impl-package-<task-id>-<n>.md` 落档 1:1)
+
+#### `workflow.md > §8.6 L2 摸排双路并行模式` (F03 + F04)
+- 文本级 (OC-helper) + 符号级 (GitNexus) 并行协议
+- L1 (Bootstrap 项目地图) vs L2 (per-task 摸排) 显式区分
+
+#### `02-codex-plan.md > §6 工具优先级` (F03)
+- 锁定符号名前预检的三级优先级: GitNexus 符号级 > OC-helper 文本级 > Codex 自跑有限范围
+
+#### `02-codex-plan.md > §7 OC delegation candidates` (F04 + F01 + F16)
+- 拆三类: OC-helper 文本级 / GitNexus 符号级 (Codex 自跑) / OC-impl 子任务包
+- 加 umbrella git 子仓 cwd 提示 (F01)
+- 加 03a 严禁动候选预审 (7 类高风险 checklist · F16)
+
+#### `02-codex-plan.md > bug 任务专属强约束` 新段 (F07)
+- B-1 复现路径处理 (确认 vs 未确认双路径)
+- B-2 修复策略三选 (minimal / refactor-with-fix / defer + workaround)
+- B-3 bug pre-decisions 锁定 (回归测试 / 不顺手 refactor / 改动范围限定)
+
+#### `03b-opencode-impl.md > bug 任务专属` 新段 (F10)
+- TDD-for-bug: 测试先写 + pre-patch FAIL + 业务代码 + post-patch PASS
+- chat 必须含 "## bug 测试两阶段证据" 段
+
+#### `04-opencode-review.md > 3b checklist B7` (F08)
+- state.md 字段完整性机器化校验 (grep 字段名 / 维护规则段 / wc -l 行数)
+- 命中信号 → 升 Human
+
+#### `oc-helper.md > git 子操作纪律` 新段 (F01)
+- req 必须显式给 cd 路径 (`cwd_override` 字段)
+- 执行前 verify `.git` 存在
+- 禁止假设 umbrella git 追踪子路径
+
+### Changed · 适配性改动
+
+#### `02-codex-plan.md > §1 Alternatives considered` (F05)
+- 必须覆盖 UX / 行为等价维度 (反例 Daemon 单例 bug)
+- 不再只列技术等价方案
+
+#### `02-codex-plan.md > §决策必须落到唯一具体选择` (F12)
+- 禁止清单扩展: 「或等价 / 或类似」「仅当 X 时 / 仅当需要」「若有必要 / 如有需要 / 按需」「可考虑 / 可以选用」全部禁
+- 加 dogfood 反例 (Daemon 单例 bug 4 条 ❌ / ✅ 对照)
+
+#### `02-codex-plan.md / 03-codex-orchestrate.md > 收尾段` (F02)
+- state.md 覆盖前必读硬约束: 禁止 condensed / 重命名字段 / 删 template 段 / 简化标题
+
+#### `03-codex-orchestrate.md > 03a 输出哪里` (F14)
+- 双输出强约束 (chat + `.ai/scratch/oc-impl-package-<task-id>-<n>.md` 落档 1:1 同步)
+
+#### `03-codex-orchestrate.md > 子任务包模板 > 严禁动 paths` (F15 + F16)
+- 必须列 ≥ 1 条具体路径 + 一句话理由
+- 7 大高风险类别 checklist (构建配置 / 运行时配置 / schema / 公共 header / CI / 第三方依赖 / 其它)
+
+#### `03b-opencode-impl.md > Scope 强约束` (F09 + F15)
+- 双层验证: 分场景 git diff (单 git / umbrella + 子 git / 跨仓) + 严禁动 paths 核对
+
+#### `04-opencode-review.md > Small Task Shortcut` (F10)
+- bug 任务不适用 Small Task Shortcut
+
+#### `04-opencode-review.md > 三步法 3a · 通用 quality` (F10)
+- bug 任务专项: 检查 chat / progress.md 两阶段证据
+
+#### `oc-helper.md > grep 任务` (F11)
+- 默认 `--exclude-dir` 17 类目录 (.git / 第三方 / 构建产物)
+- req `include_third_party: false` (默认) / `additional_exclude_dirs` 项目特定追加
+- out notes 段必标过滤数 (若过滤 ≥ 10 条)
+
+#### `oc-code-quality-rubric.md > H2` (F09 + F15)
+- 分场景 git diff 验证 (单 git / umbrella + 子 git / 跨仓)
+- 加严禁动 paths 核对
+
+#### `oc-code-quality-rubric.md > D3 + D5` (F10 + F16)
+- D3 bug 任务专项子项 (revert 验证 / 两阶段证据)
+- D5 fail 信号加 config/*.ini / *.proto / migration / 公共 header
+
+#### `state.md` template (F02 + F13 + F14)
+- 头部加字段完整性硬约束段
+- `Active task.当前阶段` 注释扩展 5 个过渡态枚举
+- `Last completed step.产出` 加子任务包落档约定
+
+#### `getting-started.md > §三 差异 1` (F06 + F07)
+- Bug Brief 模板 Reproduction 段加未确认场景处理 + 复现要求段
+- Severity → human-escalation-suggested 默认映射表
+
+#### `getting-started.md > §三 差异 3 + 速记` (F07 + F10 + F04)
+- AC 加未确认场景必须先复现验证
+- AC 加 bug 两阶段证据要求
+- 速记 Step 2 加 L2 双路并行 (OC-helper + GitNexus)
+
+### Removed · 删除
+
+无 · 全部增量改动, v0.1 旧 prompt / brief / state.md 仍合法。
+
+### Why these changes (按 finding 编号 · 实战 case 摘要)
+
+- **F01** (P1 · umbrella git 拓扑): smart-uite umbrella + 30 子 git, Codex 写 req 没指定 cd 子仓, OC-helper 在 umbrella 顶层跑 git log 返回空 → 误判子项目无 commit。修 4 处文档 + 1 处 prompt
+- **F02** (P2 · state.md 字段漂移): Codex 02 跑完 L2 后刷 state.md 多字段被 condensed, 头部简化, 维护规则段被删 → Pattern A 跨 session 重建质量下降。修 4 处 prompt + 1 处 template
+- **F03** (P2 · GitNexus 一等公民): smart-uite 接入 GitNexus 给出极有价值的符号级查询 (Daemon.cpp:main / 无 mutex 符号), 但 lite 0 文档提到, ad-hoc 接入。新增 1 文件 + 3 处 prompt 改动
+- **F04** (P2 · L2 双路并行): OC-helper 文本级 + GitNexus 符号级双路并发跑得非常好, 但 lite 0 文档化。修 3 处 prompt + 1 处 doc
+- **F05** (P2 · UX 维度): Daemon 单例 bug Expected 写"严格单例", 实际代码"杀旧+唤窗", 若 Codex 只列技术等价方案 (PID vs Mutex) 漏 UX 维度 → 修完用户反馈"双击不再唤窗"。修 §1 强约束 + 加 D9 候选
+- **F06** (P3 · severity-escalation 映射): Bug Brief 模板 `human-escalation-suggested` 无默认值规则, 凭经验填易漂移。加映射表
+- **F07** (P2 · 复现未确认纪律): Daemon bug 复现路径未确认 (4 条嫌疑), 现有 prompt 没说怎么处理。加 02 bug 专属 B-1 + getting-started Reproduction 段 + AC 项
+- **F08** (P3 · B7 state 完整性): F02 的 review 兜底, 04 三步法 3b checklist 加 B7
+- **F09** (P2 · H2 多 git 验证): rubric H2 `git diff --cached --stat` 在 umbrella 跑返空, OC-impl/Codex 03c 误判 scope 干净。修 rubric H2 + 03b/03c 分场景
+- **F10** (P3 · bug TDD revert-verify): bug 修复回归测试有"pre-patch 必须 fail"特殊要求, 现有 prompt 没 enforce 到 03b/03c/04 流程。修 3 处 prompt + rubric D3
+- **F11** (P3 · OC-helper 第三方过滤): smart-uite grep Win32 keyword 命中 200+ 条 boost 头文件, OC 自觉过滤但 prompt 未 force。加默认 --exclude-dir + req 字段 + out notes 提示
+- **F12** (P3 · 软措辞清单): 02 brief 软条件等价措辞 (或等价 / 仅当 / 若有必要 / 可考虑) 漏在禁止清单外。扩展清单 + 反例
+- **F13** (P3 · 阶段枚举漂移): Codex 自创 `03a-prep` / `02-plan approved · micro L2 before 03a`, 不在 template 枚举内。加 5 个过渡态枚举 + workflow.md 阶段流转图
+- **F14** (P2 · 03a 子任务包落档): 子任务包正文只在 chat, 没落档 → Pattern A 跨 session 重建失败, Claude 辅助审计失败。加双输出强约束 + workflow §8.4 + state.md 产出字段约定
+- **F15** (P3 · 严禁动具体路径): 03a 子任务包"严禁动 paths: 其余全部"是通用兜底, Codex 自觉补 Daemon/CMakeLists.txt 是自发行为非模板 force。模板改为必须列 ≥ 1 条具体路径
+- **F16** (P2 · 高风险类别 checklist): smart-uite 03b 第 1 轮 verify fail 因 OC-impl 顺手改 Daemon/config/Daemon.ini, F15 修了"必须列"但没指导"列哪些类别"。模板加 7 大高风险类别 checklist + D5 fail 信号
+
+### Breaking changes
+
+无 · MINOR release。
+
+旧 v0.1 brief / 子任务包 / state.md / OC-helper req 不显式带 v0.2 新字段仍合法, 只是不达 v0.2 best practice。新建 brief / 子任务包 / state.md 必须符合 v0.2 强约束。
+
+### 升级指南 (derived 项目 sync v0.2)
+
+```bash
+cd <derived-project-root>
+
+# 1. rsync prompts + key configs
+rsync -av --exclude='.git' /path/to/ai-collab-starter-lite/.ai/prompts/ .ai/prompts/
+rsync -av /path/to/ai-collab-starter-lite/.ai/intake-templates.md .ai/
+rsync -av /path/to/ai-collab-starter-lite/.ai/workflow.md .ai/
+rsync -av /path/to/ai-collab-starter-lite/.ai/oc-code-quality-rubric.md .ai/
+rsync -av /path/to/ai-collab-starter-lite/.ai/gitnexus-integration.md .ai/  # v0.2.0 新增
+
+# 2. surgical merge (项目特定文件): state.md / decisions.md / context.md 不覆盖, 手动看 diff
+diff .ai/state.md /path/to/ai-collab-starter-lite/.ai/state.md   # 评估字段完整性变化
+diff .ai/getting-started.md /path/to/ai-collab-starter-lite/.ai/getting-started.md
+
+# 3. stamp version (rc 版本默认不强推 STARTER_VERSION; 若 Human 决定推则:)
+echo "v0.2.0-lite-rc1  · synced $(date +%Y-%m-%d)" > .ai/STARTER_VERSION
+echo "- $(date +%Y-%m-%d) · lite v0.2.0-lite-rc1 同步, 详见 ai-collab-starter-lite CHANGELOG" >> .ai/progress.md
+```
+
+**v0.1 → v0.2 不兼容场景**: 无 (MINOR), derived 项目可不 sync 继续跑 v0.1 prompts。
+
+### lite → main sync 候选
+
+本次实施的通用 finding (非 Claude-specific 项, 可 sync 到 main inbox):
+
+- **F02** state.md 字段完整性 (main 同样适用 Pattern A)
+- **F03** GitNexus 一等公民 (main 同样可受益, 但 main 已有 Claude session 跑符号级查询, 优先级低)
+- **F05** alternatives UX 维度 (普适)
+- **F06** severity-escalation 映射 (普适)
+- **F07** 复现未确认纪律 (普适)
+- **F09** H2 多 git 验证 (普适, main 也有多 git 场景)
+- **F10** bug 任务 TDD revert-verify (普适)
+- **F11** OC-helper 第三方过滤 (main 无 OC-helper, sync 改名 grep helper)
+- **F12** 软措辞清单 (普适)
+- **F13** 阶段枚举扩展 (普适)
+- **F14** 子任务包落档 (main 也涉及, Pattern A 同样依赖)
+- **F15** 严禁动具体路径 (普适)
+- **F16** 高风险类别 checklist (普适)
+
+**lite-specific (不 sync)**:
+- F01 umbrella git (main 已隐式支持 git 拓扑变化, 不必复制 lite 章节)
+- F04 L2 双路并行 (main 无 OC-helper, 设计前提不同)
+- F08 B7 state.md 完整性 (main 04 prompt 结构不同)
+
+---
+
 ## [v0.1.0-lite] — 2026-05-16
 
 > **lite 产品线起点**。从 `ai-collab-starter` v4.0.0-rc1 fork,删除 Claude 角色,

@@ -1,4 +1,4 @@
-# Session State (lite v0.1.0)
+# Session State (lite v0.2.0-lite)
 
 > Resume 协议。每个 Agent 完成后必须刷新本文件。
 > 下一次开 session 第一件事:读这里就知道接哪一步。
@@ -7,11 +7,26 @@
 >
 > **lite vs main**: lite 无 Claude,4 终端拓扑 (Codex + OC-helper + OC-impl + OC-review + Human)。
 > Escalation 接收方是 **Human**,不是 Claude main session。
+>
+> **字段完整性硬约束 (v0.2.0 · F02 · F08-B7)**: 后续 Agent 刷本文件时, **必须保留本 template 所有字段名 + 维护规则段 + Pattern A/B 安全栏段 + 顶部说明段**。
+> 字段值可改 (动态), 字段名 / 段结构不能漂移。违反 → OC-review 04 三步法第三步 B7 catch + 升 Human。
 
 ## Active task
 
 - 当前 task: `NONE`
-- 当前阶段: `NONE` <!-- 02-plan / 03a-decompose / 03b-impl / 03c-verify / 04-review / merge / ... -->
+- 当前阶段: `NONE` <!-- 主线阶段 + 过渡态 (v0.2.0 · F13):
+     02-plan              · Codex 出 brief
+     02-plan-refine       · brief 已出但需微 L2 / 用户反馈才能 finalize (v0.2 新增)
+     03a-decompose        · Codex 拆 OC-impl 子任务包
+     03a-prep             · 03a 前的微 L2 / 补查 (v0.2 新增)
+     03b-impl             · OC-impl 写代码 (T3)
+     03b-retry            · 03b 因 03c 退回重试 (轮次 X/3, v0.2 新增)
+     03c-verify           · Codex 跑 rubric 验收
+     04-review            · OC-review 三步法 (T4)
+     04-fix-loop          · review 出 finding, OC-impl 修, OC-review 重审 (v0.2 新增)
+     merge                · Human 合入
+     <stage>-human-gate   · 任意阶段 Human 介入决策 (escalation / override, v0.2 新增)
+     -->
 - 起始时间: `NONE` <!-- task 第一次启动时间(intake 完成那一刻);**跨 step 不变**,详见 AGENTS.md > Session State Discipline 字段表 -->
 - 当前 epic 终端布局:
   - T1 Codex: `NONE`
@@ -30,7 +45,10 @@
 
 <!-- 产出字段填写约定:
      不要手写具体 finding 文件清单,改写产出根目录(如 `.ai/logs/lite-v0.1-finding-*.md`)+
-     "(数量请 ls 实查)"。 -->
+     "(数量请 ls 实查)"。
+     (v0.2.0 · F14) 03a 阶段产出必含:
+       - .ai/scratch/oc-impl-package-<task-id>-<n>.md (子任务包正文落档)
+       - .ai/tasks/<task-id>.md Implementation slices 段更新 (若 paths 收紧) -->
 
 
 ## Next step

@@ -1,4 +1,4 @@
-# Prompt: OC-helper 全仓查询 (lite v0.1.0)
+# Prompt: OC-helper 全仓查询 (lite v0.2.0-lite)
 
 ## 角色
 
@@ -47,6 +47,9 @@
 - pattern / path / file: ...
 - context_lines: 3
 - max_matches: 100
+- include_third_party: false  # v0.2.0 · F11 · 默认 false, OC-helper 自动 --exclude-dir 第三方目录
+- additional_exclude_dirs: []  # v0.2.0 · F11 · 项目特定额外过滤目录, e.g. ["legacy_module"]
+- cwd_override: null           # v0.2.0 · F01 · umbrella git 子仓操作时填子仓相对路径, e.g. "Daemon"
 
 ## output_file
 .ai/scratch/oc-helper/out-<epic-id>-<n>.md
@@ -63,8 +66,36 @@
 
 ```bash
 # 按 req.action 跑 grep, 严格遵守 max_matches
-grep -rn -C <context_lines> "<pattern>" <path> | head -<max_matches>
+# v0.2.0 · F11: 默认 --exclude-dir 第三方 + 构建产物 (除非 req include_third_party=true)
+grep -rn -C <context_lines> "<pattern>" <path> \
+  --exclude-dir=.git \
+  --exclude-dir=node_modules \
+  --exclude-dir=vendor \
+  --exclude-dir=3rdLibraries \
+  --exclude-dir=third_party \
+  --exclude-dir=external \
+  --exclude-dir=boost \
+  --exclude-dir=Boost \
+  --exclude-dir=.venv \
+  --exclude-dir=venv \
+  --exclude-dir=__pycache__ \
+  --exclude-dir=build \
+  --exclude-dir=Release \
+  --exclude-dir=Debug \
+  --exclude-dir=dist \
+  --exclude-dir=target \
+  | head -<max_matches>
 ```
+
+**默认过滤理由 (v0.2.0 · F11)**:
+- `.git` — 仓 metadata
+- `node_modules` / `vendor` / `3rdLibraries` / `third_party` / `external` — 第三方依赖
+- `boost` / `Boost` — 大型 C++ 第三方头文件 (实战来自 smart-uite Daemon 单例 bug, 命中噪音极大)
+- `.venv` / `venv` / `__pycache__` — Python 第三方依赖与缓存
+- `build` / `Release` / `Debug` / `dist` / `target` — 构建产物
+
+**例外**: 若 req `intent` 段明确说 "包括第三方依赖" (e.g. 排查依赖版本漂移), req `action` 加 `include_third_party: true`, OC-helper 移除上述 `--exclude-dir`。
+若 req `additional_exclude_dirs` 非空, 追加为更多 `--exclude-dir`。
 
 - 若 match > max_matches, out 文件 `status` 标 `partial`, `truncated: true`
 - 输出格式: 每条 `<file>:<line> | <snippet>`, 一行一条
@@ -101,20 +132,37 @@ find <path> -type f -name '*.<ext>' -exec wc -l {} + 2>/dev/null | head -<max_ma
 - success | partial | failed
 - total_matches: 47
 - truncated: false
+- third_party_filtered: 0  # v0.2.0 · F11 · 默认过滤掉的第三方命中数
 
 ## result
 (按 req 指定的 output_format)
 
 ## notes
 (自由文本: 异常 / 建议 / 你发现的可疑模式; 简短即可, ≤ 5 行)
+
+# v0.2.0 · F11: 若 include_third_party=false 且过滤掉了 ≥ 10 条第三方命中, notes 必须显式标:
+# "已默认过滤 N 条第三方命中 (路径: boost / vendor / 3rdLibraries 等), 业务代码命中数: M。若需查看第三方命中, req 加 include_third_party: true。"
+
+# v0.2.0 · F02: notes **不**刷 state.md (Codex 03c 的活), 也**不**读 state.md (Pattern A)
 ```
+
+## git 子操作纪律 (v0.2.0 · F01)
+
+req 让你跑 `git log` / `git diff` / `git blame` 时, 必须遵守:
+
+- **req 必须显式给 cd 路径** (`cwd_override` 字段) — 若 req 漏写但目标是子仓, **不要**假设 umbrella 顶层 git 追踪了子路径; 立即停下, chat 输出 "req git cwd unclear, 需 Codex 补 cwd_override" 让 Human 转告 Codex 修 req
+- **执行前 verify .git 存在**: `test -d <cwd>/.git || echo "no .git at <cwd>"`
+- **umbrella + 子 git 拓扑** (e.g. smart-uite 顶层 .git 只追 .ai/ + AGENTS.md, 子目录如 Daemon/ MsgTransManager/ 各有独立 .git):
+  - 在 umbrella 顶层跑 `git log -- Daemon/` 会返回空 (umbrella 不追该路径), 这**不**等于 "Daemon 无 commit"
+  - 必须 `cd Daemon && git log` 在子仓内跑
 
 ## 禁止
 
 - **禁止动业务代码** (你是只读 + 写共享文件, 不动 git working tree)
 - **禁止在 chat 输出长结果** (写到 out 文件, chat 只说 `done` + 几个数字摘要)
 - **禁止扩 scope**: req 让你 grep "foo", 不要顺手 grep "bar"
-- **禁止读 / 改 state.md**
+- **禁止读 / 改 state.md** (v0.2.0 · F02 · Pattern A)
+- **禁止假设 umbrella git 追踪子路径** (v0.2.0 · F01 · 见上方 git 子操作纪律)
 
 ## 输出 chat 格式 (精简)
 

@@ -1,4 +1,4 @@
-# Getting Started (lite v0.1.0)
+# Getting Started (lite v0.2.0-lite)
 
 > 入口文档。三类常见情境都能在这里找到答案:
 >
@@ -69,9 +69,46 @@ prefix `from-lite-` 让 main 升级 session 能识别来源。
 
 ---
 
+## 一bis · git 拓扑选择 (v0.2.0 · F01)
+
+新项目 bootstrap 前先选 git 拓扑, 决定后续 git 操作 cwd 边界:
+
+### 单仓 (默认场景)
+单 `.git`, lite 框架元数据 + 业务代码同仓。沿用 §一 5 步标准 bootstrap。
+
+### umbrella + 子 git (大型多子项目 · e.g. smart-uite)
+顶层 `.git` 只追 `.ai/` + `AGENTS.md`, 子目录各自有独立 `.git` (30 个子项目都各自是 git repo)。
+
+**bootstrap 时的 `.gitignore` 白名单方案**:
+```gitignore
+# umbrella 顶层 .gitignore (白名单模式)
+/*
+!.ai/
+!AGENTS.md
+!.gitignore
+!.gitattributes
+!README.md
+```
+
+这样 umbrella 顶层 git 只追 `.ai/` + `AGENTS.md`, 不会把子项目源码累计进 umbrella git index。
+
+**约束**:
+- 任何 `git log` / `git diff` / `git blame` 必须 cd 进对应子仓, **不能**在 umbrella 顶层跑
+- prompt / req 文件中所有 git 操作都必须显式标 cwd (Codex 写 req 时 `cwd_override: "Daemon"`, OC-impl 03b Scope 自检在每个改动子仓各跑一次 git diff)
+- rubric H2 验证按 git 拓扑分场景跑 (详见 `oc-code-quality-rubric.md > H2`)
+
+### 跨仓 (lite 仓 + 业务仓物理分离)
+lite 仓 + N 个业务仓物理分离, 通过 env var (`$COLLAB_ROOT` 指向 lite 仓, `$REPO_*` 指向各业务仓) 引用。
+
+**约束**:
+- 每个 git 操作的 cwd 必须明确是哪个 repo
+- 跨仓 prompt 引用文件路径必须含 env var 前缀
+
+---
+
 ## 一 · 新项目 bootstrap (Human 主导, ~1h)
 
-> lite 中无 Claude bootstrap session。Human 用 Codex 当辅助,跑下面 5 步。
+> lite 中无 Claude bootstrap session。Human 用 Codex 当辅助,跑下面 5 步 (+ 可选 Step 0.5)。
 
 ### 1. 复制骨架 (5 分钟, 机械)
 
@@ -141,6 +178,35 @@ tmux new -s lite-epic-<name>
 - 编造未读到的项目细节
 - 复述 lite kit 中已经存在的普适约束
 ```
+
+### 4.5 (可选 · v0.2.0 · F03) · GitNexus 索引接入
+
+**判断条件**: 满足任一即建议接入 GitNexus
+- 项目 ≥ 50 KLOC
+- 多语言混合 (e.g. Java + TypeScript / C++ + Python)
+- 跨 ≥ 5 子项目 (e.g. smart-uite 30 子项目)
+- 含复杂 call chain (IPC / RPC / event-driven)
+
+**接入步骤**:
+```bash
+# 单仓
+npx gitnexus analyze .
+
+# 多仓 (umbrella + 子 git): MCP tool group_sync
+# 在 Claude / Codex chat 中: mcp__gitnexus__group_sync(<group-name>)
+```
+
+**验证 (5 条试探 query, 跑通即接入成功)**:
+- 找最常用 export 符号 (`mcp__gitnexus__query` 找 main / start / init)
+- 跨子项目 caller (`mcp__gitnexus__impact` 找某公共 header 的影响面)
+- 入口 + call chain (`mcp__gitnexus__api_impact` 查跨 repo export)
+
+接入后, 02 brief / L2 摸排走双路并行 (符号级 GitNexus + 文本级 OC-helper), 详见:
+- `.ai/gitnexus-integration.md` (本仓 v0.2.0 新文件)
+- `.ai/workflow.md > §8.6 L2 摸排双路并行模式`
+- `.ai/prompts/02-codex-plan.md > §6 工具优先级` + `§7 OC delegation candidates`
+
+不接的项目沿用 v0.1 单路 OC-helper, 无影响。
 
 ### 5. Human 审 + 修正 (10-15 分钟)
 
@@ -265,10 +331,14 @@ created: YYYY-MM-DD
 
 ```
 Step 1: OC-helper 跑 bug 复现路径 grep / 嫌疑 commit 区间 scan (写 out-*.md)
-Step 2: Codex 02 修复策略决策 (minimal patch / refactor-with-fix / defer + workaround)
-Step 3: Codex 03a 拆任务 → OC-impl 03b 实施 → Codex 03c 验收 (必须含回归测试)
-Step 4: OC-review 04 (专门检查回归测试有效性)
-Step 5: Human 合入 + 关闭 review.md 中对应 finding
+Step 2: L2 摸排 (v0.2.0 · F04 双路并行)
+        - 2a: OC-helper 跑文本级 grep (req-<bug>-N.md, F11 默认过滤第三方)
+        - 2b: Codex 自跑 GitNexus 符号级查询 (gitnexus-<bug>-N.md), 若项目已接 GitNexus
+        - Codex 02 finalize brief 时双源汇总
+Step 3: Codex 02 修复策略决策 (minimal patch / refactor-with-fix / defer + workaround)
+Step 4: Codex 03a 拆任务 → OC-impl 03b 实施 → Codex 03c 验收 (必须含回归测试)
+Step 5: OC-review 04 (专门检查回归测试有效性 + bug 任务两阶段证据 · F10)
+Step 6: Human 合入 + 关闭 review.md 中对应 finding
 ```
 
 ### 差异 1 · Bug Brief 模板
@@ -287,8 +357,13 @@ created: YYYY-MM-DD
 # Bug Brief: <现象一句话>
 
 ## Reproduction
-<具体步骤、命令、输入、环境>
-<必须能让别人按这个 repro 出来>
+<若已确认: 具体步骤、命令、输入、环境, 别人能按这个 repro 出来>
+<若未确认 (v0.2.0 · F07): 标"复现路径未确认", 列 ≥ 2 条嫌疑触发路径, 标"待 L2 摸排 + 复现验证">
+
+## 复现要求 (修复必带 · v0.2.0 · F07)
+<未确认场景下显式要求: 03a 拆任务前必须有 ≥ 1 条 confirmed repro 路径>
+<复现脚本路径 (e.g. tests/<bug-id>_repro.ps1) + pre-patch fail 关键断言>
+<post-patch pass 验证流水>
 
 ## Expected vs Actual
 - Expected: <应有行为>
@@ -303,6 +378,17 @@ created: YYYY-MM-DD
 ## Severity
 P0 / P1 / P2 / P3
 ```
+
+### Severity → human-escalation-suggested 默认映射 (v0.2.0 · F06)
+
+| Severity | 默认 `human-escalation-suggested` | 例外情况 |
+| --- | --- | --- |
+| P0 (线上事故 / 阻塞用户 / 数据损坏) | `true` | 紧急通道明确跳 02 → minimal hotfix 时 `false` |
+| P1 (功能错乱 / 体验严重影响 / 资源冲突) | `true` | 修复路径明确单选, Human 不需介入决策时 `false` |
+| P2 (功能瑕疵 / 边界 case 错误) | `false` | 涉及架构敏感字段 (注解 / SPI / 配置结构) 改 `true` |
+| P3 (typo / 文档 / 不影响行为) | `false` | 改 lite 框架本身 prompt 时 `true` (走 lite-upgrade-protocol) |
+
+不严格强制, 但偏离默认时**必须在 brief 末尾 "Why this severity-escalation combination" 段说明理由**。
 
 OC-helper 跑的 packet 多两段:
 
@@ -330,6 +416,8 @@ bug task 文件 Acceptance Criteria 必须包含:
 - [ ] 回归测试: 复现脚本 / 单测能在 patch 前 fail, patch 后 pass
 - [ ] 测试名 / 测试 docstring 包含 issue 或 bug 编号, 方便日后 grep
 - [ ] 该回归测试加入常规测试套件 (CI 默认跑)
+- [ ] (v0.2.0 · F07) 若 Reproduction 标"未确认", 03b 必须先 L2 复现验证 (至少 1 条嫌疑路径变成 confirmed), 才能进 03c 验收
+- [ ] (v0.2.0 · F10) chat / progress.md 含 bug 测试两阶段证据 (pre-patch FAIL + post-patch PASS) — 03b 必须显式输出, 03c 必须验证, 04 必须 cross-check
 ```
 
 Codex 03c 验收对 bug 任务**额外**检查:

@@ -7,7 +7,7 @@ discovered: 2026-05-18
 target:
   - .ai/prompts/02-codex-plan.md (§强约束 1 Alternatives considered)
   - .ai/oc-code-quality-rubric.md (D1 brief 完成度 + 新增 D9 候选 · 视情况)
-status: pending
+status: implemented-in-v0.2.0-lite-rc1
 related: []
 ---
 
@@ -59,3 +59,13 @@ Brief Expected 锁了 A, 但用户真正想要的可能是 B 或 C。lite `02-co
 
 ## SemVer 影响
 **MINOR** (扩展现有强约束, 不破坏旧 brief 兼容性 · 旧 brief 不显式列 UX 维度仍合法, 只是新 brief 必须含)。
+
+---
+
+## v0.2.0-lite-rc1 实施记录 (2026-05-18)
+
+- **release**: v0.2.0-lite-rc1
+- **触发来源**: smart-uite epic (Daemon 单例 bug, commit 9afc2f7) 实战 dogfood 反馈 — lite v0.1 首次真实大型项目接入
+- **实施摘要**: 见 `CHANGELOG.md > [v0.2.0-lite-rc1]` 段, 本 finding (F05) 落入对应分组 (group A/B/C/D/E/F/G), 详见 CHANGELOG `### Why these changes` 段
+- **关联 commit**: 见 `git log --oneline v0.1.0-lite-rc1..v0.2.0-lite-rc1` (release 提交 hash 由 Step 6 tag 后填入)
+- **archive 路径**: `.ai/logs/archived/v0.2-released/lite-v0.1-finding-05-alternatives-ux-dimension.md`

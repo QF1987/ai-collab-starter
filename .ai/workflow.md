@@ -1,4 +1,4 @@
-# AI Collaboration Workflow (lite v0.1.0)
+# AI Collaboration Workflow (lite v0.2.0-lite)
 
 > **lite vs main**: 无 Claude,Codex 当 lead engineer(架构 + 拆任务 + 验收),OC 写代码 + 审 + 信息查询。
 > Escalation 接收方是 **Human**,不是 Claude main session。
@@ -35,6 +35,51 @@ This workflow turns requirements into reviewed, testable changes while preservin
 | 不同 epic 之间 | 全部新 session(隔离上下文污染) |
 
 一句话:**阶段内连续,阶段间隔离,epic 间清零**。
+
+### git 拓扑维度 (v0.2.0 · F01)
+
+4 终端拓扑只画"信息流", 还有一维**git 拓扑**决定 git 操作 cwd 边界:
+
+| git 拓扑 | 含义 | git 操作 cwd 边界 |
+|---------|-----|------------------|
+| **单仓** (默认) | 单 `.git`, lite 元数据 + 业务代码同仓 | repo 根目录跑 git, 沿用现有约定 |
+| **umbrella + 子 git** | 顶层 `.git` 只追 `.ai/` + `AGENTS.md`, 子目录各有独立 `.git` (e.g. smart-uite 30 子项目 C++ 系统) | umbrella 顶层 git 不追子路径; **任何 git 操作 (log/diff/blame) 必须 cd 进对应子仓**; 顶层 `git log -- Daemon/` 返回空 ≠ Daemon 无 commit |
+| **跨仓** | lite 仓 + 业务仓物理分离, env var $COLLAB_ROOT / $REPO_* | 每个 repo 各自 cwd, prompt / req 文件必须显式标 cwd |
+
+→ 详见 `.ai/getting-started.md §一bis · git 拓扑选择` 和 `.ai/prompts/oc-helper.md > git 子操作纪律` 段。
+
+### 阶段流转图 (v0.2.0 · F13)
+
+主线 + 5 个过渡态分支:
+
+```
+   ┌─────────┐    ┌──────────────┐    ┌──────────────┐
+   │ 02-plan │──→│02-plan-refine│──→│03a-decompose │
+   └────┬────┘    └──────────────┘    └────┬─────────┘
+        │ (无须微 L2 直接)                    │
+        └──────────────────────────────────→ │
+                                              ↓
+                       ┌──────────────┐    ┌──────────────┐
+                       │  03a-prep    │←──│03b-impl      │
+                       │ (微 L2 补查)  │    └────┬─────────┘
+                       └──────┬───────┘         ↓
+                              ↓            ┌──────────────┐
+                       ┌──────────────┐    │ 03c-verify   │
+                       │03a-decompose │←───┤ (3 轮上限)   │
+                       └──────────────┘    └────┬─────────┘
+                                                 ↓ pass
+                                          ┌──────────────┐
+                                          │  04-review   │
+                                          │ → 04-fix-loop │
+                                          └────┬─────────┘
+                                               ↓ (无 finding)
+                                          ┌──────────────┐
+                                          │    merge     │
+                                          └──────────────┘
+   任意阶段 fail → <stage>-human-gate → human override 三选 (a)(b)(c)
+```
+
+阶段枚举值见 `.ai/state.md > Active task.当前阶段` 注释段。
 
 ## 1. Requirement
 
@@ -314,7 +359,7 @@ worktree 中运行的 Agent 在最后一步必须:
    ```
 3. 不要假设 Human 知道 worktree 存在。
 
-## 8. 共享文件协议 (OC-helper)
+## 8. 共享文件协议 (OC-helper + GitNexus + OC-impl 子任务包)
 
 OC-helper 是**全仓搜索 / scan / summarize** 的辅助角色(T2),走 `.ai/scratch/oc-helper/` 共享文件:
 
@@ -327,6 +372,33 @@ OC-helper 是**全仓搜索 / scan / summarize** 的辅助角色(T2),走 `.ai/sc
 - ❌ Codex 自己:`grep "foo" path/to/specific/file.go` / `read 3 个已知文件`
 
 详细 SOP 见 `.ai/prompts/oc-helper.md` 与 `lite-v0.1.0-design.md` §3.4。
+
+### 8.4 OC-impl 子任务包文件 (v0.2.0 · F14)
+
+```
+.ai/scratch/oc-impl-package-<task-id>-<n>.md  ← Codex 03a 写: OC-impl 子任务包正文
+```
+
+`.gitignore` 已含 `.ai/scratch/`, 子任务包默认不入版本控制 (临时文件, epic 结束 Human 可清空)。
+若需归档审计追溯, epic 收口时 Human 把本轮所有子任务包 cp 到 `.ai/logs/archived/<epic-id>/` 保留。
+
+**双输出强约束**: chat 输出 + 文件落档 1:1 同步 — 见 `.ai/prompts/03-codex-orchestrate.md > 03a 输出哪里`。
+
+### 8.6 L2 摸排双路并行模式 (v0.2.0 · F03 + F04)
+
+适用: bug 复现路径未确认 / 嫌疑符号跨子项目 / 项目 ≥ 50 KLOC
+
+双路:
+- **文本级** (OC-helper): 走 `.ai/scratch/oc-helper/req-<bug>-N.md` → `out-<bug>-N.md`
+- **符号级** (Codex 自跑 GitNexus): 走 `.ai/scratch/oc-helper/gitnexus-<bug>-N.md`
+
+汇总: Codex 02 finalize brief 时双源对比, 互证发现的强化 Decision, 互斥的标 follow-up。
+
+L1 vs L2 区分:
+- **L1**: Bootstrap 阶段一次性项目地图 (getting-started §一 Step 4)
+- **L2**: per-task / per-bug 摸排 (本段, 02-codex-plan §6 + §7)
+
+GitNexus 接入见 `.ai/gitnexus-integration.md` (v0.2.0 新文件 · F03)。
 
 ## CI/CD Extension
 

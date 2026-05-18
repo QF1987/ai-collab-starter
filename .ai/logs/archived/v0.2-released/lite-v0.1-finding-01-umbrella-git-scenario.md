@@ -9,7 +9,7 @@ target:
   - .ai/getting-started.md (§一 Step 0 + 新增 git 拓扑章节)
   - .ai/prompts/oc-helper.md (git log 子操作说明)
   - .ai/prompts/02-codex-plan.md (OC delegation candidates 段)
-status: pending
+status: implemented-in-v0.2.0-lite-rc1
 related: [09]
 ---
 
@@ -48,3 +48,13 @@ Human 第一次撞这个坑, 问 "smart-uite 是 umbrella git, git log 时必须
 
 ## SemVer 影响
 **MINOR** (新增能力 · umbrella git 场景指导)。本 finding 单独不够 MAJOR, 因为现有单仓场景行为不变。
+
+---
+
+## v0.2.0-lite-rc1 实施记录 (2026-05-18)
+
+- **release**: v0.2.0-lite-rc1
+- **触发来源**: smart-uite epic (Daemon 单例 bug, commit 9afc2f7) 实战 dogfood 反馈 — lite v0.1 首次真实大型项目接入
+- **实施摘要**: 见 `CHANGELOG.md > [v0.2.0-lite-rc1]` 段, 本 finding (F01) 落入对应分组 (group A/B/C/D/E/F/G), 详见 CHANGELOG `### Why these changes` 段
+- **关联 commit**: 见 `git log --oneline v0.1.0-lite-rc1..v0.2.0-lite-rc1` (release 提交 hash 由 Step 6 tag 后填入)
+- **archive 路径**: `.ai/logs/archived/v0.2-released/lite-v0.1-finding-01-umbrella-git-scenario.md`
