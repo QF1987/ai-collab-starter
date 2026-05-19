@@ -100,6 +100,18 @@ fork 起点见 v0.1.0 段。
 
 无 · MINOR release。v0.4 旧契约仍合法, v0.5 是增量 best practice + 新能力。
 
+### v0.5-rc1 patch (2026-05-19 · Pattern A 完整性 hot-fix)
+
+发布 rc1 后 ~30 min 内 Human catch 一个 Pattern A 设计 gap (跨 epic 累积观察):
+
+- **04-fix-loop → 04-re-review 切换点 (T3→T4) lite contract 没明文 force OC-impl 填 Next step.可粘贴 prompt body 为 re-review prompt**
+- 跨 3 epic dogfood (daemon-business-manager-not-started / h5coat-start-fails / h5coat-qt5core-missing) 实际都撞过: 04-fix-loop 完后 state.md `Next step.可粘贴 prompt` 是旧的 04-fix-loop OC-impl prompt (没更新), Human 切到 T4 复制粘贴会粘错
+- 修复:
+  - `03b-opencode-impl.md > 收尾必做 > 04-fix-loop 例外段` 加 "必须填 OC-review re-review 启动 prompt" 硬约束 + B7 self-verify 钩子
+  - `state.md > 维护规则` 加第 7 条 "每个 cross-terminal 切换点当前 Agent 完成 step 时必须填 Next step.可粘贴 prompt body" + 列 7 个具体切换点
+
+修复进了 v0.5-rc1 retag (同 tag 名, force 重打), 不另起 rc2 (因为是 contract gap 不是新能力)。
+
 ### 升级指南 (derived 项目 sync v0.5)
 
 ```bash

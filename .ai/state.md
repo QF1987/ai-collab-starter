@@ -106,6 +106,15 @@ NONE
 4. 任务整体完成(merge + 文档收口都做完):**走 `workflow.md §9 Epic closeout` 完整 checklist** (v0.4 加 · F01-self), 不只是清空 `Active task / Last completed step / Next step` 三段, 还涉及 `.ai/scratch/` 清理 + `progress.md` append DONE 段 + `review.md` status 翻转 + `state.md` HTML 注释段闭合 self-verify (F06-self) 等。推荐喂 `.ai/prompts/09-codex-closeout.md` 让 Codex 协助。
 5. 多个并行任务:本文件**只**追当前活跃任务;其它任务用各自的 task 文件 `Handoff state` 段记录。
 6. (v0.5 · F06-v0.5) `Next step.Prompt 模板` 字段值必须是**实际存在的** `.ai/prompts/*.md` 文件路径, 或 `NONE` / `n/a` (无下一步 / 不适用)。填错路径 (e.g. `.ai/prompts/03c-codex-verify.md` 不存在 / `.ai/prompts/03-oc-impl.md` 笔误) 会被 OC-review 04 三步法第三步 B7 catch 升 Human。
+7. (v0.5-rc1 patch · Pattern A 完整性) **每个 cross-terminal 切换点**, 当前 Agent 完成 step 时**必须填 `Next step.可粘贴 prompt` body** 为下一个 Agent 的具体启动 prompt (Human bus Pattern A 切换 terminal 时直接复制粘贴, 不需回头找契约)。具体切换点 (按 lite 4 终端拓扑):
+   - 02 → OC-helper L2 (T1→T2): Codex 02 填 OC-helper req-* path + 启动 prompt
+   - 03a → 03b (T1→T3): Codex 03a 填子任务包正文 (F14 双输出协同)
+   - 03c → 04-review (T1→T4): Codex 03c 填 04 review 三步法启动 prompt
+   - 04-review → 04-fix-loop (T4→T3): OC-review 填 OC-impl 04-fix-loop 修 RV prompt
+   - **04-fix-loop → 04-re-review (T3→T4)**: OC-impl 填 OC-review re-review 启动 prompt (v0.5-rc1 patch 加 · 历史反例 h5coat-qt5core-missing epic)
+   - 04-re-review → Human merge (T4→Human): OC-review 填 Human merge 决策指引
+   - Human merge → 09-closeout (Human→T1): Human merge prompt 含 09-closeout 启动指引
+   不填 / 填错 prompt body → 违反 Pattern A 设计意图, 04 三步法第三步 B7 catch + 升 Human。
 
 ## Human vs Agent · 谁该读 state.md
 

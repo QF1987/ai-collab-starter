@@ -168,6 +168,13 @@ lite 中 OC-impl 是被调度者, 不是调度者。state.md 由 Codex 03c 刷, 
 
 例外: **04-fix-loop 阶段** OC-impl 修完 RV finding 后允许刷 state.md (因为是 review→fix→review 循环, OC-impl 修方报告状态自然, OC-review re-review 不能等"猜"修没修完). 但 03b 主流程仍禁。
 
+**04-fix-loop 例外的硬约束** (v0.5 · patch 加 · Pattern A 完整性):
+- OC-impl 刷 state.md 时, **必须填 `Next step.可粘贴 prompt`** body 为 **OC-review re-review 启动 prompt** (含: re-review 任务 / 必读输入含 review.md 已 fix 的 RV / fix commit hash / 重点验证哪几条 RV 闭合)
+- 不填 / 填错 prompt body → Pattern A Human bus 切到 T4 复制粘贴会粘错 prompt (粘成 review prompt 让 OC-review 重跑 review, 而不是 re-review verify fix)
+- 历史反例 (v0.5-rc1 dogfood h5coat-qt5core-missing): 04-fix-loop 完后 state.md `Next step.可粘贴 prompt` 是旧的 OC-impl 04-fix-loop prompt (没更新), Human 问"提示词是什么", Claude 才补写 re-review prompt
+
+OC-impl 04-fix-loop **刷完 state.md 必跑 B7 self-verify** (跟 03c / 04 / 09 一致): 6 项机器化检测 + Prompt 模板路径存在性. 任一 fail → 立即修复.
+
 你只需要确保:
 - working tree 干净 (除子任务包 paths 外无改动)
 - 测试 PASS (或在 chat 显式标 FAIL 原因)
