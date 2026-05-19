@@ -1,4 +1,4 @@
-# Prompt: OC-impl 写代码 (lite v0.4.0-lite-rc1 · 03b)
+# Prompt: OC-impl 写代码 (lite v0.5.0-lite-rc1 · 03b)
 
 ## 角色
 
