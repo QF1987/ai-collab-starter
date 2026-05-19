@@ -1,4 +1,4 @@
-# Prompt: OC-review 独立审 (lite v0.4.0-lite-rc1)
+# Prompt: OC-review 独立审 (lite v0.5.0-lite-rc1)
 
 ## 角色
 
@@ -71,6 +71,28 @@ Verdict 路径(lite):
   - state.md `Next step.Agent` 写 **`Human`** (lite 触发来源 C · OC escalation, 替代 main 的 Claude escalation)
   - 由 Human 决定: 接受 → verified; 不接受 → 新增 RV 要求 OC-impl 回滚
 
+#### 核心 paths git 追踪 verify (v0.5 · F05-v0.5 新增)
+
+每个核心 path **必须在 git 追踪**:
+
+```bash
+# 对子任务包"核心 paths"列每个 file 跑:
+for path in <子任务包核心 paths>; do
+  if [ -z "$(git ls-files "$path")" ]; then
+    echo "FAIL: $path NOT git tracked (.gitignore 命中: $(git check-ignore -v "$path" 2>&1))"
+  else
+    echo "OK: $path tracked"
+  fi
+done
+```
+
+任一核心 path `git ls-files` 返空 (即被 `.gitignore` 排除) → **立即 escalate Human** (P0/P1 等价风险, 修了等于没修 / 现场重新 staging 时丢失):
+- Human 决策路径 1: 修 `.gitignore` 加 `!/<path>` 白名单 + commit 该 path 入追踪
+- Human 决策路径 2: 退回 02 让 Codex 改 Decision 避开 umbrella 顶层 / gitignored 文件
+- state.md `Next step.Agent = Human` (lite 触发来源 C · OC escalation), `Next step.触发条件 = "F05-v0.5 · core path not git tracked"`
+
+历史反例 (dogfood v0.4 stable 第一个真实 epic): smart-uite umbrella whitelist `.gitignore` (`/*` + `!/.ai/**` + `!/AGENTS.md`) 排除 `cmake/` + `interim/`, OC-impl 改 `cmake/StageTdmRuntime.cmake` (Slice 1 核心 path) 不在 git 追踪 → 04 OC-review 未 catch, Claude audit 才发现 (lite v0.4 contract 漏检 · F05-v0.5 触发本 finding)。
+
 ### 第二步 · Architecture / pre-decisions 对齐
 
 对照 brief frontmatter `pre-decisions` D1-Dn + 已 accepted ADR 的 `Decision` 段 + `Data Contract` 段 (L1-L5 全部级别):
@@ -110,17 +132,52 @@ Verdict 路径(lite):
 - [ ] **B6**. Codex 03c 验收是否被 `human-override-codex-fix` 路径绕过(3 轮 fail 后 Codex 接手写)
   - 验证方法: progress.md / state.md 找 `human-override-codex-fix` 标记
   - 若有: 重点审 Codex 临时写的代码段是否守 scope (Codex 写代码倾向越界)
-- [ ] **B7** (v0.2.0 · F08). state.md 字段完整性: 当前 state.md 按 lite template 完整保留所有字段名 + 维护规则段 + Pattern A/B 段
-  - 验证方法 (机器化):
+- [ ] **B7** (v0.2.0 · F08 · v0.4 · F06-self 加 HTML 注释 + 枚举 · v0.5 · F04-v0.5 修跨行 grep + F06-v0.5 加 Prompt 模板 path verify). state.md 字段完整性 + 注释段 + 路径验证
+  - 验证方法 (机器化 · v0.5 修):
     ```bash
-    # 字段名应存在 (≥ 8 个核心字段名)
-    grep -c '当前阶段\|Last completed step.Agent\|Last completed step.Step\|Last completed step.产出\|Next step.Prompt 模板\|Next step.触发来源\|Next step.触发条件\|Next step.输入' .ai/state.md
-    # 维护规则段应存在 (应 = 3)
+    # (1) 字段名应存在 — v0.5 修 F04-v0.5: 改逐字段独立 grep (跨行 markdown 结构兼容)
+    REQUIRED_HEADERS=("## Active task" "## Last completed step" "## Next step")
+    REQUIRED_FIELDS=("- 当前 task:" "- 当前阶段:" "- 起始时间:" "- Agent:" "- Step:" "- 完成时间:" "- Commit:" "- 产出:" "- Prompt 模板:" "- 触发来源" "- 触发条件" "- 输入:")
+    MISSING=()
+    for h in "${REQUIRED_HEADERS[@]}"; do grep -q "^$h" .ai/state.md || MISSING+=("header: $h"); done
+    for f in "${REQUIRED_FIELDS[@]}"; do grep -q "^$f" .ai/state.md || MISSING+=("field: $f"); done
+    [ ${#MISSING[@]} -eq 0 ] && echo "fields complete" || echo "FAIL missing: ${MISSING[*]}"
+
+    # (2) 维护规则段应存在 (应 = 3)
     grep -c '## 维护规则\|## Human vs Agent\|### Pattern B 的安全栏' .ai/state.md
-    # state.md 总行数应接近 template (105 行 ± 5)
+
+    # (3) state.md 总行数应接近 template (105-150 行范围)
     wc -l .ai/state.md
+
+    # (4) HTML 注释段闭合 (v0.4 · F06-self)
+    OPEN=$(grep -c '<!--' .ai/state.md)
+    CLOSE=$(grep -c '\-\->' .ai/state.md)
+    [ "$OPEN" = "$CLOSE" ] && echo "comments balanced" || echo "FAIL: $OPEN open vs $CLOSE close"
+
+    # (5) 阶段枚举完整性 (v0.4 · F06-self · v0.5 起 13 枚举)
+    EXPECTED=("01-intake" "01-intake-done" "02-plan" "02-plan-refine" "03a-decompose" "03a-prep" "03b-impl" "03b-retry" "03c-verify" "04-review" "04-fix-loop" "merge" "<stage>-human-gate")
+    ENUM_MISSING=()
+    for e in "${EXPECTED[@]}"; do grep -q "$e" .ai/state.md || ENUM_MISSING+=("$e"); done
+    [ ${#ENUM_MISSING[@]} -eq 0 ] && echo "enums complete" || echo "FAIL missing: ${ENUM_MISSING[*]}"
+
+    # (6) Prompt 模板路径存在性 (v0.5 · F06-v0.5)
+    PROMPT_TEMPLATE=$(grep '^- Prompt 模板:' .ai/state.md | head -1 | sed 's/^- Prompt 模板: *`*\([^`]*\)`*.*/\1/' | sed 's/ *$//')
+    if [ "$PROMPT_TEMPLATE" = "NONE" ] || [ "$PROMPT_TEMPLATE" = "n/a" ]; then
+      echo "Prompt 模板 OK (intentionally empty)"
+    elif [ -f "$PROMPT_TEMPLATE" ]; then
+      echo "Prompt 模板 OK ($PROMPT_TEMPLATE exists)"
+    else
+      echo "FAIL Prompt 模板: $PROMPT_TEMPLATE not found"
+    fi
     ```
-  - 命中信号: 字段名漂移 (e.g. "Next step.输入" 被改成 "关键输入") / 头部标题被简化 / 维护规则段被删 / state.md < 80 行
+  - 命中信号:
+    - 字段名漂移 (e.g. "Next step.输入" 被改成 "关键输入")
+    - 头部标题被简化 (e.g. "# Session State (lite vX.Y)" → "# State")
+    - 维护规则段被删
+    - state.md < 80 行
+    - **HTML 注释开闭不配对** (v0.4 · F06-self 反例: re-review 阶段 OC-review 自刷时把 multi-line 注释简化为 single-line, 枚举值逃出注释段)
+    - **阶段枚举值缺失**
+    - **Prompt 模板路径不存在** (v0.5 · F06-v0.5 反例: OC-impl/OC-review 笔误填 `03c-codex-verify.md` 或 `03-oc-impl.md` 等不存在路径)
   - 严重度: P2 (lite 系统级风险), 升 Human
 
 **重要**: 自审盲点专项不替代 quality 通用项, 是补充。两段都跑。
@@ -265,7 +322,7 @@ OC-review (无论主审 04-review-1 还是 re-review 04-review-N) 完成刷 stat
 
 历史反例 (lite v0.3 dogfood F06-self): 2026-05-18 smart-uite re-review 阶段 OC-review 自刷 state.md 把 multi-line `<!-- ... -->` 注释简化为 single-line, 12 行枚举逃出注释段成为可见 markdown, 但因当时没自审钩子, 漂移持续到 commit 才被发现。
 
-**同样适用其它刷 state.md 的 Agent** (v0.4 加): Codex 03c / Codex 09-closeout 在收尾必做也应跑 B7 self-verify (3 prompts 一致)。
+**同样适用其它刷 state.md 的 Agent** (v0.4 加 · v0.5 · F06-v0.5 加 Prompt 模板 path verify): Codex 03c / Codex 09-closeout 在收尾必做也应跑 B7 self-verify (3 prompts 一致), 含 Prompt 模板路径存在性检测。
 
 #### Review 完成 state.md 刷新「不可推迟」硬约束（Dogfood #23 修复）
 

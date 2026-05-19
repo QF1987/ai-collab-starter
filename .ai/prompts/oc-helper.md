@@ -1,4 +1,4 @@
-# Prompt: OC-helper 全仓查询 (lite v0.2.0-lite)
+# Prompt: OC-helper 全仓查询 (lite v0.5.0-lite-rc1)
 
 ## 角色
 
@@ -67,6 +67,7 @@
 ```bash
 # 按 req.action 跑 grep, 严格遵守 max_matches
 # v0.2.0 · F11: 默认 --exclude-dir 第三方 + 构建产物 (除非 req include_third_party=true)
+# v0.5 · F02-v0.5: 加 .ai/scratch 防 OC-helper 自指 framework 元数据 (req/out/gitnexus 自己生成的文件 grep 命中浪费配额)
 grep -rn -C <context_lines> "<pattern>" <path> \
   --exclude-dir=.git \
   --exclude-dir=node_modules \
@@ -84,18 +85,22 @@ grep -rn -C <context_lines> "<pattern>" <path> \
   --exclude-dir=Debug \
   --exclude-dir=dist \
   --exclude-dir=target \
+  --exclude-dir=.ai/scratch \
   | head -<max_matches>
 ```
 
-**默认过滤理由 (v0.2.0 · F11)**:
+**默认过滤理由 (v0.2.0 · F11 + v0.5 · F02-v0.5)**:
 - `.git` — 仓 metadata
 - `node_modules` / `vendor` / `3rdLibraries` / `third_party` / `external` — 第三方依赖
 - `boost` / `Boost` — 大型 C++ 第三方头文件 (实战来自 smart-uite Daemon 单例 bug, 命中噪音极大)
 - `.venv` / `venv` / `__pycache__` — Python 第三方依赖与缓存
 - `build` / `Release` / `Debug` / `dist` / `target` — 构建产物
+- `.ai/scratch` (v0.5 · F02-v0.5) — OC-helper 自己工作目录, grep 命中自指 req/out/gitnexus/oc-impl-package 等 framework 元数据浪费配额
 
-**例外**: 若 req `intent` 段明确说 "包括第三方依赖" (e.g. 排查依赖版本漂移), req `action` 加 `include_third_party: true`, OC-helper 移除上述 `--exclude-dir`。
-若 req `additional_exclude_dirs` 非空, 追加为更多 `--exclude-dir`。
+**例外**:
+- 若 req `intent` 段明确说 "包括第三方依赖" (e.g. 排查依赖版本漂移), req `action` 加 `include_third_party: true`, OC-helper 移除第三方 `--exclude-dir`。
+- 若 req `intent` 段明确说 "包括 framework 元数据" (e.g. 排查 framework finding 漂移 / lite 自演化分析), req `action` 加 `include_lite_metadata: true` (v0.5 · F02-v0.5), OC-helper 移除 `.ai/scratch` 过滤。
+- 若 req `additional_exclude_dirs` 非空, 追加为更多 `--exclude-dir`。
 
 - 若 match > max_matches, out 文件 `status` 标 `partial`, `truncated: true`
 - 输出格式: 每条 `<file>:<line> | <snippet>`, 一行一条

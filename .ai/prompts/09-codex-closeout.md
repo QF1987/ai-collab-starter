@@ -1,4 +1,4 @@
-# Prompt: Codex 09-closeout · Epic 收口 (lite v0.4.0-lite-rc1)
+# Prompt: Codex 09-closeout · Epic 收口 (lite v0.5.0-lite-rc1)
 
 ## 角色
 
@@ -134,9 +134,19 @@ grep -q "^## ${EPIC_ID} · DONE" .ai/progress.md && echo "progress PASS" || echo
 
 # 5. review.md 无 P0/P1 open
 [ "$(grep -c 'Severity:.*P[01]\b.*\n.*Status:\s*open' .ai/review.md 2>/dev/null)" = "0" ] && echo "review PASS" || echo "FAIL: P0/P1 open"
+
+# 6. Prompt 模板路径存在 (v0.5 · F06-v0.5)
+PROMPT_TEMPLATE=$(grep '^- Prompt 模板:' .ai/state.md | head -1 | sed 's/^- Prompt 模板: *`*\([^`]*\)`*.*/\1/' | sed 's/ *$//')
+if [ "$PROMPT_TEMPLATE" = "NONE" ] || [ "$PROMPT_TEMPLATE" = "n/a" ]; then
+  echo "Prompt template OK (NONE / n/a · closeout 后无下一步是正常的)"
+elif [ -f "$PROMPT_TEMPLATE" ]; then
+  echo "Prompt template OK ($PROMPT_TEMPLATE exists)"
+else
+  echo "FAIL: Prompt template $PROMPT_TEMPLATE not found"
+fi
 ```
 
-5 项全 PASS → closeout 完成, chat 输出:
+6 项全 PASS → closeout 完成, chat 输出:
 
 ```
 ✅ closeout done · <epic-id>

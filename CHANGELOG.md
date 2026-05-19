@@ -12,6 +12,129 @@ fork 起点见 v0.1.0 段。
 
 ---
 
+## [v0.5.0-lite-rc1] — 2026-05-19
+
+> ⚠️ **Release candidate · 待 ≥ 1 个独立真实 epic 用 v0.5 contract dogfood 验证后翻 stable**。
+> (rc1 理由: v0.5 新加的契约 — 02 Assumptions to verify + Quick workaround 段 / 04 Scope `git ls-files` check / B7 grep 跨行修正 + Prompt 模板 path verify / OC-helper `.ai/scratch` exclude / 03a 子任务包 paths git 追踪标 — 未经独立 v0.5 contract dogfood。F05-v0.5 在 smart-uite 已半 release 到 AGENTS.md, 但 lite contract force 未实战。)
+
+### TL;DR
+
+- **6 条 lite-self finding 全消化** (2×P2 + 4×P3, 来源 lite v0.4.0-lite stable 跨 2 epic dogfood + Claude audit)
+- **关键 P2 严重 (P0/P1 等价) · F05-v0.5**: umbrella whitelist `.gitignore` 漏检核心 paths — lite 04 Scope 验证加 `git ls-files` check + Codex 02/03a paths 追踪 verify + getting-started/workflow 陷阱说明 + AGENTS.md half-release pattern (修了不能 deliver 风险, smart-uite 实战触发)
+- **新强约束: F01-v0.5 Assumptions to verify by Human 段** (02 输出格式 P0/P1 必填, force Codex 主动 cross-check 假设)
+- **新强约束: F03-v0.5 Quick workaround 段** (02 输出格式 P0/P1 必填, force Codex 给 Human 应急 hotfix 路径)
+- **B7 验证扩展** (F04-v0.5 修跨行 grep 误判 + F06-v0.5 加 Prompt 模板路径 path 存在性): 04/rubric/03c/09-closeout 全 sync
+- **OC-helper 默认 `.ai/scratch` exclude** (F02-v0.5): 防 OC-helper 自指 framework 元数据浪费配额
+- **state.md 维护规则 6**: Prompt 模板路径必须实际存在 (F06-v0.5)
+- 无 breaking change · v0.4 旧 brief / 子任务包 / state.md 仍合法
+
+### 触发数据
+
+- **来源**: lite v0.4.0-lite stable dogfood — smart-uite 跨 2 个 P0 bug epic + Claude audit
+  - `bug-20260518-dcbusinessmanager-h5coat-start-fails` (4 finding RV-05~08 触发 v0.5 F01-F03 候选)
+  - `bug-20260519-h5coat-qt5core-missing` (3 finding RV-09~11 触发 v0.5 F04-F06 候选 + 严重 umbrella .gitignore 漏检 F05-v0.5)
+- **重要数据点**:
+  - 09-codex-closeout 第 2 次实战 5/5 PASS (v0.4 翻 stable 信号确立)
+  - Codex 02 brief 主动加 "Cross-check confirmed 段" (5 类 cross-check + 非根因排除 · 教科书级 · F01-v0.5 精神实现 contract 未 force 前)
+  - 严禁动 paths 加 "二进制" 类细化 (*.dll/*.exe · 个体超 contract)
+  - Codex 09-closeout AGENTS.md Step 3c 主动 promote F05-v0.5 提议到 smart-uite 项目级 (half-release pattern)
+
+### Added · 新增能力
+
+#### 新强约束 §8 Assumptions to verify by Human (F01-v0.5) → `02-codex-plan.md`
+- 输出格式末尾固定段 `## Assumptions to verify`
+- 5 类必列假设 (命名歧义 / binary-source 映射 / 跨子项目调用链 / 架构敏感 / L2 无 evidence 子句) + 新 v0.5 第 6 类 (paths git 追踪状态 · 与 F05-v0.5 协同)
+- P0/P1 必列 ≥ 1, P2/P3 可标"无假设 evidence 闭环"
+
+#### 新强约束 §9 Quick workaround (F03-v0.5) → `02-codex-plan.md`
+- 输出格式末尾固定段 `## Quick workaround` (P0/P1 必填)
+- 必含 5 字段 (应急命令 ≤ 30 秒 / 适用范围 / 与 Decision 关系 / 为什么不是 Decision / 执行人 = Human)
+
+#### 03a 子任务包模板加 paths git 追踪状态 (F05-v0.5) → `03-codex-orchestrate.md`
+- 每条核心 path 必须标 `tracked` 或 `gitignored (需 .gitignore 白名单扩展)`
+- 若 `gitignored` → 03a 先升 Human 决策, 不能进 03b
+
+#### 04 Scope 验证加 `git ls-files` check (F05-v0.5) → `04-opencode-review.md`
+- 三步法第一步 Scope 验证段加"核心 paths git 追踪 verify"
+- 任一核心 path `git ls-files` 返空 → escalate Human (P0/P1 等价风险, 修了等于没修)
+- 历史反例: smart-uite umbrella whitelist `.gitignore` 排除 cmake/ + interim/
+
+#### B7 验证扩展 (F04-v0.5 跨行 grep 修正 + F06-v0.5 Prompt 模板 path verify) → `04-opencode-review.md` + `oc-code-quality-rubric.md`
+- F04-v0.5: 改逐字段独立 grep, 跨行 markdown header + list item 结构兼容 (旧 `grep -c 'Last completed step.Agent'` 跨行不匹配, 永远 fail)
+- F06-v0.5: 加 (6) Prompt 模板路径存在性 verify (`[ -f "$PROMPT_TEMPLATE" ]`), 防笔误填不存在路径 (跨 epic 反例: `.ai/prompts/03c-codex-verify.md` / `.ai/prompts/03-oc-impl.md`)
+- 收尾自审钩子同步: 03c / 04 / 09-closeout 三处刷 state.md 后必跑 B7 self-verify
+
+#### OC-helper 默认 `.ai/scratch` exclude (F02-v0.5) → `oc-helper.md`
+- grep 任务默认 `--exclude-dir=.ai/scratch` (跟 v0.2 F11 17 类默认 exclude 并列)
+- 防 OC-helper grep 自指 req/out/gitnexus/oc-impl-package framework 元数据浪费配额 (~40% noise · h5coat-start-fails 实战观察)
+- 例外 `include_lite_metadata: true` 允许 framework finding 漂移分析时移除
+
+#### 09-codex-closeout Step 4 验证扩展 (F06-v0.5) → `09-codex-closeout.md`
+- 加第 6 项 Prompt 模板路径存在性 verify (跟 04 B7 同步)
+- closeout 后 `Next step.Prompt 模板 = NONE` 是 OK 的 (epic 结束无下一步)
+
+### Changed · 适配性改动
+
+#### `workflow.md > §0 git 拓扑维度` (F05-v0.5)
+- umbrella + 子 git 行加 "⚠️ umbrella whitelist `.gitignore` 陷阱"
+- 加新子段 `#### umbrella whitelist .gitignore 陷阱与扩展` 含 v0.5 协同强约束机制 4 项 (02/03a/04/rubric)
+
+#### `getting-started.md > §一bis umbrella + 子 git` (F05-v0.5)
+- 加新子段 `#### ⚠️ 后续扩展陷阱 (v0.5 · F05-v0.5)`
+- 提供 `.gitignore` 扩展模板 (`!/cmake` + `!/interim` 等) + 历史反例 (smart-uite h5coat-qt5core-missing epic)
+
+#### `state.md > 维护规则` 加第 6 条 (F06-v0.5)
+- "`Next step.Prompt 模板` 字段值必须是实际存在的 .ai/prompts/*.md 文件路径, 或 NONE / n/a"
+
+#### `oc-code-quality-rubric.md > H2` (F05-v0.5)
+- 加"git 追踪 verify" 子项 (`git ls-files <core_path>` 返空 → H2 直接 fail)
+
+#### `03-codex-orchestrate.md > 03c 收尾必做` (F06-v0.5)
+- 加 Prompt 模板路径 self-verify bash snippet, 与 04 B7 同步
+
+### Removed · 删除
+
+无 · 全部增量改动。
+
+### Breaking changes
+
+无 · MINOR release。v0.4 旧契约仍合法, v0.5 是增量 best practice + 新能力。
+
+### 升级指南 (derived 项目 sync v0.5)
+
+```bash
+cd <derived-project-root>
+
+# 1. rsync prompts (全套 v0.5)
+rsync -av --exclude='.git' /path/to/ai-collab-starter-lite/.ai/prompts/ .ai/prompts/
+
+# 2. rsync key docs
+rsync -av /path/to/ai-collab-starter-lite/.ai/workflow.md .ai/
+rsync -av /path/to/ai-collab-starter-lite/.ai/getting-started.md .ai/
+rsync -av /path/to/ai-collab-starter-lite/.ai/oc-code-quality-rubric.md .ai/
+
+# 3. state.md surgical merge (维护规则 6 + 头部 v0.5.0-lite)
+diff .ai/state.md /path/to/ai-collab-starter-lite/.ai/state.md
+
+# 4. stamp version (rc 默认不强推, 但若已部分 dogfood v0.5 contract 可考虑)
+echo "v0.5.0-lite-rc1  · synced $(date +%Y-%m-%d)" > .ai/STARTER_VERSION
+echo "- $(date +%Y-%m-%d) · lite v0.5.0-lite-rc1 同步, 详见 ai-collab-starter-lite CHANGELOG" >> .ai/progress.md
+```
+
+**测试 v0.5 新能力**: 下个 epic 触发 P0 bug 时, Codex 02 brief 是否自动列 `## Assumptions to verify` + `## Quick workaround` 段; 04 OC-review 是否 catch umbrella whitelist `.gitignore` 排除核心 paths; B7 grep 是否能逐字段独立匹配 (而非跨行误判)。
+
+### lite → main sync 候选
+
+本次 6 条 finding 中:
+- **F01-v0.5 (Assumptions to verify)**: 普适, main 02-claude-plan.md 也可考虑加同样段
+- **F03-v0.5 (Quick workaround)**: 普适, main 也应有 P0 hotfix 路径段
+- **F04-v0.5 (B7 grep 跨行)**: 普适但 main rubric 不同, main owner 评估
+- **F05-v0.5 (umbrella .gitignore)**: 普适, 任何 umbrella whitelist .gitignore 项目都可能撞, main 02 + 04 + getting-started 应加同样防护
+- **F02-v0.5 (OC-helper exclude .ai/scratch)**: lite-specific (main 没 OC-helper 这个 agent 但有类似 grep helper)
+- **F06-v0.5 (state.md Prompt 模板 path verify)**: lite-specific (state.md template 形态不同)
+
+---
+
 ## [v0.4.0-lite-rc1] — 2026-05-18
 
 > ⚠️ **Release candidate · 待 ≥ 1 个独立真实 epic dogfood 验证 v0.4 新能力后翻 stable**。

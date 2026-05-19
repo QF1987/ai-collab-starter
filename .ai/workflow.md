@@ -1,4 +1,4 @@
-# AI Collaboration Workflow (lite v0.4.0-lite-rc1)
+# AI Collaboration Workflow (lite v0.5.0-lite-rc1)
 
 > **lite vs main**: 无 Claude,Codex 当 lead engineer(架构 + 拆任务 + 验收),OC 写代码 + 审 + 信息查询。
 > Escalation 接收方是 **Human**,不是 Claude main session。
@@ -57,10 +57,20 @@ This workflow turns requirements into reviewed, testable changes while preservin
 | git 拓扑 | 含义 | git 操作 cwd 边界 |
 |---------|-----|------------------|
 | **单仓** (默认) | 单 `.git`, lite 元数据 + 业务代码同仓 | repo 根目录跑 git, 沿用现有约定 |
-| **umbrella + 子 git** | 顶层 `.git` 只追 `.ai/` + `AGENTS.md`, 子目录各有独立 `.git` (e.g. smart-uite 30 子项目 C++ 系统) | umbrella 顶层 git 不追子路径; **任何 git 操作 (log/diff/blame) 必须 cd 进对应子仓**; 顶层 `git log -- Daemon/` 返回空 ≠ Daemon 无 commit |
+| **umbrella + 子 git** | 顶层 `.git` 只追 `.ai/` + `AGENTS.md`, 子目录各有独立 `.git` (e.g. smart-uite 30 子项目 C++ 系统) | umbrella 顶层 git 不追子路径; **任何 git 操作 (log/diff/blame) 必须 cd 进对应子仓**; 顶层 `git log -- Daemon/` 返回空 ≠ Daemon 无 commit; **⚠️ umbrella whitelist `.gitignore` 陷阱: `/*` + 4 白名单默认排除 cmake / interim / 顶层 build 脚本等, OC-impl 改这些文件不在 git 追踪 → 修了不能 deliver (v0.5 · F05-v0.5 反例)** |
 | **跨仓** | lite 仓 + 业务仓物理分离, env var $COLLAB_ROOT / $REPO_* | 每个 repo 各自 cwd, prompt / req 文件必须显式标 cwd |
 
 → 详见 `.ai/getting-started.md §一bis · git 拓扑选择` 和 `.ai/prompts/oc-helper.md > git 子操作纪律` 段。
+
+#### umbrella whitelist `.gitignore` 陷阱与扩展 (v0.5 · F05-v0.5)
+
+umbrella + 子 git 拓扑下, `.gitignore` 白名单模式 (`/*` + `!/.ai/**` + `!/AGENTS.md`) **默认排除所有顶层目录**, 仅追 lite 元数据。后续 epic 改 umbrella 顶层文件 (e.g. `cmake/CMakeLists.txt` / `scripts/build.sh` / `Dockerfile`) 时, **必须先扩展 .gitignore 白名单** 加 `!/cmake/` + `!/cmake/**` 等, 否则 OC-impl 改动**不在 git 追踪**, 修了等于没修 (现场重新 staging 时丢失)。
+
+**强约束机制** (v0.5 协同):
+- 02-codex-plan.md `§5 Paths 二组分` + `§8 Assumptions to verify`: Codex 02 必须 verify core paths `git ls-files` 非空
+- 03-codex-orchestrate.md `03a 子任务包模板`: 每条核心 path 必须标"git 追踪状态" (tracked / gitignored)
+- 04-opencode-review.md `第一步 Scope 验证`: 加 `git ls-files <core_path>` check, 返空 → escalate Human
+- oc-code-quality-rubric.md `H2`: 加 git 追踪 verify, 返空直接 fail
 
 ### 阶段流转图 (v0.3.0 加 01-intake 起点 · v0.2.0 · F13)
 

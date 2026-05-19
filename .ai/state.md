@@ -1,4 +1,4 @@
-# Session State (lite v0.3.0-lite-rc1)
+# Session State (lite v0.5.0-lite-rc1)
 
 > Resume 协议。每个 Agent 完成后必须刷新本文件。
 > 下一次开 session 第一件事:读这里就知道接哪一步。
@@ -105,6 +105,7 @@ NONE
 3. session 中断后回来——**Pattern A**:你(Human)用眼读本文件 → 复制 `Next step.可粘贴 prompt` → 粘给对应终端。Agent **不读** state.md(它收到的 prompt 已自带完整上下文)。
 4. 任务整体完成(merge + 文档收口都做完):**走 `workflow.md §9 Epic closeout` 完整 checklist** (v0.4 加 · F01-self), 不只是清空 `Active task / Last completed step / Next step` 三段, 还涉及 `.ai/scratch/` 清理 + `progress.md` append DONE 段 + `review.md` status 翻转 + `state.md` HTML 注释段闭合 self-verify (F06-self) 等。推荐喂 `.ai/prompts/09-codex-closeout.md` 让 Codex 协助。
 5. 多个并行任务:本文件**只**追当前活跃任务;其它任务用各自的 task 文件 `Handoff state` 段记录。
+6. (v0.5 · F06-v0.5) `Next step.Prompt 模板` 字段值必须是**实际存在的** `.ai/prompts/*.md` 文件路径, 或 `NONE` / `n/a` (无下一步 / 不适用)。填错路径 (e.g. `.ai/prompts/03c-codex-verify.md` 不存在 / `.ai/prompts/03-oc-impl.md` 笔误) 会被 OC-review 04 三步法第三步 B7 catch 升 Human。
 
 ## Human vs Agent · 谁该读 state.md
 

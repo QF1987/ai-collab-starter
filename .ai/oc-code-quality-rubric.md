@@ -1,4 +1,4 @@
-# OC 代码质量 rubric (lite v0.4.0-lite-rc1)
+# OC 代码质量 rubric (lite v0.5.0-lite-rc1)
 
 ## 用途
 
@@ -39,7 +39,8 @@ Codex 03c 验收 OC-impl 产出时, 按本 rubric 打分。
       3. 若 OC-impl 改了未列子仓的文件 → H2 fail
     - **跨仓场景** ($REPO_MAIN + $REPO_X): 在每个 repo cwd 内分别跑 git diff
   - **额外核对** (v0.2.0 · F15): 没动子任务包"严禁动的高风险 paths"列表中任一条; 触及任一 → H2 直接 fail
-  - 典型 fail 信号: 改了 `src/utils/format.ts` 但子任务包 paths 没列; 改了未列子仓的文件 (e.g. 子任务包只列 Daemon/, 但 diff 显示 MsgTransManager/ 也改了); 改了"严禁动"列表中的 `Daemon/config/Daemon.ini` 等高风险文件
+  - **(v0.5 · F05-v0.5) git 追踪 verify**: 对每个核心 path 跑 `git ls-files <core_path>` (返空 = `.gitignore` 排除), 任一返空 → H2 直接 fail (修了不能 deliver, 现场重新 staging 时丢失). 修复方向: 改 .gitignore 加 ! 白名单 或 改 02 Decision 避开 umbrella 顶层 / gitignored 文件
+  - 典型 fail 信号: 改了 `src/utils/format.ts` 但子任务包 paths 没列; 改了未列子仓的文件; 改了"严禁动"列表中的 `Daemon/config/Daemon.ini` 等高风险文件; **核心 path 物理改了但 `git ls-files` 返空** (v0.5 · F05-v0.5 反例 · smart-uite umbrella whitelist .gitignore 触发)
 - [ ] **H3**. 编译 / lint / typecheck 通过 (Codex 本机跑)
   - 验证方法: 跑子任务包"测试要求"段指定的命令
 - [ ] **H4**. 现有测试不退化 (新增测试可以失败, 但旧测试不能挂)

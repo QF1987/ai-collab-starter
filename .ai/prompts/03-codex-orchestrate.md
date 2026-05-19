@@ -1,4 +1,4 @@
-# Prompt: Codex 调度 (lite v0.4.0-lite-rc1 · 03a 拆任务 + 03c 验收)
+# Prompt: Codex 调度 (lite v0.5.0-lite-rc1 · 03a 拆任务 + 03c 验收)
 
 ## 角色
 
@@ -37,6 +37,9 @@
 - task brief: <path, 通常 .ai/tasks/<id>.md>
 - pre-decisions 摘要: D1=..., D2=..., D3=...
 - 本子任务涉及的 paths (核心): file1, file2
+  - **每条核心 path 必须标 git 追踪状态** (v0.5 · F05-v0.5): `tracked` 或 `gitignored (需 .gitignore 白名单扩展)`
+  - 若 `gitignored`, 03a 必须先升 Human 决策 (修 .gitignore 加 ! 白名单 vs 改 02 Decision 避开 umbrella 顶层文件), 不能进 03b
+  - 验证命令: `git ls-files <core_path>` (返空 = gitignored), `git check-ignore -v <core_path>` (输出规则行 = 命中 .gitignore)
 - 本子任务涉及的 paths (连带, 允许小改): file3
 - **严禁动的高风险 paths** (v0.2.0 · F15 · 必须列 ≥ 1 条具体路径 + 一句话理由, 禁止只写"其余全部"):
 
@@ -298,7 +301,15 @@ Tokens: in=<n> out=<n> total=<n>
 禁止: condensed 字段 / 重命名字段 / 删除 template 顶部说明段 / 删除维护规则段 / 删除 Pattern A/B 段 / 简化主标题 / 简化 multi-line HTML 注释为 single-line (v0.4 · F06-self)。
 只覆盖动态字段值, template 标题 / 注释 / 字段名称 / 校验规则段全部保留原文。
 
-**刷完后必跑 B7 self-verify** (v0.4 · F06-self): 见 `04-opencode-review.md > 3b · B7` 段 6 项机器化检测. 任一 fail → 立即修复 + 重 commit, 不算 03c 完成.
+**刷完后必跑 B7 self-verify** (v0.4 · F06-self · v0.5 加 Prompt 模板路径 verify · F06-v0.5): 见 `04-opencode-review.md > 3b · B7` 段 7 项机器化检测 (含 v0.5 新增 Prompt 模板路径存在性). 任一 fail → 立即修复 + 重 commit, 不算 03c 完成.
+
+```bash
+# v0.5 · F06-v0.5 加: Prompt 模板路径存在性 verify
+PROMPT_TEMPLATE=$(grep '^- Prompt 模板:' .ai/state.md | sed 's/^- Prompt 模板: *`*\([^`]*\)`*.*/\1/')
+[ "$PROMPT_TEMPLATE" = "NONE" ] || [ "$PROMPT_TEMPLATE" = "n/a" ] && echo "OK (intentionally empty)" || \
+  ([ -f "$PROMPT_TEMPLATE" ] && echo "OK ($PROMPT_TEMPLATE exists)" || echo "FAIL: $PROMPT_TEMPLATE not found")
+```
+
 违反 → OC-review 04 第三步 B7 catch + 升 Human。
 
 

@@ -1,4 +1,4 @@
-# Getting Started (lite v0.4.0-lite-rc1)
+# Getting Started (lite v0.5.0-lite-rc1)
 
 > 入口文档。三类常见情境都能在这里找到答案:
 >
@@ -96,6 +96,28 @@ prefix `from-lite-` 让 main 升级 session 能识别来源。
 - 任何 `git log` / `git diff` / `git blame` 必须 cd 进对应子仓, **不能**在 umbrella 顶层跑
 - prompt / req 文件中所有 git 操作都必须显式标 cwd (Codex 写 req 时 `cwd_override: "Daemon"`, OC-impl 03b Scope 自检在每个改动子仓各跑一次 git diff)
 - rubric H2 验证按 git 拓扑分场景跑 (详见 `oc-code-quality-rubric.md > H2`)
+
+#### ⚠️ 后续扩展陷阱 (v0.5 · F05-v0.5)
+
+后续 epic 若改 umbrella 顶层文件 (e.g. `cmake/CMakeLists.txt` / `cmake/StageTdmRuntime.cmake` / `scripts/build.sh` / `Dockerfile` / `interim/scripts/*.ps1`), **必须先扩展 `.gitignore` 白名单**:
+```gitignore
+# 加进 .gitignore 白名单段:
+!/cmake
+!/cmake/**
+!/interim
+!/interim/**
+# 若改其它顶层目录, 同样加 !/<dir> + !/<dir>/**
+```
+
+**否则**: OC-impl 改的文件物理存在但**不在 git 追踪** (`git ls-files <path>` 返空), 修了不能 deliver (现场重新 staging 时丢失) — 等价 P0/P1 风险。
+
+**v0.5 强约束机制** (自动 catch):
+- Codex 02 plan `§5 Paths 二组分` + `§8 Assumptions to verify`: 必须 verify core paths `git ls-files` 非空
+- Codex 03a 子任务包模板: 每条核心 path 必须标"git 追踪状态"
+- OC-review 04 三步法 `第一步 Scope 验证`: 加 `git ls-files <core_path>` check, 返空 → escalate Human
+- Codex/OC rubric H2: 加 git 追踪 verify, 返空直接 fail
+
+历史反例 (smart-uite v0.4 stable 第一个 epic `dcbusinessmanager-h5coat-qt5core-missing`): Codex 02 选改 `cmake/StageTdmRuntime.cmake` (顶层 cmake/) 触发本陷阱, Claude audit 才发现, 04 OC-review 漏 catch → F05-v0.5 finding。
 
 ### 跨仓 (lite 仓 + 业务仓物理分离)
 lite 仓 + N 个业务仓物理分离, 通过 env var (`$COLLAB_ROOT` 指向 lite 仓, `$REPO_*` 指向各业务仓) 引用。

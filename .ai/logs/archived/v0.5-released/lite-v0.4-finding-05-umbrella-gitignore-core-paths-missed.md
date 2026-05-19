@@ -10,7 +10,7 @@ target:
   - .ai/prompts/02-codex-plan.md (强约束 5 Paths 二组分加 git 追踪 verify)
   - .ai/workflow.md (umbrella whitelist .gitignore 模式风险段)
   - .ai/getting-started.md (§一bis git 拓扑选择 umbrella + 子 git 加 .gitignore 白名单陷阱)
-status: pending
+status: implemented-in-v0.5.0-lite-rc1
 related: [F01-v0.5, F03-v0.5]
 priority-tag: 严重 (P0/P1 风险等级)
 ---
@@ -153,3 +153,12 @@ Codex 02 plan 时**必须 verify** core paths `git ls-files` 不为空; OC-revie
 - 与 **F01-v0.5** (Codex 02 加 Assumptions to verify) 协同 — paths 追踪状态可作为 Assumptions 一类
 - 与 **F09** (rubric H2 多 git paths 验证 v0.2) 协同 — H2 验证 paths 在哪个 git 仓, F05-v0.5 验证 paths 在不在 git
 - **lite-self 形态**: 都是 lite framework 自演化, 通过 dogfood 跑出 contract gap
+
+---
+
+## v0.5.0-lite-rc1 实施记录 (2026-05-19)
+
+- **release**: v0.5.0-lite-rc1
+- **触发来源**: smart-uite v0.3/v0.4 dogfood 跨 3 epic 累积 (dcbusinessmanager-h5coat-start-fails / dcbusinessmanager-h5coat-qt5core-missing / + Claude audit)
+- **实施摘要**: 详见 `CHANGELOG.md > [v0.5.0-lite-rc1]` Added/Changed 段, 本 finding (F05-v0.5) 落入对应分组
+- **archive 路径**: `.ai/logs/archived/v0.5-released/lite-v0.4-finding-05-umbrella-gitignore-core-paths-missed.md`

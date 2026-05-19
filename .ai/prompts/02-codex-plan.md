@@ -1,4 +1,4 @@
-# Prompt: Codex 架构与切片 (lite v0.2.0-lite)
+# Prompt: Codex 架构与切片 (lite v0.5.0-lite-rc1)
 
 ## 角色
 
@@ -215,6 +215,7 @@ grep -rn "^var uploadFile\b\|^const uploadFile\b" <target-package>
 
 ### 7. OC delegation candidates 段 (v0.2.0 双路 · F04)
 
+
 在 brief 末尾标 `OC delegation candidates`, 列**三类** (v0.2.0 拆 OC-helper / GitNexus):
 
 ```markdown
@@ -248,6 +249,43 @@ grep -rn "^var uploadFile\b\|^const uploadFile\b" <target-package>
 
 这一段让 OC 04 review 时能预期 OC 调用频率, 反查异常。
 也让 Human 提前知道本 task 要切几个终端。
+
+### 8. Assumptions to verify by Human (v0.5 · F01-v0.5)
+
+Brief 描述里的**关键假设** (类型识别 / 命名映射 / 跨子项目调用 / 32-64 位 / 工作目录 / 编码 等架构敏感选择) 必须显式标在 02 输出末尾 `## Assumptions to verify` 段, 让 Human cross-check。
+
+#### 必须列的假设类型 (任一命中 → 必列)
+
+- **命名歧义**: Brief 描述路径 (e.g. "DcBusinessManager 托盘菜单") vs evidence 实际路径 (e.g. `DcReaderService/trayclass.cpp`) 不一致 — **必列**
+- **binary 名 vs source 子仓名映射**: 当二进制名跟代码所在子仓名不同 (e.g. binary `DcBusinessManager.exe` 用 `DcReaderService/` 代码编译) — **必列**
+- **跨子项目调用链假设**: 涉及 wrapper / inheritance / 反射 / IPC / proto 序列化 等不直观调用关系 — **必列**
+- **架构敏感选择假设**: 32 vs 64 位 / Windows vs Linux / 调试 vs Release / 字符编码 (GBK vs UTF-8) / 工作目录依赖 等 — **必列**
+- **L2 摸排无 evidence 的子句**: 02 brief 任一句陈述若 L2 摸排没有 ≥ 1 条 evidence 支持 — **必列**
+- **paths 在 git 追踪状态** (v0.5 · F05-v0.5): core paths 若在 umbrella whitelist `.gitignore` 排除范围, 必须列假设 + escalate Human (修了不能 deliver 风险)
+
+#### 例外: 真无假设
+
+若 02 L2 摸排 evidence 完全闭环 (每个 brief 陈述都有 evidence 支持 + 无命名歧义 + 无架构敏感选择), 显式标 "**无假设, evidence 闭环 confirmed**"。
+
+**但若 brief frontmatter `human-escalation-suggested: true` 或 `severity: P0/P1`, 必须列 ≥ 1 项**, 不允许 "无假设" 兜底 (P0/P1 风险高, 强制 cross-check)。
+
+#### 反例 (dogfood 留底 · v0.5)
+
+- ❌ Codex 02 brief 反复说 "DcBusinessManager 托盘菜单", 但 GitNexus evidence 全在 `DcReaderService/`, 没列假设 — Claude 外部审计才发现, 生产环境若没审则浪费下游一整轮
+- ✅ Codex 02 brief 描述 "DcBusinessManager 托盘菜单", 末尾 Assumptions 段列 A1: "binary `DcBusinessManager.exe` 用 `DcReaderService/*.cpp` 编译 · evidence: `JsCoat/CMakeLists.txt:N` install target / `DcReaderService/CMakeLists.txt` add_executable · cross-check 方式: Human 跑 `dumpbin /headers <bin>` 或 verify binary 命名 mapping"
+
+### 9. Quick workaround (P0/P1 必填 · v0.5 · F03-v0.5)
+
+P0/P1 任务 02 输出末尾**必填** `## Quick workaround` 段, 给 Human 一条**现在能跑的 ≤ 30 秒 hotfix**, 跟长期 fix 并行。P2/P3 任务可显式标"无 quick workaround"。
+
+**必含字段**:
+- **应急命令 / 操作**: ≤ 30 秒能跑完的具体步骤 (e.g. "在本机 `dcCardDriver.ini` 加 `StartH5Bit/Type32Bit=true`" / "手动复制 `Qt5Core.dll` 到 `recardbin/runtimes/qt-5.15.2/bin/`")
+- **适用范围**: 仅本机 / 仅当前安装包 / 仅 dev VM / ...
+- **与 Decision 关系**: 跟长期 fix (Decision 段方案) 不冲突, 可并行
+- **为什么这不是 Decision**: 引用 Alternatives `Alt-N · workaround · 被拒` 段, 解释"作为唯一修复不够" (无法覆盖新机器 / 重装包 / 配置重生成 / 多设备)
+- **执行人**: Human (lite contract: workaround 不走 OC-impl, Human 直接跑)
+
+例外: P2/P3 任务可显式标 "无 quick workaround, 直接等 lite 流程修复"。
 
 ## 输出格式
 
@@ -321,6 +359,33 @@ created: YYYY-MM-DD
 
 ### OC-impl 子任务包 (03a 阶段展开)
 - ...
+
+## Cross-check confirmed (若有命名歧义 / binary-source 映射 · v0.5 · F01-v0.5 协同)
+
+(若 brief 涉及命名歧义 / binary-source 映射 / 跨子项目假设, 这里列 cross-check 证据闭环; 若真没歧义, 跳过本段)
+
+- ...
+
+## Assumptions to verify (Human cross-check 必读 · v0.5 · F01-v0.5)
+
+> 若本段非空, state.md `Next step.触发条件 = "X · Assumptions to verify"`, Human 必看必反馈才能进 03a。
+> P0/P1 任务**必列** ≥ 1 项 (即使 evidence 闭环, 列高风险假设让 Human 兜底)。
+> P2/P3 任务可标 "无假设, evidence 闭环 confirmed"。
+
+- **A1**: <一句话假设> · evidence: <file:line / path> · cross-check 方式: <Human 看哪 / 跑什么命令>
+- **A2**: ...
+
+## Quick workaround (P0/P1 必填 · P2/P3 可标无 · v0.5 · F03-v0.5)
+
+> 给 Human 一条**现在能跑的 ≤ 30 秒 hotfix**, 跟长期 fix 并行执行不冲突。
+
+- **应急命令 / 操作**: <具体步骤>
+- **适用范围**: <仅本机 / 仅当前安装包 / ...>
+- **与 Decision 关系**: 不冲突 (Decision 是长期 fix, workaround 是应急补 deliver)
+- **为什么不是 Decision**: 见 Alternatives `Alt-N · workaround · 被拒` (无法覆盖新机器 / 重装包 / 配置重生成 / 多设备)
+- **执行人**: Human (workaround 不走 OC-impl)
+
+(P2/P3 任务: 标 "无 quick workaround, 直接等 lite 流程修复")
 
 ## Decision record (ADR-YYYYMMDD-NN)
 ```

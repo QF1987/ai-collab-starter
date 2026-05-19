@@ -6,7 +6,7 @@ source-project: lite-self (v0.4.0-lite-rc1 dogfood · smart-uite dcbusinessmanag
 discovered: 2026-05-18
 target:
   - .ai/prompts/02-codex-plan.md (输出格式末尾加 "Quick workaround" 段 · P0/P1 必填)
-status: pending
+status: implemented-in-v0.5.0-lite-rc1
 related: [F01-v0.5, F12, F06]
 ---
 
@@ -109,3 +109,12 @@ pre-decisions:
 - 与 **F12** (软措辞清单) 弱关联: F12 防 Codex 02 给模糊决策, F03-v0.5 让 Codex 02 给清晰的"应急路径 vs 长期 fix" 二分
 - 与 **F06** (severity → escalation 默认映射) 协同: P0/P1 触发 `human-escalation-suggested: true` + Quick workaround 段, Human gate 看 brief 一眼知道(a)接受 (b)退回 (c)override + 是否并行 hotfix
 - 触发本 finding 的实战是 v0.4 dogfood, lite 自演化路径
+
+---
+
+## v0.5.0-lite-rc1 实施记录 (2026-05-19)
+
+- **release**: v0.5.0-lite-rc1
+- **触发来源**: smart-uite v0.3/v0.4 dogfood 跨 3 epic 累积 (dcbusinessmanager-h5coat-start-fails / dcbusinessmanager-h5coat-qt5core-missing / + Claude audit)
+- **实施摘要**: 详见 `CHANGELOG.md > [v0.5.0-lite-rc1]` Added/Changed 段, 本 finding (F03-v0.5) 落入对应分组
+- **archive 路径**: `.ai/logs/archived/v0.5-released/lite-v0.4-finding-03-codex-02-quick-workaround-section.md`

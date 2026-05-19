@@ -6,7 +6,7 @@ source-project: lite-self (v0.4.0-lite-rc1 dogfood · smart-uite dcbusinessmanag
 discovered: 2026-05-18
 target:
   - .ai/prompts/oc-helper.md (grep 任务默认 --exclude-dir 清单加 .ai/scratch)
-status: pending
+status: implemented-in-v0.5.0-lite-rc1
 related: [F11, F01-v0.5]
 ---
 
@@ -133,3 +133,12 @@ grep -rn -C <context_lines> "<pattern>" <path> \
 - 与 **F11** (v0.2 OC-helper 默认过滤第三方) 同形态: F11 排第三方依赖 + 构建产物, F02-v0.5 排 lite framework 自己工作目录
 - 与 **F01-v0.5** (Assumptions to verify) 弱关联: 都是 v0.4 dogfood smart-uite dcbusinessmanager-h5coat-start-fails bug 02 L2 摸排阶段触发
 - v0.5 inbox 累计 2 条 (F01-v0.5 P2 + F02-v0.5 P3), 距升级阈值 (≥ 5) 还差 3 条, 或任一 P0/P1 触发紧迫升级
+
+---
+
+## v0.5.0-lite-rc1 实施记录 (2026-05-19)
+
+- **release**: v0.5.0-lite-rc1
+- **触发来源**: smart-uite v0.3/v0.4 dogfood 跨 3 epic 累积 (dcbusinessmanager-h5coat-start-fails / dcbusinessmanager-h5coat-qt5core-missing / + Claude audit)
+- **实施摘要**: 详见 `CHANGELOG.md > [v0.5.0-lite-rc1]` Added/Changed 段, 本 finding (F02-v0.5) 落入对应分组
+- **archive 路径**: `.ai/logs/archived/v0.5-released/lite-v0.4-finding-02-oc-helper-default-exclude-ai-scratch.md`

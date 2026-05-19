@@ -7,7 +7,7 @@ discovered: 2026-05-19
 target:
   - .ai/prompts/04-opencode-review.md (3b · B7 grep pattern 修正)
   - .ai/oc-code-quality-rubric.md (B7 验证段同步)
-status: pending
+status: implemented-in-v0.5.0-lite-rc1
 related: [F06-self, F02]
 ---
 
@@ -94,3 +94,12 @@ grep -c '## 维护规则\|## Human vs Agent\|### Pattern B 的安全栏' .ai/sta
 - 与 **F06-self** (v0.4 B7 加 HTML 注释闭合 + 枚举完整性) 同根 — B7 验证完整化系列
 - 与 **F02** (state.md 字段漂移) 协同 — 都是 state.md 守约的机器化保障
 - 跨 epic: smart-uite 跑 4 个 epic 的 04 review 都没暴露 (因为 OC-review 一般 PASS 不严格 catch 自检 grep 输出), 本 epic OC-review 主动指出
+
+---
+
+## v0.5.0-lite-rc1 实施记录 (2026-05-19)
+
+- **release**: v0.5.0-lite-rc1
+- **触发来源**: smart-uite v0.3/v0.4 dogfood 跨 3 epic 累积 (dcbusinessmanager-h5coat-start-fails / dcbusinessmanager-h5coat-qt5core-missing / + Claude audit)
+- **实施摘要**: 详见 `CHANGELOG.md > [v0.5.0-lite-rc1]` Added/Changed 段, 本 finding (F04-v0.5) 落入对应分组
+- **archive 路径**: `.ai/logs/archived/v0.5-released/lite-v0.4-finding-04-b7-grep-cross-line-misjudge.md`

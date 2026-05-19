@@ -10,7 +10,7 @@ target:
   - .ai/prompts/03b-opencode-impl.md (说明 OC-impl 不刷 state.md, 但若 04-fix-loop 刷需 self-verify)
   - .ai/prompts/09-codex-closeout.md (Step 4 验证段加 Prompt 模板路径检测)
   - .ai/state.md (维护规则段加"Prompt 模板路径必须实际存在")
-status: pending
+status: implemented-in-v0.5.0-lite-rc1
 related: [F05-self, F02]
 ---
 
@@ -125,3 +125,12 @@ FAIL → 立即修复 (改对正确路径) + 重 commit, 不算 step 完成。
 | h5coat-qt5core-missing (v0.4) | 04 OC-review 刷 state.md | `.ai/prompts/03-oc-impl.md` | `.ai/prompts/03b-opencode-impl.md` |
 
 → 跨 v0.3/v0.4 不同 Agent 都犯, 不是个体行为 → contract gap
+
+---
+
+## v0.5.0-lite-rc1 实施记录 (2026-05-19)
+
+- **release**: v0.5.0-lite-rc1
+- **触发来源**: smart-uite v0.3/v0.4 dogfood 跨 3 epic 累积 (dcbusinessmanager-h5coat-start-fails / dcbusinessmanager-h5coat-qt5core-missing / + Claude audit)
+- **实施摘要**: 详见 `CHANGELOG.md > [v0.5.0-lite-rc1]` Added/Changed 段, 本 finding (F06-v0.5) 落入对应分组
+- **archive 路径**: `.ai/logs/archived/v0.5-released/lite-v0.4-finding-06-state-md-prompt-template-path-no-verify.md`
