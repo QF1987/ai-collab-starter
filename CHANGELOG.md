@@ -9,6 +9,63 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html):
 
 ---
 
+## [v5.0.0-rc1] — 2026-05-20
+
+> ⚠️ **Release candidate · 待实战 dogfood 验证后翻 stable**。
+> 本版本是纯命名重构 (0 实战 dogfood)。derived 项目默认仍 sync v3.0.0 stable。
+
+> 🔨 **MAJOR · breaking change**: 角色名 `Codex → Impl`、`OpenCode → Scout`,6 个 prompt 文件去工具品牌前缀。`Claude` 角色名保留不变。
+
+### TL;DR
+
+- **工具无关命名重构**: 角色名描述职责而非工具品牌 —— `Codex → Impl`(实施层)、`OpenCode → Scout`(低成本先锁层:摸排/廉价审/草稿)。`Claude` 保留(main 的架构决策定位本就以 Claude 为核心)。
+- 6 个 prompt 文件重命名去工具前缀;`02-claude-plan.md` 保留(Claude 不变)。
+- 触发: lite 产品线已于 `v0.7.0-lite-rc1` 做同类重构 (lite finding F11-v0.7); Human 要求 main 同步做工具无关命名, 以便切换底层 agent 工具 (如 Codex CLI → 其它) 时框架命名不失效。
+
+### 实战数据
+
+- 无独立 dogfood —— 命名重构, 由 lite v0.7 重构 + Human 工具栈决策驱动。
+- lite 侧同源重构: `ai-collab-starter-lite` `v0.7.0-lite-rc1` 已落地 (`Codex→Lead` / `OC-*→Helper/Impl/Reviewer`)。main 角色拓扑不同 (3 角色 vs lite 4 角色), 故映射不同。
+
+### Breaking changes (MAJOR)
+
+**角色重命名**:
+
+| 旧名 | 新名 | 职责 |
+|------|------|------|
+| Codex | **Impl** | 实施 (03) / 修复 (06) / 草稿审校 (08) |
+| OpenCode | **Scout** | 上下文摸排 (01) / 低成本 review (04) / 草稿实施 (07) |
+| Claude / Claude Code | *(不变)* | 架构决策 / 高风险评审 |
+
+**prompt 文件重命名**:
+
+```
+01-opencode-context.md  → 01-context.md
+03-codex-implement.md   → 03-implement.md
+04-opencode-review.md   → 04-review.md
+06-codex-fix.md         → 06-fix.md
+07-opencode-draft.md    → 07-draft.md
+08-codex-audit.md       → 08-audit.md
+02-claude-plan.md       → (不变 · Claude 保留)
+```
+
+**其它 token**: TODO 标记 `TODO(codex-review) → TODO(impl-review)`;全仓 prose / 阶段枚举 / 触发来源表里 `Codex/OpenCode/OC` 角色引用全部 sync 到新名。
+
+### Changed
+
+- 全仓角色 token 替换: `.ai/prompts/` (7 文件) / `workflow.md` / `state.md` / `AGENTS.md` / `getting-started.md` / `intake-templates.md` / `token-strategy.md` / `review.md` / `README.md` / `STRUCTURE.md`
+- `decisions.md` / `progress.md` / `CHANGELOG.md` 历史段**不动** (append-only 历史记录, 保留旧名)
+
+### 升级指南 (derived 项目 sync)
+
+> rc 默认不强推; 等翻 stable 后再 sync。stable sync 时:
+
+1. `rsync` 新 `.ai/prompts/` (6 个文件名变更, 旧文件需删除; `02-claude-plan.md` 不变)
+2. 项目内引用旧 prompt 路径 / 旧角色名的文档按 Breaking changes 映射表替换
+3. 旧 epic 归档 / decisions.md 不动 (历史保留旧名)
+
+---
+
 ## [v4.0.0-rc1] — 2026-05-15
 
 > ⚠️ **Release candidate · 待实战 dogfood 验证后翻 stable**

@@ -4,8 +4,8 @@
 
 - Reduce repeated full-repo scans.
 - Spend Claude tokens only on high-value reasoning.
-- Keep Codex implementation context bounded.
-- Let OpenCode and lower-cost models prepare context and reviews.
+- Keep Impl implementation context bounded.
+- Let Scout and lower-cost models prepare context and reviews.
 - Preserve reusable knowledge in Markdown.
 
 ## Layered Context
@@ -21,7 +21,7 @@ Use context in this order:
 
 ## Reducing Context
 
-- Ask OpenCode for a file map before asking Claude for design.
+- Ask Scout for a file map before asking Claude for design.
 - Summarize large modules instead of pasting full files.
 - Prefer symbols, paths, call chains and test names over raw source.
 - Use `rg` or GitNexus queries with scoped terms.
@@ -35,7 +35,7 @@ Split when:
 - The task touches more than one repo.
 - The task changes protocol or storage semantics.
 - The conversation exceeds one coherent feature or bug.
-- Claude has produced a decision and Codex is ready to implement.
+- Claude has produced a decision and Impl is ready to implement.
 - Review findings need a separate fix pass.
 
 Each split should leave a task file with goal, paths, decisions, tests and next step.
@@ -54,11 +54,11 @@ Each split should leave a task file with goal, paths, decisions, tests and next 
 - Move durable decisions into `.ai/decisions.md`.
 - Move review findings into `.ai/review.md`.
 - Start a new session when implementation begins after architecture approval.
-- Do not make Claude re-read implementation output that OpenCode can summarize.
+- Do not make Claude re-read implementation output that Scout can summarize.
 
 ## Agent Boundaries
 
-OpenCode:
+Scout:
 
 - Best for broad but cheap scanning, doc generation, symbol maps and low-cost review.
 - Should output concise context packets with file paths and risks.
@@ -68,7 +68,7 @@ Claude Code:
 - Best for architecture, complex root cause, trade-offs and critical review.
 - Should receive a narrow question and prepared context packet.
 
-Codex:
+Impl:
 
 - Best for editing files, fixing tests, wiring build scripts and running verification.
 - Should receive exact repo, paths, task file, acceptance criteria and test commands.

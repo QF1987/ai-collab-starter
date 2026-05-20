@@ -16,7 +16,7 @@
 
 ## 〇、任何新 Claude session 启动前的检查清单（v4.0 强约束）
 
-任何 Claude / OC / Codex session 在 derived 项目内启动业务任务**之前**,**必须**先跑这套检查:
+任何 Claude / Scout / Impl session 在 derived 项目内启动业务任务**之前**,**必须**先跑这套检查:
 
 ```bash
 # 1. 看本项目 STARTER_VERSION stamp
@@ -106,11 +106,11 @@ rm -rf .ai/tasks/* .ai/logs/* .ai/archive/* 2>/dev/null || true
 - Owner: <human>
 - Date: YYYY-MM-DD
 - Repos affected: <list>
-- Context: 新项目 <PROJECT_NAME> 启动，引入多 Agent 协同框架（Claude Code + Codex + OpenCode）以应对中-大型工作量的可追溯性需求。
+- Context: 新项目 <PROJECT_NAME> 启动，引入多 Agent 协同框架（Claude Code + Impl + Scout）以应对中-大型工作量的可追溯性需求。
 - Decision:
   - Claude Code 负责架构决策与高风险评审
-  - Codex 负责实施、审校、修复
-  - OpenCode 负责上下文摸排、草稿实施、低成本 review、文档维护
+  - Impl 负责实施、审校、修复
+  - Scout 负责上下文摸排、草稿实施、低成本 review、文档维护
   - 工作目录与日志统一在 .ai/，源码在真实仓
 - Alternatives considered: 单 Agent 全包；不引入框架。
 - Consequences:
@@ -170,7 +170,7 @@ Claude 写的有偏差或漏掉的项目特性，手动改对。常见漏项：
 | 规模 | 标志 | 入口 | 跑哪些 prompt | 何时止步 |
 | --- | --- | --- | --- | --- |
 | **Tiny** | < 30 行、单文件、命名调整、文档改字 | 单 Agent 单轮对话 | 不走框架 | commit 即止 |
-| **Small** | 1-2 小时、单模块、行为清晰 | 人直接写 task 文件 | 03（Codex 实施）→ 04（OC review）→ 合入 | review 通过即合入 |
+| **Small** | 1-2 小时、单模块、行为清晰 | 人直接写 task 文件 | 03（Impl 实施）→ 04（Scout review）→ 合入 | review 通过即合入 |
 | **Medium** | 半天-1 天、多文件、需权衡 | 人写一两段 brief | 01 → 02 → 03 → 04 → 合入 | 同上 |
 | **Large** | 多日、跨模块、可能跨仓 | 人写 brief 标 Large | 01 → 02（切片 ≤3）→ 多次 (07+08) → 04 合入前 | 切片全部合入 |
 | **Epic** | 多周、跨多目标（如 P0 系列） | `.ai/plan.md` 建 epic 章节 | epic 拆 ≥3 个 task 文件，各自走 Large | 整 epic 收口 |
@@ -197,7 +197,7 @@ Claude 写的有偏差或漏掉的项目特性，手动改对。常见漏项：
 <已知的技术限制 / 截止时间 / 依赖>
 ```
 
-把这段贴给 OC（用 `01-opencode-context.md` 模板）即可启动。
+把这段贴给 Scout（用 `01-context.md` 模板）即可启动。
 
 ### Small 任务的 task 文件最小模板
 
@@ -225,16 +225,16 @@ Claude 写的有偏差或漏掉的项目特性，手动改对。常见漏项：
 - [ ] ...
 ```
 
-直接喂给 Codex（`03-codex-implement.md`）。
+直接喂给 Impl（`03-implement.md`）。
 
 ### 「跳过哪一步」纪律
 
 | 跳过 | 何时合理 | 何时危险 |
 | --- | --- | --- |
-| 跳 OC 摸排（01） | task 写得已够清楚 / Small | Medium 以上禁止跳——容易扩 scope |
+| 跳 Scout 摸排（01） | task 写得已够清楚 / Small | Medium 以上禁止跳——容易扩 scope |
 | 跳 Claude 决策（02） | scope 满足 `AGENTS.md > Scope Heuristics` 的 Claude 直改条件 | 跨仓 / 协议改动禁止跳 |
-| 跳 OC review（04） | Codex 自审 + Claude 评审已覆盖 | 不要跳——便宜的最后一道扫雷 |
-| 跳 Claude 评审（05） | OC 没标 escalate | OC 标了就不能跳 |
+| 跳 Scout review（04） | Impl 自审 + Claude 评审已覆盖 | 不要跳——便宜的最后一道扫雷 |
+| 跳 Claude 评审（05） | Scout 没标 escalate | Scout 标了就不能跳 |
 
 ---
 
@@ -245,10 +245,10 @@ Claude 写的有偏差或漏掉的项目特性，手动改对。常见漏项：
 ### Bug 流程速记
 
 ```
-Step 1: OC bug packet（含复现路径 + 嫌疑 commit 区间）
+Step 1: Scout bug packet（含复现路径 + 嫌疑 commit 区间）
 Step 2: Claude 修复策略决策（minimal patch / refactor-with-fix / defer + workaround）
-Step 3: Codex / OC 实施 + 回归测试（必须）
-Step 4: OC review（专门检查回归测试有效性）
+Step 3: Impl / Scout 实施 + 回归测试（必须）
+Step 4: Scout review（专门检查回归测试有效性）
 Step 5: 合入 + 关闭 review.md 中对应 finding
 ```
 
@@ -272,13 +272,13 @@ bug 的 Step 1 输入比 feature 多两段：
 <git bisect 候选区间，如已知>
 
 ## Initial hypothesis
-<可选；OC 调研后会确认或推翻>
+<可选；Scout 调研后会确认或推翻>
 
 ## Severity
 P0 / P1 / P2 / P3（参考 review.md > Severity 定义）
 ```
 
-OC 的 packet 输出多两段：
+Scout 的 packet 输出多两段：
 
 - **稳定复现路径**（明确步骤，人能照做）
 - **嫌疑 commit 区间**（git log + 可能的 bisect 候选）
@@ -306,7 +306,7 @@ bug task 文件 Acceptance Criteria 必须包含：
 - [ ] 该回归测试加入常规测试套件（CI 默认跑）
 ```
 
-08 Codex 审校对 bug 任务**额外**检查（在通用第 4 步之上）：
+08 Impl 审校对 bug 任务**额外**检查（在通用第 4 步之上）：
 
 - 测试代码**真的**跑了 bug 的代码路径，不是空跑
 - 临时 revert patch 后测试**确实 fail**（如条件允许；不能 revert 时至少要静态确认逻辑覆盖）
@@ -320,7 +320,7 @@ bug 必须作为 finding 在 `.ai/review.md` 追踪：
 
 - Severity: P0 | P1 | P2 | P3
 - Reporter: <人 / Agent / 监控告警>
-- Owner: Codex（或 OC 草稿）
+- Owner: Impl（或 Scout 草稿）
 - Verifier: <Reporter 或指定人>
 - Repo: <path>
 - File/symbol: <精确定位>
@@ -336,9 +336,9 @@ bug 必须作为 finding 在 `.ai/review.md` 追踪：
 
 生产事故 / 阻塞用户的 P0 bug 允许：
 
-- 跳过 Step 1 OC packet——**人**直接写复现到 task 文件
+- 跳过 Step 1 Scout packet——**人**直接写复现到 task 文件
 - 跳过 Step 2 ADR——**先**打 minimal hotfix 合入，**事后** 24 小时内补 ADR
-- 跳过 Step 4 OC review——Codex 自审 + 人 review 即可
+- 跳过 Step 4 Scout review——Impl 自审 + 人 review 即可
 
 但**绝不**允许：
 

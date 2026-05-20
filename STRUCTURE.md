@@ -21,14 +21,14 @@ ai-collab-starter/
 │   ├── architecture.md.template ← 架构原则 + 边界 + 评审触发条件（bootstrap 后改名）
 │   ├── plan.md.template      ← Active Epics + Planning Rules（bootstrap 后改名）
 │   ├── prompts/
-│   │   ├── 01-opencode-context.md   ← OC 摸排 packet
+│   │   ├── 01-context.md   ← Scout 摸排 packet
 │   │   ├── 02-claude-plan.md        ← Claude 架构决策 + 切片
-│   │   ├── 03-codex-implement.md    ← Codex 直接实施
-│   │   ├── 04-opencode-review.md    ← OC 低成本 review
+│   │   ├── 03-implement.md    ← Impl 直接实施
+│   │   ├── 04-review.md    ← Scout 低成本 review
 │   │   ├── 05-claude-review.md      ← Claude 关键评审
-│   │   ├── 06-codex-fix.md          ← Codex 修复已批准 finding
-│   │   ├── 07-opencode-draft.md     ← OC 草稿实施（Codex 后续审校）
-│   │   └── 08-codex-audit.md        ← Codex 审校 OC 草稿（PASS/PATCH/REJECT）
+│   │   ├── 06-fix.md          ← Impl 修复已批准 finding
+│   │   ├── 07-draft.md     ← Scout 草稿实施（Impl 后续审校）
+│   │   └── 08-audit.md        ← Impl 审校 Scout 草稿（PASS/PATCH/REJECT）
 │   ├── tasks/                ← 单个任务文件（一 task 一 PR）
 │   ├── logs/                 ← Agent 中间产出（context packet / draft.patch / test.log）
 │   ├── archive/              ← progress.md 旧段归档
@@ -59,7 +59,7 @@ ai-collab-starter/
 | --- | --- |
 | `.ai/getting-started.md` | 新项目 / 新需求 / bug 三类入口的总指南 |
 | `.claude/skills/intake/SKILL.md` | `/intake` skill 触发：探索式 / 问答式两套问答 |
-| `.ai/intake-templates.md` | intake 问题库 + 产出模板（OC / Codex 也能直接读） |
+| `.ai/intake-templates.md` | intake 问题库 + 产出模板（Scout / Impl 也能直接读） |
 
 ### Prompt 体系（按角色分）
 
@@ -67,14 +67,14 @@ ai-collab-starter/
 
 | Agent | Prompt | 阶段 |
 | --- | --- | --- |
-| OpenCode | 01 | 摸排（产 context packet） |
+| Scout | 01 | 摸排（产 context packet） |
 | Claude | 02 | 架构决策 + 切片（产 ADR + task 文件） |
-| Codex | 03 | 直接实施 |
-| OpenCode | 04 | 低成本 review |
+| Impl | 03 | 直接实施 |
+| Scout | 04 | 低成本 review |
 | Claude | 05 | 关键评审（升级路径） |
-| Codex | 06 | 修复已批准 finding |
-| OpenCode | 07 | 草稿实施（替代 03 的省钱版） |
-| Codex | 08 | 审校 OC 草稿（PASS/PATCH/REJECT） |
+| Impl | 06 | 修复已批准 finding |
+| Scout | 07 | 草稿实施（替代 03 的省钱版） |
+| Impl | 08 | 审校 Scout 草稿（PASS/PATCH/REJECT） |
 
 ### 文档卫生（追加 vs 覆盖）
 
@@ -106,8 +106,8 @@ ai-collab-starter/
 | --- | --- | --- |
 | Session State Discipline（state.md 协议） | `AGENTS.md` | 8 prompts 末段 + `state.md` 头注释 + SKILL.md Step 3 |
 | Language Discipline（中文优先） | `AGENTS.md` | 8 prompts Token 策略段 |
-| Commit 阻塞规则 | `AGENTS.md` | `04-opencode-review.md` |
-| 状态翻转必有 commit hash | `AGENTS.md` Known Sharp Edges | `04-opencode-review.md` 文档状态翻转检查段 |
+| Commit 阻塞规则 | `AGENTS.md` | `04-review.md` |
+| 状态翻转必有 commit hash | `AGENTS.md` Known Sharp Edges | `04-review.md` 文档状态翻转检查段 |
 | 数据契约约束分三级 | `02-claude-plan.md` Compatibility 段 | ADR 范例 |
 | 「下一步提示词」4 字段格式 | 8 prompts 末段（统一） | SKILL.md Step 3 + `state.md` Next step 段 |
 

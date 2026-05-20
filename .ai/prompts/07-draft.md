@@ -1,11 +1,11 @@
-# Prompt: OpenCode 草稿实施
+# Prompt: Scout 草稿实施
 
 ## 角色
 
-你是 OpenCode 跑「草稿实施」角色——Codex 会在下一步审校（`08-codex-audit.md`）。
+你是 Scout 跑「草稿实施」角色——Impl 会在下一步审校（`08-audit.md`）。
 你的任务是落一份**满足 task Acceptance Criteria 的可工作草稿**，不抛光风格、不争论设计。
 
-这个角色存在的原因：Codex token 紧（多项目共享），OpenCode 国产模型 token 管饱——大批量实施压在这边，审校交给 Codex。
+这个角色存在的原因：Impl token 紧（多项目共享），Scout 国产模型 token 管饱——大批量实施压在这边，审校交给 Impl。
 
 ## 输入
 
@@ -21,7 +21,7 @@
 - 实现代码 + 单元测试一次写完。
 - 跑 task `Tests` 段列出的命令，捕获原始输出。
 - 严格遵守 Scope / Non-goals。
-- 不确定的设计点标 `TODO(codex-review): <一句话理由>`，**上限 2 条**；超过说明 task 描述不够清，停下来回退给人或 Claude，不要瞎猜。
+- 不确定的设计点标 `TODO(impl-review): <一句话理由>`，**上限 2 条**；超过说明 task 描述不够清，停下来回退给人或 Claude，不要瞎猜。
 - 输出 patch + 测试日志 + 自审清单到 `.ai/logs/`。
 - 自审清单逐条对照 Acceptance Criteria，标 ✓/△/✗（已覆盖 / 不确定 / 未做）。
 
@@ -33,7 +33,7 @@
 - 不跳过 task 的必测 case，即便看起来"很简单"。
 - patch 里不留无意义注释。
 - 不扩展 Acceptance Criteria 之外的功能（"顺便也支持 X" 是禁忌）。
-- 不假设 Codex 会替你补遗漏的边界条件——所有边界条件**你**必须处理或显式标 TODO。
+- 不假设 Impl 会替你补遗漏的边界条件——所有边界条件**你**必须处理或显式标 TODO。
 
 ## Scope 自检（实施前必跑）
 
@@ -68,7 +68,7 @@ grep -c "^diff --git" .ai/logs/<task>.draft.patch
 
 ## 测试质量强约束（Dogfood #17 / #20 / #21 修复）
 
-测试是 Slice 验收的硬门槛。OC 国产模型在测试 discipline 上有反复出现的弱点（连续 3 个 slice 命中）。**违反以下任一条 = 草稿不可交付**，自审清单中标 ✗ 并回退人工或 Claude。
+测试是 Slice 验收的硬门槛。Scout 国产模型在测试 discipline 上有反复出现的弱点（连续 3 个 slice 命中）。**违反以下任一条 = 草稿不可交付**，自审清单中标 ✗ 并回退人工或 Claude。
 
 ### 1. 测试必须 import 被测对象（Dogfood #17 / P0）
 
@@ -137,7 +137,7 @@ it('test', async () => {
 
 ### 3. UI 类 task 必须 Browser 实测（Dogfood #20）
 
-涉及视觉 / DOM 渲染 / 交互 / 路由 / 响应式布局的 task，**typecheck + unit test + build 全过≠ UI 正确**。OC 草稿 Slice 3 的 ChartCard slot 缺失就是 typecheck/test/build 全过但 Browser canvasCount=0 的真实案例。
+涉及视觉 / DOM 渲染 / 交互 / 路由 / 响应式布局的 task，**typecheck + unit test + build 全过≠ UI 正确**。Scout 草稿 Slice 3 的 ChartCard slot 缺失就是 typecheck/test/build 全过但 Browser canvasCount=0 的真实案例。
 
 **草稿产出前**必须做以下一项：
 
@@ -161,7 +161,7 @@ it('test', async () => {
 
 #### Browser 实测「不可交付」硬约束（Dogfood #20-v2 P0）
 
-文字约束不足以拦住 OC 推责（Slice 4 OC 主动写「Browser 实测待 Codex」直接跳过）。**v0.4 修复**：草稿自审段中 Browser 实测**必须有可机器读取的证据**，否则草稿**不可交付**。
+文字约束不足以拦住 Scout 推责（Slice 4 Scout 主动写「Browser 实测待 Impl」直接跳过）。**v0.4 修复**：草稿自审段中 Browser 实测**必须有可机器读取的证据**，否则草稿**不可交付**。
 
 `Self-review notes` 中**必须**含以下任一证据形式（任选一种但必须有）：
 
@@ -195,12 +195,12 @@ Manual browser test (Chrome 1920×1080):
 **禁止**的反例：
 
 ```
-❌ "Browser 实测 OC 未做，待 Codex" (Slice 4 实际推责)
+❌ "Browser 实测 Scout 未做，待 Impl" (Slice 4 实际推责)
 ❌ "UI 应该工作（看代码逻辑没问题）" (无证据)
 ❌ "build 通过即说明 UI OK" (build 不等于 UI 正确)
 ```
 
-无 Browser 证据 = 草稿 `Self-review` 段标 ✗ = 草稿不可交付，OC 必须自跑或退回人/Claude。下游 Codex 审校发现无 Browser 证据**直接 REJECT**（08 prompt 已加，#20 v0.3 修法）。
+无 Browser 证据 = 草稿 `Self-review` 段标 ✗ = 草稿不可交付，Scout 必须自跑或退回人/Claude。下游 Impl 审校发现无 Browser 证据**直接 REJECT**（08 prompt 已加，#20 v0.3 修法）。
 
 ## 输出
 
@@ -212,7 +212,7 @@ Manual browser test (Chrome 1920×1080):
 | # | Criterion (短句) | 状态 | 证据 (文件/行/测试名) |
 | - | --- | --- | --- |
 | 1 | ... | ✓ | ... |
-| 2 | ... | △ | TODO(codex-review): ... |
+| 2 | ... | △ | TODO(impl-review): ... |
 
 ## Files changed
 
@@ -230,7 +230,7 @@ Manual browser test (Chrome 1920×1080):
 <前 20 行 + ... + 后 20 行>
 ```
 
-## TODO(codex-review) 列表
+## TODO(impl-review) 列表
 
 - (≤ 2 条；超过请停下回退)
 
@@ -251,7 +251,7 @@ artefacts:
 
 - `<DEVOPS_PATH>/.ai/logs/<task>.draft.patch`
 - `<DEVOPS_PATH>/.ai/logs/<task>.test.log`
-- `<DEVOPS_PATH>/.ai/progress.md` 追加一段「draft submitted, awaiting Codex audit」。
+- `<DEVOPS_PATH>/.ai/progress.md` 追加一段「draft submitted, awaiting Impl audit」。
 
 ## 收尾必做
 
@@ -269,7 +269,7 @@ Tokens: in=<n> out=<n> total=<n>
 
 #### state.md 覆盖前必读（Dogfood #19 强约束）
 
-**覆盖写入 state.md 前必须先 Read 前一版**——这是 Pattern A 「Agent 不读 state.md」的**轻量例外**。原因：state.md 含若干跨 step 不变的 **invariant 字段**，Agent 不知道前一版值就会胡填（曾 4 次发生「起始时间」字段被错填为当前 step 开工时间，OC / Codex / Claude 都犯过——证明这是 Pattern A 设计副作用，不是 Agent 执行力问题）。
+**覆盖写入 state.md 前必须先 Read 前一版**——这是 Pattern A 「Agent 不读 state.md」的**轻量例外**。原因：state.md 含若干跨 step 不变的 **invariant 字段**，Agent 不知道前一版值就会胡填（曾 4 次发生「起始时间」字段被错填为当前 step 开工时间，Scout / Impl / Claude 都犯过——证明这是 Pattern A 设计副作用，不是 Agent 执行力问题）。
 
 **必须从前一版完整复制（不变）**：
 
@@ -293,7 +293,7 @@ Tokens: in=<n> out=<n> total=<n>
 
 `## 下一步提示词` 段必须含 4 个固定字段：
 
-1. **下一步 Agent**: `OpenCode | Claude | Codex | Human`
+1. **下一步 Agent**: `Scout | Claude | Impl | Human`
 2. **关键输入**: 必读文件路径列表（≤ 4 条）
 3. **Token 预算估计**: `数千 | 万 | 多万`
 4. **可粘贴 prompt**: text code block
@@ -311,7 +311,7 @@ prompt body 推荐结构：
 
 下一步提示词的**业务内容**（按本 prompt 角色具体写）：
 
-- 通常下一步是 Codex 审校（`08-codex-audit.md`）。
+- 通常下一步是 Impl 审校（`08-audit.md`）。
 - 输出**完整可粘贴**的审校 prompt（代码块），路径已填好（task / draft.patch / test.log）。
 - 在 prompt 里强调本次审校重点（参考 task `Review checklist`）。
 - 若你已标 ≥ 2 条 TODO 或 patch 完整性自检失败：**不**输出审校 prompt，改输出「回退给人或 Claude」的 prompt 并说明原因。

@@ -39,12 +39,12 @@
 - `.ai/progress.md`: latest execution status.
 - `.ai/review.md`: review findings and fix status.
 - `.ai/decisions.md`: architecture and process decisions.
-- `.ai/workflow.md`: end-to-end collaboration workflow between OpenCode, Claude Code and Codex.
+- `.ai/workflow.md`: end-to-end collaboration workflow between Scout, Claude Code and Impl.
 - `.ai/token-strategy.md`: token and context control rules.
 - `.ai/getting-started.md`: 新项目 / 新需求 / bug 处理的入口指南。
 - `.ai/intake-templates.md`: intake skill 问题库与产出模板（探索式 + 问答式）。
 - `.ai/tasks/`: one task file per feature, bug, refactor or review.
-- `.ai/prompts/`: copy-ready prompts for OpenCode, Claude Code and Codex.
+- `.ai/prompts/`: copy-ready prompts for Scout, Claude Code and Impl.
 
 ## Build Commands
 
@@ -115,7 +115,7 @@ npm run build
 
 ## Agent Responsibilities
 
-OpenCode plus domestic models:
+Scout plus domestic models:
 
 - Scan scoped code, summarize context, generate docs and produce low-cost review notes.
 - Prefer file lists, symbol maps, module summaries and risk checklists over long prose.
@@ -124,10 +124,10 @@ OpenCode plus domestic models:
 Claude Code:
 
 - Own architecture design, complex root-cause analysis, high-risk review and trade-off evaluation.
-- Must consume OpenCode summaries and `.ai/*` context before reading source.
+- Must consume Scout summaries and `.ai/*` context before reading source.
 - Must not spend tokens on repetitive coding, formatting or mechanical test repair.
 
-Codex:
+Impl:
 
 - Own implementation, test repair, build wiring, scripts, CI-compatible engineering details and final verification.
 - Must implement only the approved scoped task.
@@ -136,9 +136,9 @@ Codex:
 ### Scope Heuristics
 
 - 改动 <= 20 行 且 不跨模块 且 不涉及协议/接口 -> Claude Code 可直接修改。
-- 改动 > 20 行 或 跨模块 或 涉及协议/接口 -> Claude Code 输出方案与 diff 描述，交 Codex 实施。
-- 纯格式化、依赖升级、机械性重命名 -> 直接交 Codex，不消耗 Claude。
-- "broad refactor"（OpenCode 禁止）定义为：跨 >= 3 个文件 或 跨模块边界 或 修改公共函数签名。
+- 改动 > 20 行 或 跨模块 或 涉及协议/接口 -> Claude Code 输出方案与 diff 描述，交 Impl 实施。
+- 纯格式化、依赖升级、机械性重命名 -> 直接交 Impl，不消耗 Claude。
+- "broad refactor"（Scout 禁止）定义为：跨 >= 3 个文件 或 跨模块边界 或 修改公共函数签名。
 
 ### Claude 主动提醒升级 starter(v4.0)
 
@@ -182,17 +182,17 @@ Human 同意后,Claude 跑 `.ai/starter-upgrade-protocol.md` 7-step 仪式。
 
 - File stable knowledge in `.ai` instead of repeating it in prompts.
 - Prefer summaries and file references over pasting large source blocks.
-- Use OpenCode for cheap context collection before Claude review.
+- Use Scout for cheap context collection before Claude review.
 - Use Claude only after the problem has a narrow question, decision point or risk list.
-- Use Codex with bounded file paths, commands and acceptance criteria.
+- Use Impl with bounded file paths, commands and acceptance criteria.
 - End long conversations by writing a new `.ai/tasks/<task>.md` handoff.
 
 ## Review Rules
 
 - Every non-trivial change requires review.
-- OpenCode review focuses on low-cost scanning: changed files, obvious defects, missing tests, docs drift and style mismatches.
+- Scout review focuses on low-cost scanning: changed files, obvious defects, missing tests, docs drift and style mismatches.
 - Claude review focuses on architecture risk, protocol compatibility, security, lifecycle, concurrency, rollback and long-term maintainability.
-- Codex fixes only approved findings and reruns targeted tests.
+- Impl fixes only approved findings and reruns targeted tests.
 - Review findings must be written to `.ai/review.md` or the relevant task file.
 - Review 发现必须标记优先级 `P0`/`P1`/`P2`/`P3`，定义见 `.ai/review.md > Severity`。本文件不重复定义。
 - 每条 finding 需指定 owner（修复方）和 reporter（提出方），状态为 open | accepted | in-progress | fixed | verified | rejected | deferred。完整状态语义见 `.ai/review.md`。
@@ -203,7 +203,7 @@ Human 同意后,Claude 跑 `.ai/starter-upgrade-protocol.md` 7-step 仪式。
 
 Claude Code 评审触发条件以 `.ai/architecture.md > Architecture Review Triggers` 为准（如本节存在），本文件不重复列举。
 
-Codex 在以下情况之后才能实施：
+Impl 在以下情况之后才能实施：
 
 - `.ai/decisions.md` 中已写入对应 ADR 且状态为 accepted。
 - `.ai/plan.md` 或 `.ai/tasks/<task>.md` 中已对实施范围做切片。
@@ -227,8 +227,8 @@ Codex 在以下情况之后才能实施：
 ### Agent Role Violations
 
 - Do not let Claude perform bulk coding.
-- Do not let Codex redesign the whole system without an approved architecture note.
-- Do not let OpenCode perform direct wide refactors.
+- Do not let Impl redesign the whole system without an approved architecture note.
+- Do not let Scout perform direct wide refactors.
 
 ### Destructive / Irreversible
 
@@ -239,7 +239,7 @@ Codex 在以下情况之后才能实施：
 
 > 本节记录本项目反复踩过的坑。新 Agent 进入前必读，避免重新发现同样问题。新踩到的坑由发现的 Agent 追加。
 >
-> bootstrap 后此段几乎为空——随着项目跑通几个真实任务后由 Claude / Codex / OpenCode 主动追加。前 1-2 个月新坑出现频率高，之后稳定。
+> bootstrap 后此段几乎为空——随着项目跑通几个真实任务后由 Claude / Impl / Scout 主动追加。前 1-2 个月新坑出现频率高，之后稳定。
 
 ### 模板示例（bootstrap 后删除此段，留作格式参考）
 
@@ -260,11 +260,11 @@ Codex 在以下情况之后才能实施：
 - `.ai/context.md` 中任何状态从 ❌/❓ 改为 ✅、或 What's Next 表删行，**证据列必须含具体 commit hash**。
 - 例外：working-tree-only 的预提交标记必须明确写「working tree on `<base-commit>`」并附 patch 路径，**不**直接标 ✅。
 - 翻转前必须 `cd <repo> && git rev-parse --verify <hash>` 验证 hash 真实存在。
-- 校验责任在 OpenCode review（`04-opencode-review.md > 文档状态翻转检查`）。
+- 校验责任在 Scout review（`04-review.md > 文档状态翻转检查`）。
 
 #### Patch artefact 完整性
 
-- OC / Codex 产出 `*.draft.patch` 或 `*.audit-patch.diff` 时，**必须**：
+- Scout / Impl 产出 `*.draft.patch` 或 `*.audit-patch.diff` 时，**必须**：
 
   ```bash
   git add <task Scope 内 modified + new 全部文件>
@@ -273,11 +273,11 @@ Codex 在以下情况之后才能实施：
   git apply --check <out.patch>       # 或 reverse-apply 验证 working tree
   ```
 
-- 校验责任在产出方（07-opencode-draft / 03-codex-implement），审校方（08-codex-audit）兜底。
+- 校验责任在产出方（07-draft / 03-implement），审校方（08-audit）兜底。
 
 #### Agent Scope 越界 pre-check
 
-- OC / Codex 实施前**必须**跑 `git diff --cached --stat`，逐行核对每个文件路径都在 task `Scope.paths` 内。
+- Scout / Impl 实施前**必须**跑 `git diff --cached --stat`，逐行核对每个文件路径都在 task `Scope.paths` 内。
 - 出现范围外文件 → 立即停下回退（unstage / restore），**不**先跑测试再说。
 - 越界检测责任在产出方，审校方兜底（08 prompt 第 2 步 Scope check）。
 
@@ -310,7 +310,7 @@ state.md 的字段更新规则：
 | 字段 | 谁填 | 内容来源 |
 | --- | --- | --- |
 | `Active task` | 当前 Agent | 从输入 task 文件抄路径 |
-| `Active task.起始时间` | 当前 Agent | **task 第一次启动的时间**（intake 完成那一刻）。**跨 step 不变**——OC 摸排 / Claude 决策 / Codex 实施都不要改这个字段。改了就是误解字段语义 |
+| `Active task.起始时间` | 当前 Agent | **task 第一次启动的时间**（intake 完成那一刻）。**跨 step 不变**——Scout 摸排 / Claude 决策 / Impl 实施都不要改这个字段。改了就是误解字段语义 |
 | `Last completed step` | 当前 Agent | 描述自己刚做完的 step |
 | `Last completed step.完成时间` | 当前 Agent | 当前 step 完成时间（每 step 刷新） |
 | `Last completed step.Commit` | 当前 Agent | 本步骤改动的 git commit hash；如未 commit 必须标 `⚠️ WORKING TREE — not committed` |
@@ -326,8 +326,8 @@ state.md 的字段更新规则：
 
 - 标 `⚠️ WORKING TREE — not committed` 时——**下一个 session 第一件事必须先 commit**，**不允许**继续启动新 slice 或新 step
 - 多 slice 任务连续 working tree 累积会让 git history 混乱、revert 风险陡升
-- `04-opencode-review.md` 把此字段作为 review 通过门槛
-- 例外：调研类步骤（OC packet / Claude ADR / 文档收口）不产代码改动时可标 `n/a`
+- `04-review.md` 把此字段作为 review 通过门槛
+- 例外：调研类步骤（Scout packet / Claude ADR / 文档收口）不产代码改动时可标 `n/a`
 
 ### Fallback：人手刷（仅兜底）
 
@@ -351,7 +351,7 @@ state.md 的字段更新规则：
 
 ## Language Discipline
 
-> 所有 Agent 自然语言输出必须中文优先，避免 OC 国产模型自然倾向英文输出的失控。
+> 所有 Agent 自然语言输出必须中文优先，避免 Scout 国产模型自然倾向英文输出的失控。
 
 ### 默认中文的范围
 
@@ -384,4 +384,4 @@ state.md 的字段更新规则：
 - 工程术语是否在允许英文清单内？
 - 测试 verdict 用 PASS/FAIL 即可，描述测试用例时用中文
 
-不符合就重写。这条纪律对 OC 国产模型尤其重要——OC 训练数据倾向英文 markdown，必须显式压回中文。
+不符合就重写。这条纪律对 Scout 国产模型尤其重要——Scout 训练数据倾向英文 markdown，必须显式压回中文。
