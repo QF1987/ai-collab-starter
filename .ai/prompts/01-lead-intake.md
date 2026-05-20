@@ -1,12 +1,12 @@
-# Prompt: Codex 01-intake · 一句话粗需求 → brief (lite v0.6.0-lite-rc1)
+# Prompt: Lead 01-intake · 一句话粗需求 → brief (lite v0.7.0-lite-rc1)
 
 ## 角色
 
-你是 Codex, 在 lite 分支承担**需求挖掘 (Requirement intake)** 职责。
+你是 Lead, 在 lite 分支承担**需求挖掘 (Requirement intake)** 职责。
 
-**为什么有这个 prompt**: lite v0.2 之前需求挖掘是 Human 独自完成 (按 `getting-started.md §二 · Brief 最小模板` 手写)。v0.3 加 Codex 协助 intake — Human 喂一句话粗描述 + 你做有界 Q&A 挖掘 + 产出标准 brief 文件。
+**为什么有这个 prompt**: lite v0.2 之前需求挖掘是 Human 独自完成 (按 `getting-started.md §二 · Brief 最小模板` 手写)。v0.3 加 Lead 协助 intake — Human 喂一句话粗描述 + 你做有界 Q&A 挖掘 + 产出标准 brief 文件。
 
-**对应 main 哪个能力**: 大致对应 main 的 `intake` 技能 (Claude 主导), lite 版换 Codex 主导, 不依赖 Claude session。
+**对应 main 哪个能力**: 大致对应 main 的 `intake` 技能 (Claude 主导), lite 版换 Lead 主导, 不依赖 Claude session。
 
 ## 输入
 
@@ -124,7 +124,7 @@ grep -rl "<组件名>" .ai/logs/archived/ 2>/dev/null
 通常 ≤ 3 个问题:
 - 改哪些文件 (路径列表)?
 - 是否影响 contract (config schema / public API / CI behavior)?
-- 是否需要 review (自审够还是要 OC-review)?
+- 是否需要 review (自审够还是要 Reviewer)?
 
 ### Step 3: Human 答完, 立即产 brief 文件 (单轮)
 
@@ -135,7 +135,7 @@ Human 答完 Q1-Q5 后, 你**单轮** chat:
    - slug 从一句话核心名词化生成 (e.g. "daemon 启动了多个" → `daemon-singleton-bug`)
    - 若属 epic 级 (跨 task, ≥ 多日 / 跨模块), 路径 `.ai/plan.md` 并加 epic 章节
 2. 写 brief 文件 (按下方模板, 类型对应模板段)
-3. chat 输出 brief 文件路径 + "intake done, 下一步喂 02-codex-plan.md contract" + 不汇报 brief 全文
+3. chat 输出 brief 文件路径 + "intake done, 下一步喂 02-lead-plan.md contract" + 不汇报 brief 全文
 
 不再追问 (除非 Human 主动 hint "我答错了 Q3, 重问")。
 
@@ -145,16 +145,16 @@ Human 答完 Q1-Q5 后, 你**单轮** chat:
 ---
 task-id: <YYYYMMDD>-<slug>
 type: feature | refactor | spike | docs | chore
-size: Tiny | Small | Medium | Large | Epic  # Codex 自估, 按 getting-started §二 路由表
+size: Tiny | Small | Medium | Large | Epic  # Lead 自估, 按 getting-started §二 路由表
 human-escalation-suggested: false | true     # 按 F06 severity-escalation 映射默认, 若 type=bug 看 severity
 created: <YYYY-MM-DD>
-intake-by: codex-01-intake
+intake-by: lead-01-intake
 ---
 
 # Brief: <一句话需求>
 
 ## What
-<2-3 句 Codex 整合自 Human 答案>
+<2-3 句 Lead 整合自 Human 答案>
 
 ## Why
 <触发动机 / 不做的代价>
@@ -193,7 +193,7 @@ size: Tiny | Small | Medium | Large
 severity: P0 | P1 | P2 | P3
 human-escalation-suggested: <按 F06 映射默认>
 created: <YYYY-MM-DD>
-intake-by: codex-01-intake
+intake-by: lead-01-intake
 ---
 
 # Bug Brief: <现象一句话>
@@ -233,8 +233,8 @@ intake-by: codex-01-intake
   - `Active task.当前 task` = 新 brief 文件路径
   - `Active task.当前阶段` = `01-intake-done`
   - `Active task.起始时间` = Human 喂一句话那一刻 (chat 第一条 timestamp)
-  - `Last completed step.Agent` = `Codex`, Step = `01-intake`, 产出 = brief 文件路径
-  - `Next step.Agent` = `Codex`, Prompt 模板 = `.ai/prompts/02-codex-plan.md`
+  - `Last completed step.Agent` = `Lead`, Step = `01-intake`, 产出 = brief 文件路径
+  - `Next step.Agent` = `Lead`, Prompt 模板 = `.ai/prompts/02-lead-plan.md`
   - `Next step.触发来源` = `normal`
 - **state.md 覆盖前必读硬约束 (F02)**: 保留完整 template 字段 / 维护规则段 / Pattern A/B 段
 - 输出 `## 下一步提示词` 段 (4 字段 / prompt body ≤ 15 行 / 指针版)
@@ -285,7 +285,7 @@ type: <type>
 size: <size>
 intake Q&A 已留底在 brief 末尾.
 
-下一步: 把 brief 喂 02-codex-plan.md 契约 (Codex 02 出 Decision + Alternatives + pre-decisions ≥ 3 + Paths 二组分 + ADR + OC delegation candidates)。
+下一步: 把 brief 喂 02-lead-plan.md 契约 (Lead 02 出 Decision + Alternatives + pre-decisions ≥ 3 + Paths 二组分 + ADR + Delegation candidates)。
 ```
 
 ## Token 策略
@@ -316,20 +316,20 @@ Tokens: in=<n> out=<n> total=<n>
 
 ### 下一步提示词 + 刷新 state.md
 
-参考 02-codex-plan.md 同段, 4 字段固定格式, prompt body ≤ 15 行指针版:
+参考 02-lead-plan.md 同段, 4 字段固定格式, prompt body ≤ 15 行指针版:
 
 ```
 ## 下一步提示词
 
-- 下一步 Agent: Codex
+- 下一步 Agent: Lead
 - 关键输入: .ai/tasks/<id>.md (本 intake 产出) + AGENTS.md + .ai/context.md
 - Token 预算估计: 多万
 - 可粘贴 prompt:
 
 ```text
-你是 Codex。按 .ai/prompts/02-codex-plan.md 契约执行。
+你是 Lead。按 .ai/prompts/02-lead-plan.md 契约执行。
 brief: .ai/tasks/<id>.md
-输出 Decision (唯一具体) + Alternatives ≥ 2 (含 UX 维度 F05) + Pre-decisions ≥ 3 (frontmatter 锁) + Paths 二组分 + OC delegation candidates + Negative consequences ≥ 1 + ADR 落 decisions.md
+输出 Decision (唯一具体) + Alternatives ≥ 2 (含 UX 维度 F05) + Pre-decisions ≥ 3 (frontmatter 锁) + Paths 二组分 + Delegation candidates + Negative consequences ≥ 1 + ADR 落 decisions.md
 若是 bug, 走 bug 任务专属强约束 B-1/B-2/B-3.
 收尾刷 state.md (F02 字段完整性硬约束).
 ```

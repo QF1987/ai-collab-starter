@@ -4,7 +4,7 @@
 >
 > 两个访问入口共用本文件：
 > - `.claude/skills/intake/SKILL.md`（Claude Code 自动 skill，UX 最优）
-> - 任何 Agent 手动调用（OpenCode / Codex 把本文件当 prompt 直接读）
+> - 任何 Agent 手动调用（Helper / Lead 把本文件当 prompt 直接读）
 >
 > 用法：模型按下面分支问问题、收答案、产出草稿、**让人审过**才落盘。
 
@@ -55,7 +55,7 @@ agent 在每个 brief 字段开头**必须**显式标四类前缀之一：
 ## What
 [原话] 标准化 release 状态机与错误码
 [推断] 当前 status 字段是字符串拼凑、跨语言无统一来源（推断理由：用户说"标准化"暗含
-       当前不标准；具体非标程度待 OC 摸排确认）
+       当前不标准；具体非标程度待 Helper 摸排确认）
 [agent-decision] ORM 选 MyBatis 3.x（用户授权"你定"；理由：批处理 FULL OUTER JOIN
                   在 JPA 不友好，且 1000w 行批量 INSERT 需 SQL 透明）
 [待确认] 是否同时定义 ErrorCode？brief 只提了状态机，未明确包含错误码
@@ -158,7 +158,7 @@ Q6.Batch.4 失败恢复策略？（auto-retry / checkpoint 续跑 / 告警 + 人
 这 4 个子问题一次性问完（用户体验：单次回答即可），不违反「每次只问 1 题」原则。
 回答进入 task brief 的 `Batch Strategy` 段 + `Performance Target` 段。
 **遗漏这些字段会让 02-claude-plan 的 ADR 缺核心决策依据**（典型：幂等策略未问出
-会让 Codex 自由发挥成 per-row upsert，破坏 ADR 三段式幂等承诺）。
+会让 Lead 自由发挥成 per-row upsert，破坏 ADR 三段式幂等承诺）。
 
 **Q8 · 扩展性骨架探针**（仅当 Q2 = Large / Epic 时问；
 对单一 small/medium task 不问，避免过度设计）：
@@ -240,10 +240,10 @@ F4. 是否动到数据 schema？(是/否)
 - [ ] 测试通过
 
 ## Handoff state
-直接喂 03-codex-implement.md 给 Codex，或人工实施。
+直接喂 03-lead-orchestrate.md 给 Lead，或人工实施。
 ```
 
-下一步建议：直接喂 Codex `03-codex-implement.md`。
+下一步建议：直接喂 Lead `03-lead-orchestrate.md`。
 
 #### Medium / Large
 
@@ -279,7 +279,7 @@ F4. 是否动到数据 schema？(是/否)
 
 下一步建议：
 
-- Medium：喂 OpenCode `01-opencode-context.md` + 这份 brief
+- Medium：喂 Helper `01-context.md` + 这份 brief
 - Large：同 Medium，注明「需 Claude 切片 ≤ 3 个 slice」
 
 #### Epic
@@ -372,10 +372,10 @@ F4. 是否动到数据 schema？(是/否)
 **强约束 · AC ↔ Scope 校验**：intake 落盘前 agent 必须自检——**Acceptance Criteria 段
 提到的每个文件 / 模块 / 命令行参数**都必须出现在 `In-scope` 或 `Out-of-scope` 或
 `Known Constraints` 段；若不一致，说明 AC 写过细 or scope 漏字段，停下让用户补完
-再落盘。这是为了避免 03-codex-implement 阶段 Codex 因「AC 要求改 X 但 X 不在 scope」
+再落盘。这是为了避免 03-lead-orchestrate 阶段 Lead 因「AC 要求改 X 但 X 不在 scope」
 触发 scope-deviation。
 
-下一步建议：人审 epic brief → 喂 OpenCode `01-opencode-context.md` 启动调研（或
+下一步建议：人审 epic brief → 喂 Helper `01-context.md` 启动调研（或
 若 Q8=A，直接进 02-claude-plan 切片）。
 
 ---
@@ -400,7 +400,7 @@ Q5. 何时开始坏？最近一次 work 是什么时候？
 
 ```
 Q6. 是否走紧急通道？
-    紧急通道允许：跳 Step 1 OC packet（人直接写 task）+ 跳 Step 2 ADR（先 hotfix 后补）
+    紧急通道允许：跳 Step 1 Helper packet（人直接写 task）+ 跳 Step 2 ADR（先 hotfix 后补）
     紧急通道不允许跳：回归测试、review.md finding、事后 ADR
     （是 / 否 / 不确定让我建议）
 ```
@@ -468,7 +468,7 @@ Q8. Initial hypothesis？
 - Owner: TBD（待分配）
 - Verifier: <Reporter>
 - Repo: <Q3 推断>
-- File/symbol: TBD（OC 摸排后填）
+- File/symbol: TBD（Helper 摸排后填）
 - Status: open
 - Finding: <Q4 actual + Q3 复现>
 - Expected fix: <Q6 决定的策略：minimal / refactor / defer，未问则 TBD>
@@ -479,8 +479,8 @@ Q8. Initial hypothesis？
 
 | 严重度 + 紧急通道 | 建议 |
 | --- | --- |
-| P0/P1 + 走紧急通道 | 直接喂 Codex `03-codex-implement.md` 实施 hotfix；事后 24h 内补 ADR |
-| P0/P1 + 不走紧急通道 | 喂 OC `01-opencode-context.md`（含复现）→ Claude 决策修复策略 |
+| P0/P1 + 走紧急通道 | 直接喂 Lead `03-lead-orchestrate.md` 实施 hotfix；事后 24h 内补 ADR |
+| P0/P1 + 不走紧急通道 | 喂 Helper `01-context.md`（含复现）→ Claude 决策修复策略 |
 | P2/P3 | 同上但优先级低，可批量处理 |
 
 ---

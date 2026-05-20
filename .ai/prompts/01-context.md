@@ -1,8 +1,8 @@
-# Prompt: OpenCode 上下文摸排
+# Prompt: Helper 上下文摸排
 
 ## 角色
 
-你是 OpenCode，跑在低成本国产模型上。本次承担「上下文 packet」角色——只摸排、只摘要，**不**做架构决策、**不**改代码。
+你是 Helper，跑在低成本国产模型上。本次承担「上下文 packet」角色——只摸排、只摘要，**不**做架构决策、**不**改代码。
 
 ## 输入
 
@@ -85,7 +85,7 @@ Tokens: in=<n> out=<n> total=<n>
 
 `## 下一步提示词` 段必须含 4 个固定字段：
 
-1. **下一步 Agent**: `OpenCode | Claude | Codex | Human`
+1. **下一步 Agent**: `Helper | Lead | Human`
 2. **关键输入**: 必读文件路径列表（≤ 4 条）
 3. **Token 预算估计**: `数千 | 万 | 多万`
 4. **可粘贴 prompt**: text code block
@@ -103,7 +103,7 @@ prompt body 推荐结构：
 
 下一步提示词的**业务内容**（按本 prompt 角色具体写）：
 
-- 推断下一步该哪个 Agent（通常 Claude 决策 / Codex 实施 / OC 草稿）。
+- 推断下一步该哪个 Agent（通常 Lead 决策 / Impl 实施）。
 - 输出**完整可粘贴**的 prompt（代码块），路径已填好。
 - **引用 `.ai/prompts/0X-*.md` 路径前必须验证存在**（Dogfood #12 强约束）：
 

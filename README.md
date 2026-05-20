@@ -1,6 +1,6 @@
 # ai-collab-starter-lite
 
-> **2 Agent + 1 Human 协同骨架**(Codex 脑力 + OC 体力 + Human bus)。
+> **2 Agent + 1 Human 协同骨架**(Lead 脑力 + worker 体力 + Human bus)。
 > `ai-collab-starter` 的独立产品线 — 适配无 Claude / air-gapped / 小团队场景。
 >
 > **当前状态**: v0.1.0 · 从 main v4.0-rc1 fork(2026-05-16)。**无 ACP 协议、无 MCP server,文件即真相,Human 当触发器**。
@@ -15,7 +15,7 @@
 | 没 Claude API / 配额受限 | **lite** |
 | 隐私敏感, 需 air-gapped(local 模型) | **lite** |
 | 个人 / 小团队 side project, Opus 级架构是 overkill | **lite** |
-| 想探索 "Codex lead engineer + OC 体力" 范式 | **lite** |
+| 想探索 "Lead 架构 + worker 体力" 范式 | **lite** |
 | 大团队 + 严合规审计 + 已建立 Claude 工作流 | **main** |
 | 想跑 Tiny / Small 任务(< 1h) | 两边都不用,直接单 Agent 单轮 |
 
@@ -25,12 +25,12 @@
 
 | 属性 | 值 |
 |------|-----|
-| Agent 数 | 4 (Codex × 1 + OC × 3 角色) + 1 Human |
-| 终端数 (per epic) | 4 (T1 Codex / T2 OC-helper / T3 OC-impl / T4 OC-review) |
+| Agent 数 | 4 (Lead × 1 + worker × 3 角色) + 1 Human |
+| 终端数 (per epic) | 4 (T1 Lead / T2 Helper / T3 Impl / T4 Reviewer) |
 | 通信协议 | **无**。Human 当 message bus + `.ai/scratch/oc-helper/` 文件总线 |
-| 写代码方 | OC-impl(03b) |
-| 拆任务 / 验收 | Codex(03a / 03c) |
-| 审 | OC-review(04,与 OC-impl 强制不同 session) |
+| 写代码方 | Impl(03b) |
+| 拆任务 / 验收 | Lead(03a / 03c) |
+| 审 | Reviewer(04,与 Impl 强制不同 session) |
 | Escalation 接收方 | Human |
 | 重试上限 (03b ↔ 03c) | 3 轮,超限升 Human |
 | 验收 rubric | `.ai/oc-code-quality-rubric.md`(8 维度 + 5 硬门槛,门槛 ≥ 16/24) |
@@ -70,13 +70,14 @@
 git clone <lite-repo> /path/to/your-new-project
 cd /path/to/your-new-project
 
-# 2. 开 4 终端 (tmux 或 4 iTerm tab)
-#    T1: codex             (主驱动)
-#    T2: opencode          (OC-helper, 按需启动)
-#    T3: opencode          (OC-impl)
-#    T4: opencode          (OC-review)
+# 2. 开 4 个独立 agent session (tmux / iTerm tab / 桌面 app chat 均可)
+#    T1: Lead              (主驱动 · 架构/拆任务/验收)
+#    T2: Helper            (全仓搜索, 按需启动)
+#    T3: Impl              (写代码)
+#    T4: Reviewer          (独立审)
+#    注: 每个 Track 跑在哪个 agent app 由你自选, 角色名不绑工具
 
-# 3. 在 T1 Codex 喂启动 prompt (见 .ai/getting-started.md §1)
+# 3. 在 T1 Lead 喂启动 prompt (见 .ai/getting-started.md §1)
 ```
 
 详细 bootstrap 步骤见 [`.ai/getting-started.md`](.ai/getting-started.md) §1。
@@ -85,14 +86,14 @@ cd /path/to/your-new-project
 
 如果只想跑通骨架但**不想一次开 4 终端**(初次试水 / 跑一个 Tiny task):
 
-- Codex 可在 T1 同时模拟 OC-impl 角色(临时授权,标 `human-override-codex-fix`)
-- OC-review 仍建议独立终端(防自审盲点)
+- Lead 可在 T1 同时模拟 Impl 角色(临时授权,标 `human-override-lead-fix`)
+- Reviewer 仍建议独立终端(防自审盲点)
 
 完整 4 终端拓扑只在 ≥ Medium epic 推荐。
 
 ## 占位符约定
 
-starter kit 中的占位符(bootstrap 时由 Codex 或脚本填充):
+starter kit 中的占位符(bootstrap 时由 Lead 或脚本填充):
 
 | 占位符 | 含义 | 示例 |
 | --- | --- | --- |
@@ -111,10 +112,10 @@ starter kit 中的占位符(bootstrap 时由 Codex 或脚本填充):
 | --- | --- | --- |
 | Session State Discipline | `AGENTS.md` | 5 prompts 末段 + `state.md` 头注释 |
 | Language Discipline | `AGENTS.md` | 5 prompts Token 策略段 |
-| Commit 阻塞规则 | `AGENTS.md` | `04-opencode-review.md` |
-| 状态翻转 commit hash 校验 | `AGENTS.md` Known Sharp Edges | `04-opencode-review.md` |
-| 数据契约约束分级 | `02-codex-plan.md` | ADR 范例 |
-| Codex 03c 验收 rubric | `.ai/oc-code-quality-rubric.md` | `03-codex-orchestrate.md` 03c 段 |
+| Commit 阻塞规则 | `AGENTS.md` | `04-review.md` |
+| 状态翻转 commit hash 校验 | `AGENTS.md` Known Sharp Edges | `04-review.md` |
+| 数据契约约束分级 | `02-lead-plan.md` | ADR 范例 |
+| Lead 03c 验收 rubric | `.ai/oc-code-quality-rubric.md` | `03-lead-orchestrate.md` 03c 段 |
 | 4 终端拓扑 | `workflow.md §0` | `getting-started.md` / `lite-v0.1.0-design.md §3.2` |
 | 「下一步提示词」4 字段格式 | 5 prompts 末段(统一) | — |
 
@@ -140,7 +141,7 @@ lite 是独立产品线,**不**是 main branch。两者通过双向 finding sync
 - [AGENTS.md](AGENTS.md) — 中央纪律(已 lite 化)
 - [.ai/getting-started.md](.ai/getting-started.md) — 三类入口指南 + 4 终端开法
 - [.ai/workflow.md](.ai/workflow.md) — 7 步法 + 4 终端拓扑
-- [.ai/oc-code-quality-rubric.md](.ai/oc-code-quality-rubric.md) — Codex 03c 验收 rubric
+- [.ai/oc-code-quality-rubric.md](.ai/oc-code-quality-rubric.md) — Lead 03c 验收 rubric
 - [.ai/lite-upgrade-protocol.md](.ai/lite-upgrade-protocol.md) — Human 主导的升级仪式
 - [.ai/prompts/](.ai/prompts/) — 5 个 lite prompt 模板
 

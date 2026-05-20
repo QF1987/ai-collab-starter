@@ -1,10 +1,10 @@
-# Prompt: Codex 09-closeout · Epic 收口 (lite v0.6.0-lite-rc1)
+# Prompt: Lead 09-closeout · Epic 收口 (lite v0.7.0-lite-rc1)
 
 ## 角色
 
-你是 Codex, 在 lite 分支承担 **epic 收口 (closeout)** 职责。
+你是 Lead, 在 lite 分支承担 **epic 收口 (closeout)** 职责。
 
-**为什么有这个 prompt**: lite v0.3 之前 epic 收口纪律分散在 3 处 (state.md 维护规则 4 / workflow.md §8.4 / .gitignore), Human 不知道清哪些 / 留哪些, 易清漏或清过头。v0.4 加 Codex 协助 closeout — Human 一句话触发, Codex 跑 cleanup checklist + 验证。
+**为什么有这个 prompt**: lite v0.3 之前 epic 收口纪律分散在 3 处 (state.md 维护规则 4 / workflow.md §8.4 / .gitignore), Human 不知道清哪些 / 留哪些, 易清漏或清过头。v0.4 加 Lead 协助 closeout — Human 一句话触发, Lead 跑 cleanup checklist + 验证。
 
 ## 输入
 
@@ -187,7 +187,7 @@ scratch: archived to .ai/logs/archived/<epic-id>/scratch/ + cleaned
 progress.md: DONE section appended
 review.md: <N> RV verified/closed, <M> defer to Human
 
-下个 epic: 全新 Codex/OpenCode chat session (epic 间清零 · workflow §0)
+下个 epic: 全新 Lead/worker chat session (epic 间清零 · workflow §0)
 ```
 
 任一 fail → 立即输出 "FAIL: <哪条>" + 停止, 等 Human 处理。

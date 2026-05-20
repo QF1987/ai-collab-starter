@@ -1,6 +1,6 @@
-# AI Collaboration Workflow (lite v0.6.0-lite-rc1)
+# AI Collaboration Workflow (lite v0.7.0-lite-rc1)
 
-> **lite vs main**: 无 Claude,Codex 当 lead engineer(架构 + 拆任务 + 验收),OC 写代码 + 审 + 信息查询。
+> **lite vs main**: 无 Claude,Lead 当 lead engineer(架构 + 拆任务 + 验收),worker 写代码 + 审 + 信息查询。
 > Escalation 接收方是 **Human**,不是 Claude main session。
 
 This workflow turns requirements into reviewed, testable changes while preserving context across long-lived multi-repo development.
@@ -13,17 +13,19 @@ This workflow turns requirements into reviewed, testable changes while preservin
 
 ### Track ↔ UI 形态对照 (v0.4)
 
-| 抽象 (Track) | Desktop app sessions (推荐) | CLI/TUI |
-|-------------|---------------------------|---------|
-| T1 (Codex / lead engineer) | Codex Desktop chat 1 | tmux/iTerm pane 1 |
-| T2 (OC-helper / 全仓搜索) | OpenCode Desktop chat 1 | pane 2 |
-| T3 (OC-impl / 写代码) | OpenCode Desktop chat 2 (独立 session 防自审) | pane 3 |
-| T4 (OC-review / 独立审) | OpenCode Desktop chat 3 (独立 session 防自审) | pane 4 |
+| 抽象 (Track) | 独立 agent session (推荐) | CLI/TUI |
+|-------------|--------------------------|---------|
+| T1 (Lead / lead engineer) | agent app · session 1 | tmux/iTerm pane 1 |
+| T2 (Helper / 全仓搜索) | agent app · session 2 | pane 2 |
+| T3 (Impl / 写代码) | agent app · session 3 (独立 session 防自审) | pane 3 |
+| T4 (Reviewer / 独立审) | agent app · session 4 (独立 session 防自审) | pane 4 |
+
+> **角色与工具解耦 (v0.7 · F11-v0.7)**: 角色名 (Lead / Helper / Impl / Reviewer) 描述**职责**, 不绑工具品牌。每个 Track 实际跑在哪个 agent app (Claude Code / Codex / OpenCode / 其它) 由项目自选, 见 `.ai/getting-started.md §一 Step 3`。
 
 
 ```
 ┌──────────────┐   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
-│ T1: Codex    │   │ T2:OC-helper │   │ T3: OC-impl  │   │ T4: OC-review│
+│ T1: Lead     │   │ T2: Helper   │   │ T3: Impl     │   │ T4: Reviewer │
 │ (主驱动)      │   │ (grep/scan)  │   │ (写代码)      │   │ (独立审)      │
 │ 长 session    │   │ 长 session    │   │ 长 session    │   │ 长 session    │
 │ per epic     │   │ per epic     │   │ per epic     │   │ per epic     │
@@ -42,9 +44,9 @@ This workflow turns requirements into reviewed, testable changes while preservin
 
 | 场景 | 规则 |
 |------|------|
-| 一个 epic 内的多轮 03b OC-impl | **同一 session 内继续**(保留 Codex 反馈历史) |
-| 一个 epic 内的多轮 04 OC-review | **同一 session 内继续**(review→fix→review 循环) |
-| 一个 epic 内 OC-helper 多次查询 | **同一 session 内继续** |
+| 一个 epic 内的多轮 03b Impl | **同一 session 内继续**(保留 Lead 反馈历史) |
+| 一个 epic 内的多轮 04 Reviewer | **同一 session 内继续**(review→fix→review 循环) |
+| 一个 epic 内 Helper 多次查询 | **同一 session 内继续** |
 | **03b ↔ 04(不同阶段之间)** | **必须新 session**(防自审盲点) |
 | 不同 epic 之间 | 全部新 session(隔离上下文污染) |
 
@@ -57,19 +59,19 @@ This workflow turns requirements into reviewed, testable changes while preservin
 | git 拓扑 | 含义 | git 操作 cwd 边界 |
 |---------|-----|------------------|
 | **单仓** (默认) | 单 `.git`, lite 元数据 + 业务代码同仓 | repo 根目录跑 git, 沿用现有约定 |
-| **umbrella + 子 git** | 顶层 `.git` 只追 `.ai/` + `AGENTS.md`, 子目录各有独立 `.git` (e.g. smart-uite 30 子项目 C++ 系统) | umbrella 顶层 git 不追子路径; **任何 git 操作 (log/diff/blame) 必须 cd 进对应子仓**; 顶层 `git log -- Daemon/` 返回空 ≠ Daemon 无 commit; **⚠️ umbrella whitelist `.gitignore` 陷阱: `/*` + 4 白名单默认排除 cmake / interim / 顶层 build 脚本等, OC-impl 改这些文件不在 git 追踪 → 修了不能 deliver (v0.5 · F05-v0.5 反例)** |
+| **umbrella + 子 git** | 顶层 `.git` 只追 `.ai/` + `AGENTS.md`, 子目录各有独立 `.git` (e.g. smart-uite 30 子项目 C++ 系统) | umbrella 顶层 git 不追子路径; **任何 git 操作 (log/diff/blame) 必须 cd 进对应子仓**; 顶层 `git log -- Daemon/` 返回空 ≠ Daemon 无 commit; **⚠️ umbrella whitelist `.gitignore` 陷阱: `/*` + 4 白名单默认排除 cmake / interim / 顶层 build 脚本等, Impl 改这些文件不在 git 追踪 → 修了不能 deliver (v0.5 · F05-v0.5 反例)** |
 | **跨仓** | lite 仓 + 业务仓物理分离, env var $COLLAB_ROOT / $REPO_* | 每个 repo 各自 cwd, prompt / req 文件必须显式标 cwd |
 
-→ 详见 `.ai/getting-started.md §一bis · git 拓扑选择` 和 `.ai/prompts/oc-helper.md > git 子操作纪律` 段。
+→ 详见 `.ai/getting-started.md §一bis · git 拓扑选择` 和 `.ai/prompts/helper.md > git 子操作纪律` 段。
 
 #### umbrella whitelist `.gitignore` 陷阱与扩展 (v0.5 · F05-v0.5)
 
-umbrella + 子 git 拓扑下, `.gitignore` 白名单模式 (`/*` + `!/.ai/**` + `!/AGENTS.md`) **默认排除所有顶层目录**, 仅追 lite 元数据。后续 epic 改 umbrella 顶层文件 (e.g. `cmake/CMakeLists.txt` / `scripts/build.sh` / `Dockerfile`) 时, **必须先扩展 .gitignore 白名单** 加 `!/cmake/` + `!/cmake/**` 等, 否则 OC-impl 改动**不在 git 追踪**, 修了等于没修 (现场重新 staging 时丢失)。
+umbrella + 子 git 拓扑下, `.gitignore` 白名单模式 (`/*` + `!/.ai/**` + `!/AGENTS.md`) **默认排除所有顶层目录**, 仅追 lite 元数据。后续 epic 改 umbrella 顶层文件 (e.g. `cmake/CMakeLists.txt` / `scripts/build.sh` / `Dockerfile`) 时, **必须先扩展 .gitignore 白名单** 加 `!/cmake/` + `!/cmake/**` 等, 否则 Impl 改动**不在 git 追踪**, 修了等于没修 (现场重新 staging 时丢失)。
 
 **强约束机制** (v0.5 协同):
-- 02-codex-plan.md `§5 Paths 二组分` + `§8 Assumptions to verify`: Codex 02 必须 verify core paths `git ls-files` 非空
-- 03-codex-orchestrate.md `03a 子任务包模板`: 每条核心 path 必须标"git 追踪状态" (tracked / gitignored)
-- 04-opencode-review.md `第一步 Scope 验证`: 加 `git ls-files <core_path>` check, 返空 → escalate Human
+- 02-lead-plan.md `§5 Paths 二组分` + `§8 Assumptions to verify`: Lead 02 必须 verify core paths `git ls-files` 非空
+- 03-lead-orchestrate.md `03a 子任务包模板`: 每条核心 path 必须标"git 追踪状态" (tracked / gitignored)
+- 04-review.md `第一步 Scope 验证`: 加 `git ls-files <core_path>` check, 返空 → escalate Human
 - oc-code-quality-rubric.md `H2`: 加 git 追踪 verify, 返空直接 fail
 
 ### 阶段流转图 (v0.3.0 加 01-intake 起点 · v0.2.0 · F13)
@@ -78,7 +80,7 @@ umbrella + 子 git 拓扑下, `.gitignore` 白名单模式 (`/*` + `!/.ai/**` + 
 
 ```
    ┌──────────────┐   (v0.3 入口 B)
-   │ 01-intake    │   Codex Q&A ≤ 5 轮
+   │ 01-intake    │   Lead Q&A ≤ 5 轮
    │ (可选起点)    │───→ 产 brief 文件 ───┐
    └──────────────┘                       │
                                           ↓
@@ -118,19 +120,19 @@ Owner: Human(产品 / 工程 lead)。
 Output: Goal / Non-goals / Affected repos / Expected behavior / Constraints / Acceptance criteria。
 substantial work 建一份 `.ai/tasks/<date>-<slug>.md`。
 
-### 入口 B: Codex 01-intake (v0.3 新增 · Human 一句话 → Codex 反问 ≤ 5 → brief)
+### 入口 B: Lead 01-intake (v0.3 新增 · Human 一句话 → Lead 反问 ≤ 5 → brief)
 
-Owner: **Codex** (协助), Human 喂一句话 + 答 ≤ 5 反问。
-Output: 同入口 A, 但 brief 文件由 Codex 写 + Q&A 留底。
+Owner: **Lead** (协助), Human 喂一句话 + 答 ≤ 5 反问。
+Output: 同入口 A, 但 brief 文件由 Lead 写 + Q&A 留底。
 适用: Human 一句话粗描述 / 类型不明确 / 需求细节没想清。
-契约: `.ai/prompts/01-codex-intake.md`。
+契约: `.ai/prompts/01-lead-intake.md`。
 触发边界: 详见 prompt > §触发边界。
 
-无论入口 A 还是 B, 产出 brief 文件后下一步都是 02 (Codex plan)。
+无论入口 A 还是 B, 产出 brief 文件后下一步都是 02 (Lead plan)。
 
-## 2. Plan (Codex)
+## 2. Plan (Lead)
 
-Owner: **Codex**(替代 main 的 Claude 02-plan 职责)。
+Owner: **Lead**(替代 main 的 Claude 02-plan 职责)。
 
 Inputs:
 
@@ -139,9 +141,9 @@ Inputs:
 - `.ai/architecture.md`
 - task file
 - relevant `.ai/decisions.md` entries
-- 必要时让 OC-helper 跑全仓 grep / scan(走 `.ai/scratch/oc-helper/req-*.md`)
+- 必要时让 Helper 跑全仓 grep / scan(走 `.ai/scratch/oc-helper/req-*.md`)
 
-Output(按 `.ai/prompts/02-codex-plan.md` 强约束 7 条):
+Output(按 `.ai/prompts/02-lead-plan.md` 强约束 7 条):
 
 - Decision(唯一具体选择,不写「或」)
 - Rationale
@@ -151,29 +153,29 @@ Output(按 `.ai/prompts/02-codex-plan.md` 强约束 7 条):
 - **Negative consequences**(≥ 1 项,不可空)
 - **Pre-decisions ≥ 3 条**(frontmatter 锁定,实施期不许翻案)
 - Implementation slices(paths 二组分:核心 / 连带)
-- **OC delegation candidates** 段(helper 任务 + OC-impl 子任务包预告)
+- **Delegation candidates** 段(helper 任务 + Impl 子任务包预告)
 - Required tests
 - Review focus
 - Decision record(ADR-YYYYMMDD-NN)
 
 Record accepted decisions in `.ai/decisions.md`.
 
-### Codex 不写代码
+### Lead 不写代码
 
-lite 中 Codex **不写业务代码**,产物是 task brief + 03a 阶段的 OC-impl 子任务包。
-代码由 OC-impl 写,Codex 拆任务 + 验收。
+lite 中 Lead **不写业务代码**,产物是 task brief + 03a 阶段的 Impl 子任务包。
+代码由 Impl 写,Lead 拆任务 + 验收。
 
-例外:03b ↔ 03c 走满 3 轮 verify 仍 fail,Human 决策走 (a) Codex 临时接手,此时 Codex
-**临时获得本子任务包范围内的写代码权限**,state.md 标 `human-override-codex-fix`。
+例外:03b ↔ 03c 走满 3 轮 verify 仍 fail,Human 决策走 (a) Lead 临时接手,此时 Lead
+**临时获得本子任务包范围内的写代码权限**,state.md 标 `human-override-lead-fix`。
 
-## 3. Implementation (Codex 03 三段式)
+## 3. Implementation (Lead 03 三段式)
 
-### 3a. 拆任务(Codex)
+### 3a. 拆任务(Lead)
 
-Owner: Codex(T1)。
+Owner: Lead(T1)。
 
-Codex 把 brief 拆成 N 个 **OC-impl 子任务包**(每包 ≤ 1 个 slice,通常 30 min 内完成)。
-模板见 `.ai/prompts/03-codex-orchestrate.md > 03a 段` 或本 workflow §6.1。
+Lead 把 brief 拆成 N 个 **Impl 子任务包**(每包 ≤ 1 个 slice,通常 30 min 内完成)。
+模板见 `.ai/prompts/03-lead-orchestrate.md > 03a 段` 或本 workflow §6.1。
 
 每个子任务包必含:
 - 上下文(brief 路径 + pre-decisions 摘要 + paths 二组分)
@@ -181,14 +183,14 @@ Codex 把 brief 拆成 N 个 **OC-impl 子任务包**(每包 ≤ 1 个 slice,通
 - 验收标准(走 `.ai/oc-code-quality-rubric.md`,门槛 ≥ 16/24)
 - 完成产出格式("done, 见 git diff")
 
-### 3b. 写代码(OC-impl)
+### 3b. 写代码(Impl)
 
-Owner: **OC-impl**(T3)。
+Owner: **Impl**(T3)。
 
 Inputs:
 
-- 子任务包(Codex 03a 输出,Human 复制到 T3)
-- 子任务包里引用的 brief 段落(OC-impl session **不**带完整 brief 上下文)
+- 子任务包(Lead 03a 输出,Human 复制到 T3)
+- 子任务包里引用的 brief 段落(Impl session **不**带完整 brief 上下文)
 - 明确的 paths 二组分(核心 / 允许连带)
 - 明确的测试命令
 
@@ -196,7 +198,7 @@ Output:
 
 - 最小 patch(动 git working tree)
 - 跑通子任务包要求的测试命令
-- 输出 "done, 见 git diff"(不要总结自己改了什么,Codex 自己看 diff)
+- 输出 "done, 见 git diff"(不要总结自己改了什么,Lead 自己看 diff)
 
 Rules:
 
@@ -205,17 +207,17 @@ Rules:
 - **严禁**动子任务包未列的 paths(核心 / 连带都不行)。
 - 不"顺手"清理相邻代码。
 - 单文件 diff > 200 行 → 停下来问(除非子任务包预声明)。
-- 完成后**不**自己进 03c,等 Codex 拿 git diff 验收。
+- 完成后**不**自己进 03c,等 Lead 拿 git diff 验收。
 
-### 3c. 验收(Codex)
+### 3c. 验收(Lead)
 
-Owner: Codex(T1,与 03a 同 session)。
+Owner: Lead(T1,与 03a 同 session)。
 
-Codex 拿 `git diff` + brief + 子任务包,用 `.ai/oc-code-quality-rubric.md` 打分:
+Lead 拿 `git diff` + brief + 子任务包,用 `.ai/oc-code-quality-rubric.md` 打分:
 
-1. **硬门槛 H1-H5** 逐条 check(任一 fail → 直接退回 OC-impl,不打分)
+1. **硬门槛 H1-H5** 逐条 check(任一 fail → 直接退回 Impl,不打分)
 2. **维度 D1-D8** 逐项打分,总分 **≥ 16/24** 通过
-3. 通过 → state.md 进 04;退回 → 输出退回模板喂回 OC-impl
+3. 通过 → state.md 进 04;退回 → 输出退回模板喂回 Impl
 
 #### 退回模板
 
@@ -226,7 +228,7 @@ Verify 不通过. 原因:
 修改要求:
 1. ...
 2. ...
-保留: [OC 做对的地方, 显式列出, 避免它推倒重来]
+保留: [worker 做对的地方, 显式列出, 避免它推倒重来]
 
 轮次: X/3
 - 若 X<3: 请按上述修改, 提交后重新 done
@@ -237,15 +239,15 @@ Verify 不通过. 原因:
 
 - **03b ↔ 03c 最多 3 轮**,第 3 轮 verify 仍 fail → 升 Human(lite 触发来源 H)
 - Human 决策三选:
-  - (a) Codex 接手改(临时获得本子任务包写权限,state.md 标 `human-override-codex-fix`)
-  - (b) OC 再试第 4 轮(Human 给 OC 新 hint)
+  - (a) Lead 接手改(临时获得本子任务包写权限,state.md 标 `human-override-lead-fix`)
+  - (b) Impl 再试第 4 轮(Human 给 Impl 新 hint)
   - (c) 回到 02 重新拆任务(brief 本身可能有问题)
 
-## 4. Review (OC-review)
+## 4. Review (Reviewer)
 
-Owner: **OC-review**(T4,**必须**与 OC-impl 不同 session,防自审盲点)。
+Owner: **Reviewer**(T4,**必须**与 Impl 不同 session,防自审盲点)。
 
-按 `.ai/prompts/04-opencode-review.md` 三步法:
+按 `.ai/prompts/04-review.md` 三步法:
 
 ### 4.1 Scope 验证
 
@@ -260,23 +262,23 @@ Owner: **OC-review**(T4,**必须**与 OC-impl 不同 session,防自审盲点)。
 - 偏离 pre-decisions 但未在新 ADR 记录 → escalation(C)
 - 形式上用了 pre-decisions 选择但价值吃光 → escalation(C)
 
-### 4.3 Quality + Codex 自审盲点专项
+### 4.3 Quality + Lead 自审盲点专项
 
 通用 quality:correctness / missing tests / docs drift / style / N+1 / 资源关闭等。
 
-**lite 新增 · Codex 自审盲点专项 checklist**(因 Codex 03c 是自审,需 OC-review 独立 cross-check):
+**lite 新增 · Lead 自审盲点专项 checklist**(因 Lead 03c 是自审,需 Reviewer 独立 cross-check):
 
 - [ ] 子任务包颗粒度合理(不超 1 slice;子任务步骤 ≤ 6 条)
-- [ ] Codex 03c 验收时所有 rubric 维度都给了具体证据,不是「OK」一字过
-- [ ] OC-impl 的实施确实在子任务包"必做"清单 100% 覆盖范围内
-- [ ] pre-decisions 没被 OC-impl 翻案(grep diff 中是否动了 frontmatter 提到的字段 / 接口 / 选择)
-- [ ] 03c 退回模板触发的轮次(若 > 1)有保留段,OC-impl 不是每轮推倒重来
+- [ ] Lead 03c 验收时所有 rubric 维度都给了具体证据,不是「OK」一字过
+- [ ] Impl 的实施确实在子任务包"必做"清单 100% 覆盖范围内
+- [ ] pre-decisions 没被 Impl 翻案(grep diff 中是否动了 frontmatter 提到的字段 / 接口 / 选择)
+- [ ] 03c 退回模板触发的轮次(若 > 1)有保留段,Impl 不是每轮推倒重来
 
 输出落 `.ai/review.md`。
 
 ### 4.4 Escalation 路径(lite)
 
-OC-review 在以下任一情况下**必须** escalate 给 **Human**(state.md `Next step.Agent = Human`):
+Reviewer 在以下任一情况下**必须** escalate 给 **Human**(state.md `Next step.Agent = Human`):
 
 1. Scope-deviation 检出(修改文件数 / diff 行数明显超出 子任务包描述)
 2. 架构敏感改动(注解 / 类继承 / 配置结构 / SPI 接口签名变更)
@@ -284,22 +286,22 @@ OC-review 在以下任一情况下**必须** escalate 给 **Human**(state.md `Ne
 4. 跨仓 / 跨服务协议改动
 5. 失败模式 / 并发 / 生命周期复杂度高的改动
 6. 安全 / rollout 风险
-7. Codex 自审盲点专项 checklist 命中
+7. Lead 自审盲点专项 checklist 命中
 
 Human 介入时**不**作为独立 step——审视结果由 Human 直接决定:接受 / 退回 / 升级问题到 02 重切。
 
 ### 4.5 不允许"内联跑了但没记录"
 
-无论 OC-review 走完三步法还是中途 escalate,所有 review 输出都必须落到 `.ai/review.md`。
+无论 Reviewer 走完三步法还是中途 escalate,所有 review 输出都必须落到 `.ai/review.md`。
 聊天里口头说"我审了"不算 review;review.md 上没有对应段落 = review 未发生。
 
-## 5. Fix (OC-impl 或 Codex 接手)
+## 5. Fix (Impl 或 Lead 接手)
 
-Owner: 默认 OC-impl(T3,同 epic 内同 session 继续);触发上限 (a) 时 Codex 临时接手。
+Owner: 默认 Impl(T3,同 epic 内同 session 继续);触发上限 (a) 时 Lead 临时接手。
 
 Inputs:
 
-- OC-review accepted findings
+- Reviewer accepted findings
 - 改动文件清单
 - 失败测试 / CI log
 
@@ -309,11 +311,11 @@ Output:
 - Re-run tests
 - Updated review status
 
-Rule: OC-impl 只修 accepted findings。新架构问题回 02 重切(不让 OC-impl 自由发挥)。
+Rule: Impl 只修 accepted findings。新架构问题回 02 重切(不让 Impl 自由发挥)。
 
 ## 6. Merge
 
-Owner: **Human**(repo maintainer 角色,assisted by Codex 出 commit 摘要)。
+Owner: **Human**(repo maintainer 角色,assisted by Lead 出 commit 摘要)。
 
 Checklist:
 
@@ -324,10 +326,10 @@ Checklist:
 - Commit scope 小且 repo-specific
 - PR 描述含 behavior / tests / risks / rollback notes
 
-## 6.1 OC-impl 子任务包模板(03a 输出)
+## 6.1 Impl 子任务包模板(03a 输出)
 
 ```markdown
-# OC-impl 子任务包 <epic-id>-<n>
+# Impl 子任务包 <epic-id>-<n>
 
 ## 上下文
 - task brief: <path>
@@ -356,17 +358,17 @@ Checklist:
 - 翻案 pre-decisions D1-D3 任一条
 - 单文件 diff > 200 行 (超了停下来问)
 
-## 验收标准 (Codex 03c 会用 rubric 打分)
+## 验收标准 (Lead 03c 会用 rubric 打分)
 见 `.ai/oc-code-quality-rubric.md`, 总分 ≥ 16/24 通过, 否则退回。
 
 ## 完成产出
-- git working tree 已改, 等 Codex 03c 验收
+- git working tree 已改, 等 Lead 03c 验收
 - 输出 "done, 见 git diff" 即可
 ```
 
 ## 9. Epic closeout (收口 · v0.4 新增 · F01-self)
 
-epic merge 完成后, Human (或喂 `.ai/prompts/09-codex-closeout.md` 给 Codex 协助) 跑下列 checklist。
+epic merge 完成后, Human (或喂 `.ai/prompts/09-lead-closeout.md` 给 Lead 协助) 跑下列 checklist。
 不收口 = 下个 epic 启动时 context 污染 (旧 epic state.md 残留 / scratch 残留干扰新 task)。
 
 ### 🗑️ 清 (per-epic ephemeral)
@@ -400,7 +402,7 @@ epic merge 完成后, Human (或喂 `.ai/prompts/09-codex-closeout.md` 给 Codex
 ### 可选清理
 
 - T1-T4 chat sessions: 本 epic 用完关掉, 下个 epic 开**全新** chat session (workflow §0 "epic 间清零" 强约束)
-- Codex Desktop / OpenCode Desktop chat 历史: 删本 epic session 释放 token context
+- 各 Track 的 agent app chat 历史: 删本 epic session 释放 token context
 
 ### 收口验证 (机器化 · 硬门槛)
 
@@ -425,26 +427,26 @@ grep -q "^## ${EPIC_ID} · DONE" .ai/progress.md && echo "PASS" || echo "FAIL"
 grep -c 'Severity:.*P[01]\b' .ai/review.md  # 配合 Status: open 同行/相邻检查
 ```
 
-### Codex 09-closeout 协助 (v0.4 新增)
+### Lead 09-closeout 协助 (v0.4 新增)
 
-Human 不想手动跑 checklist? 喂 `.ai/prompts/09-codex-closeout.md` 契约给 T1 Codex:
+Human 不想手动跑 checklist? 喂 `.ai/prompts/09-lead-closeout.md` 契约给 T1 Lead:
 
 ```text
-你是 Codex。按 .ai/prompts/09-codex-closeout.md 契约执行 epic 收口.
+你是 Lead。按 .ai/prompts/09-lead-closeout.md 契约执行 epic 收口.
 epic: <epic-id> 完了, merge commit <hash>, outcome: <一句话>.
 按 4 步流: Step 1 验证前置条件 → Step 2 清 → Step 3 留 → Step 4 收口验证.
 ```
 
-Codex 跑完, 5 项机器化 verify 全 PASS 即收口完成。
+Lead 跑完, 5 项机器化 verify 全 PASS 即收口完成。
 
 ## 10. 诊断循环收敛规则 (v0.6 新增 · F04-v0.6 + F05-v0.6)
 
-> 跨 prompt SoT。02-codex-plan.md `§诊断型 epic 强约束` / 03-codex-orchestrate.md `03a/03c 诊断型` 段引用本节。
+> 跨 prompt SoT。02-lead-plan.md `§诊断型 epic 强约束` / 03-lead-orchestrate.md `03a/03c 诊断型` 段引用本节。
 > 适用: bug 任务走 02-plan-refine 诊断循环 (每轮换角度 + 跑 instrumentation/matrix 验证根因) 时。
 
 ### 10.1 诊断轮次硬上限 (F04-v0.6)
 
-诊断型 refine **最多 3 轮**。每轮结束 Codex brief 标注 `诊断轮 R<X>/3` + 本轮是否产生收敛信号。
+诊断型 refine **最多 3 轮**。每轮结束 Lead brief 标注 `诊断轮 R<X>/3` + 本轮是否产生收敛信号。
 
 **第 3 轮结束仍无收敛 → 强制进入 `02-human-gate`**, 不允许开 R4。
 对比: 03b-impl 早有 `轮次 X/3` retry cap, 但 02-plan-refine 诊断轮历史上一直裸奔 (F04-v0.6 反例: smart-uite `h5coat-white-screen` 跑了 R1-R5 五轮才被 Human 手动喊停)。
@@ -461,7 +463,7 @@ Codex 跑完, 5 项机器化 verify 全 PASS 即收口完成。
 
 ### 10.3 differential signal 优先 (F05-v0.6 · 强收敛)
 
-每轮 matrix 结果回来, Codex 先做**分化检查**。一旦出现 PASS/FAIL 分化:
+每轮 matrix 结果回来, Lead 先做**分化检查**。一旦出现 PASS/FAIL 分化:
 
 1. 立即停止「再开一个广角矩阵」的冲动。
 2. 显式写出分化两侧的**唯一变量**。
@@ -470,27 +472,39 @@ Codex 跑完, 5 项机器化 verify 全 PASS 即收口完成。
 
 F05-v0.6 反例: smart-uite `h5coat-white-screen` R4 已出现 local-static PASS / remote FAIL 分化, R5 仍跑广角诊断, 多烧一整轮 Windows VM 矩阵; Human override 后正是靠该差分一步推到根因。
 
+### 10.3b 依赖闭包优先 (F09-v0.7 · linkage 类 bug 强收敛)
+
+bug 现象指向 linkage 问题 (找不到符号 / 动态库加载失败 / 函数指针获取失败 / undefined reference) 时, 诊断第一轮**必须先做完整传递依赖闭包扫描**, 而非补一个看一个:
+
+1. 对嫌疑二进制跑递归依赖扫描 (`dumpbin /dependents` 递归 / `ldd` / PE import table 全解析), 列出整条依赖链每个节点。
+2. 对链上每个节点核对: 文件存在 / hash 同源 / ABI 导出符号匹配。
+3. 一次性把闭包内所有缺失/不符项列全, 出一个覆盖整个闭包的 Decision。
+
+该闭包扫描算「强收敛」, 轮次计数可放宽。禁止「补一个缺失依赖 → 跑 → 看下一个 → 再补」链式烧轮次。
+
+F09-v0.7 反例: smart-uite `daemon-reader-device-prompt-loop` 补 `DcReaderParam.ini` → 换 `EgAPP.dll` → 换 `MyLoggerCore.dll`, 一次挖一个, 挖了 3 轮 ADR (2 个被 reject); 实际是 3 文件同源闭包问题, 第一轮 `dumpbin /dependents` 递归即可一次看全。
+
 ### 10.4 human-gate 三选项
 
 诊断轮达上限触发 `02-human-gate`, Human 三选:
 
-- **(a)** 切「Codex direct-solve mode」(见 §11)
+- **(a)** 切「Lead direct-solve mode」(见 §11)
 - **(b)** 外部审计 (Claude / 资深工程师)
 - **(c)** Human 提供新 evidence 后显式批准再开一轮
 
-## 11. Escalation 模式: Codex direct-solve mode (v0.6 新增 · F06-v0.6)
+## 11. Escalation 模式: Lead direct-solve mode (v0.6 新增 · F06-v0.6)
 
 > 把已验证有效的 ad-hoc 模式成文。lite escalation 原本只有 `<stage>-human-gate` 一个通用态,
-> 「诊断 stall → Codex 脱编排直接推理+修复」一直靠 Human 临场口头触发 (F06-v0.6 反例: smart-uite `h5coat-white-screen` Human 喊「你自己干吧」)。
+> 「诊断 stall → Lead 脱编排直接推理+修复」一直靠 Human 临场口头触发 (F06-v0.6 反例: smart-uite `h5coat-white-screen` Human 喊「你自己干吧」)。
 
-**触发**: 诊断型 epic 达 §10.1 诊断轮上限 (3 轮无收敛), 02-human-gate 选项 (a); 或 Human 显式说「Codex 你自己干」。
+**触发**: 诊断型 epic 达 §10.1 诊断轮上限 (3 轮无收敛), 02-human-gate 选项 (a); 或 Human 显式说「Lead 你自己干」。
 
 **模式定义**:
 
-- Codex 脱离 03a/03b/03c 4-track 编排, 在 T1 直接: 翻历史归档 → 推理 → 出最小 patch。
-- direct-solve 期间允许 Codex 直接改代码 (不经 OC-impl), 但仍受 scope 约束: 只动诊断已收窄指向的 paths, 单 patch 优先 ≤ 50 行。
-- **必须回归正常质量门**: direct-solve 出 patch 后, 强制补 04 OC-review (不可跳过) + 09 closeout。review 出 P0/P1 → 正常 04-fix-loop。
-- state.md 阶段标 `02-human-gate · codex-direct-solve` (子模式见 state.md 阶段枚举注释)。
+- Lead 脱离 03a/03b/03c 4-track 编排, 在 T1 直接: 翻历史归档 → 推理 → 出最小 patch。
+- direct-solve 期间允许 Lead 直接改代码 (不经 Impl), 但仍受 scope 约束: 只动诊断已收窄指向的 paths, 单 patch 优先 ≤ 50 行。
+- **必须回归正常质量门**: direct-solve 出 patch 后, 强制补 04 Reviewer (不可跳过) + 09 closeout。review 出 P0/P1 → 正常 04-fix-loop。
+- state.md 阶段标 `02-human-gate · lead-direct-solve` (子模式见 state.md 阶段枚举注释)。
 
 **不允许**: direct-solve 跳过 04 review 直接 merge。
 
@@ -523,44 +537,44 @@ worktree 中运行的 Agent 在最后一步必须:
    ```
 3. 不要假设 Human 知道 worktree 存在。
 
-## 8. 共享文件协议 (OC-helper + GitNexus + OC-impl 子任务包)
+## 8. 共享文件协议 (Helper + GitNexus + Impl 子任务包)
 
-OC-helper 是**全仓搜索 / scan / summarize** 的辅助角色(T2),走 `.ai/scratch/oc-helper/` 共享文件:
+Helper 是**全仓搜索 / scan / summarize** 的辅助角色(T2),走 `.ai/scratch/oc-helper/` 共享文件:
 
-- Codex 写 `req-<epic-id>-<n>.md`(请求)
-- OC-helper 读 req,执行,写 `out-<epic-id>-<n>.md`(结果)
-- Codex 读 out 继续
+- Lead 写 `req-<epic-id>-<n>.md`(请求)
+- Helper 读 req,执行,写 `out-<epic-id>-<n>.md`(结果)
+- Lead 读 out 继续
 
 **触发边界**:
 - ✅ 走 helper: `grep "foo" .` / `scan all internal/` / `summarize whole CHANGELOG.md`
-- ❌ Codex 自己:`grep "foo" path/to/specific/file.go` / `read 3 个已知文件`
+- ❌ Lead 自己:`grep "foo" path/to/specific/file.go` / `read 3 个已知文件`
 
-详细 SOP 见 `.ai/prompts/oc-helper.md` 与 `lite-v0.1.0-design.md` §3.4。
+详细 SOP 见 `.ai/prompts/helper.md` 与 `lite-v0.1.0-design.md` §3.4。
 
-### 8.4 OC-impl 子任务包文件 (v0.2.0 · F14)
+### 8.4 Impl 子任务包文件 (v0.2.0 · F14)
 
 ```
-.ai/scratch/oc-impl-package-<task-id>-<n>.md  ← Codex 03a 写: OC-impl 子任务包正文
+.ai/scratch/oc-impl-package-<task-id>-<n>.md  ← Lead 03a 写: Impl 子任务包正文
 ```
 
 `.gitignore` 已含 `.ai/scratch/`, 子任务包默认不入版本控制 (临时文件, epic 结束 Human 可清空)。
 若需归档审计追溯, epic 收口时 Human 把本轮所有子任务包 cp 到 `.ai/logs/archived/<epic-id>/` 保留。
 
-**双输出强约束**: chat 输出 + 文件落档 1:1 同步 — 见 `.ai/prompts/03-codex-orchestrate.md > 03a 输出哪里`。
+**双输出强约束**: chat 输出 + 文件落档 1:1 同步 — 见 `.ai/prompts/03-lead-orchestrate.md > 03a 输出哪里`。
 
 ### 8.6 L2 摸排双路并行模式 (v0.2.0 · F03 + F04)
 
 适用: bug 复现路径未确认 / 嫌疑符号跨子项目 / 项目 ≥ 50 KLOC
 
 双路:
-- **文本级** (OC-helper): 走 `.ai/scratch/oc-helper/req-<bug>-N.md` → `out-<bug>-N.md`
-- **符号级** (Codex 自跑 GitNexus): 走 `.ai/scratch/oc-helper/gitnexus-<bug>-N.md`
+- **文本级** (Helper): 走 `.ai/scratch/oc-helper/req-<bug>-N.md` → `out-<bug>-N.md`
+- **符号级** (Lead 自跑 GitNexus): 走 `.ai/scratch/oc-helper/gitnexus-<bug>-N.md`
 
-汇总: Codex 02 finalize brief 时双源对比, 互证发现的强化 Decision, 互斥的标 follow-up。
+汇总: Lead 02 finalize brief 时双源对比, 互证发现的强化 Decision, 互斥的标 follow-up。
 
 L1 vs L2 区分:
 - **L1**: Bootstrap 阶段一次性项目地图 (getting-started §一 Step 4)
-- **L2**: per-task / per-bug 摸排 (本段, 02-codex-plan §6 + §7)
+- **L2**: per-task / per-bug 摸排 (本段, 02-lead-plan §6 + §7)
 
 GitNexus 接入见 `.ai/gitnexus-integration.md` (v0.2.0 新文件 · F03)。
 
@@ -570,7 +584,7 @@ This framework can be extended by adding:
 
 - `.ai/tasks/<task>.md` generated from issue templates
 - CI job summary copied into `.ai/logs/` and summarized in `.ai/progress.md`
-- OC-review prompt run on changed files in PR
+- Reviewer prompt run on changed files in PR
 - Human escalation triggered on high-risk labels
 
-(lite 中无 Claude escalation;OC 04 触发 escalation 直接到 Human gate)
+(lite 中无 Claude escalation;Reviewer 04 触发 escalation 直接到 Human gate)

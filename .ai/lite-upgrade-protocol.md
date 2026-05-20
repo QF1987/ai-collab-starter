@@ -1,9 +1,9 @@
 # lite Upgrade Protocol (v0.1.0)
 
-> **作用**: 跨 session 的 lite 自演化升级仪式 SoT。Human 主导,Codex 辅助。
+> **作用**: 跨 session 的 lite 自演化升级仪式 SoT。Human 主导,Lead 辅助。
 >
 > **与 main 的区别**: main 升级仪式是 Claude 主导(starter-upgrade-protocol.md);
-> lite 因无 Claude,**升级由 Human 亲自跑**——Codex 可以帮 grep / draft CHANGELOG,
+> lite 因无 Claude,**升级由 Human 亲自跑**——Lead 可以帮 grep / draft CHANGELOG,
 > 但版本号决策、findings 分桶、tag/push 是 Human 的活。
 
 ## 触发条件 (任一即可启动)
@@ -21,7 +21,7 @@
 
 ## 7-step 升级仪式
 
-### Step 1 · 状态盘点 (5-10 min · Human + Codex 协助)
+### Step 1 · 状态盘点 (5-10 min · Human + Lead 协助)
 
 ```bash
 cd <path-to-ai-collab-starter-lite>
@@ -69,15 +69,15 @@ done
 > **lite v0.X 期间**: MAJOR 突变保留在 v0.X+1.0 形式(不冲 v1.0.0),给设计迭代留余地。
 > 等 lite 跑过 ≥ 3 个真实 epic 验证稳定后再翻 v1.0.0 stable。
 
-### Step 4 · 实施 patches (30-90 min · Human 主导, Codex 拆任务 + OC-impl 写)
+### Step 4 · 实施 patches (30-90 min · Human 主导, Lead 拆任务 + Impl 写)
 
 按必修桶逐条实施。**遵循 lite 03 三段式**:
 
 1. Human 把每条 finding 写成 brief
-2. Codex 02 / 03a 拆任务
-3. OC-impl 03b 写代码
-4. Codex 03c 验收(走 rubric)
-5. OC-review 04 审
+2. Lead 02 / 03a 拆任务
+3. Impl 03b 写代码
+4. Lead 03c 验收(走 rubric)
+5. Reviewer 04 审
 
 每条 finding 文件**末尾**记录:
 - 实施方式(改了哪些文件,具体内容摘要)
@@ -88,7 +88,7 @@ done
 - **保留原文 + 加 v(N).0 标记**,不删旧版
 - **改 prompt 时不破坏 v0.1.0 contract**(MAJOR 例外,CHANGELOG 显式说明)
 
-### Step 5 · 移动归档 + 写 CHANGELOG (15 min · Codex 起草, Human 终审)
+### Step 5 · 移动归档 + 写 CHANGELOG (15 min · Lead 起草, Human 终审)
 
 实施完每条必修后:
 
@@ -98,7 +98,7 @@ git mv .ai/logs/pending-findings/from-<project>/<finding-file>.md \
        .ai/logs/archived/v0.X-released/
 ```
 
-写 CHANGELOG.md 新段(Codex 起草,Human 改后定稿):
+写 CHANGELOG.md 新段(Lead 起草,Human 改后定稿):
 
 ```markdown
 ## [v0.X.Y] — YYYY-MM-DD

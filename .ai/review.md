@@ -1,12 +1,12 @@
 # Review Log
 
-This file tracks review findings across OpenCode, Claude Code and Codex fix cycles.
+This file tracks review findings across Reviewer and Lead/Impl fix cycles.
 
 ## Review Policy
 
-- OpenCode performs low-cost review first.
+- Reviewer performs low-cost review first.
 - Claude Code reviews architecture-sensitive or high-risk changes.
-- Codex fixes only approved findings and reruns targeted verification.
+- Impl fixes only approved findings and reruns targeted verification.
 - Review output must identify file, line or symbol whenever possible.
 
 ## Finding Format
@@ -15,8 +15,8 @@ This file tracks review findings across OpenCode, Claude Code and Codex fix cycl
 ## RV-YYYYMMDD-NN: <short title>
 
 - Severity: P0/P1/P2/P3
-- Reporter: 提出方（OpenCode | Claude Code | Human | CI）
-- Owner: 修复责任 Agent（Claude / Codex / OpenCode / Human）
+- Reporter: 提出方（Reviewer | Human | CI）
+- Owner: 修复责任 Agent（Lead | Impl | Human）
 - Verifier: verify 责任方，默认与 Reporter 相同
 - Repo: <repo 标识 / 路径>
 - File/symbol: <精确定位>

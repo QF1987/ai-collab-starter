@@ -12,6 +12,102 @@ fork 起点见 v0.1.0 段。
 
 ---
 
+## [v0.7.0-lite-rc1] — 2026-05-20
+
+> ⚠️ **Release candidate · 待 ≥ 1 个独立真实 epic 用 v0.7 contract dogfood 验证后翻 stable**。
+> (rc1 理由: v0.7 是 MAJOR — 角色/prompt 文件全仓重命名未经实战 contract dogfood; F07-F10 新契约同样未独立 dogfood。来源 epic 已结束, contract force 形态未实战。)
+
+> 🔨 **MAJOR · breaking change**: 角色名与 prompt 文件名全部改为函数式工具无关命名 (见下方 Breaking changes)。derived 项目 sync 前必读升级指南。
+
+### TL;DR
+
+- **5 条 finding 全消化** (1×MAJOR + 3×P2 + 1×P3, 来源 smart-uite 2 个 derived epic dogfood + Human 工具决策)
+- **MAJOR · F11-v0.7 · 角色/prompt 工具无关重命名**: `Codex→Lead` / `OC-helper→Helper` / `OC-impl→Impl` / `OC-review→Reviewer`; 11 个 prompt 文件去工具品牌前缀。角色名描述职责, 不绑工具 (Human 拟将 worker 从 OpenCode 切到 Claude Code 配国产模型, 旧命名名实不符)
+- **F07-v0.7 (P2)**: 单文件 200 行硬上限反复误伤 verifier/test 脚本 — 03a 子任务包模板加行数预算预声明 + rubric H5 对 verifier 脚本默认放宽到 250 行
+- **F08-v0.7 (P2)**: Impl 报假环境 blocker (「SSH 不可达」) 并污染 progress.md — 03a「测试要求」必含标准执行入口 + 03c verify-don't-trust 纪律 + 03b 环境 blocker 上报纪律
+- **F09-v0.7 (P2)**: 缺「依赖闭包优先」诊断原则, linkage/missing-DLL 类 bug 一次只挖一个依赖 — 02-plan 诊断方法段 + workflow §10.3b
+- **F10-v0.7 (P3)**: 04-review 语言自适应 quality 表加 PowerShell 行 (drive-qualified 变量陷阱等)
+
+### 触发数据
+
+- **来源**: lite v0.6.0-lite dogfood — smart-uite 同日 2 个 P0 epic + Human 工具栈决策
+  - `bug-20260520-daemon-reader-device-prompt-loop` (依赖闭包链式挖掘 3 轮 ADR · 触发 F07/F09)
+  - `bug-20260520-h5coat-tray-white-screen-qt5core-missing` (03c 退回 3 轮: PowerShell parser / 200 行 cap / 假 SSH blocker · 触发 F07/F08/F10)
+  - Human 反馈 OpenCode 配国产模型实战效果不行, 拟改用 Claude Code 配国产模型 → 角色名绑死工具的设计缺陷暴露 (F11)
+- **重要数据点**: 两个 epic 各因 verifier PowerShell 脚本撞 200 行 cap 退回一轮 (208 行 / 205 行); h5coat-tray 03c round3 Impl 报「SSH 不可达」假 blocker, Lead 用项目标准入口 `prlctl exec` 一次跑通。
+
+### Breaking changes (MAJOR · F11-v0.7)
+
+**角色重命名** (函数式 · 工具无关):
+
+| 旧名 | 新名 | 职责 |
+|------|------|------|
+| Codex | **Lead** | 架构 / 拆任务 (03a) / 验收 (03c) / intake / closeout |
+| OC-helper | **Helper** | 全仓搜索 / scan / summarize |
+| OC-impl | **Impl** | 写代码 |
+| OC-review | **Reviewer** | 独立审 |
+
+**prompt 文件重命名**:
+
+```
+01-codex-intake.md      → 01-lead-intake.md
+01-opencode-context.md  → 01-context.md
+02-codex-plan.md        → 02-lead-plan.md
+03-codex-orchestrate.md → 03-lead-orchestrate.md
+03b-opencode-impl.md    → 03b-impl.md
+04-opencode-review.md   → 04-review.md
+06-codex-fix.md         → 06-lead-fix.md
+07-opencode-draft.md    → 07-draft.md
+08-codex-audit.md       → 08-lead-audit.md
+09-codex-closeout.md    → 09-lead-closeout.md
+oc-helper.md            → helper.md
+```
+
+**其它 contract token 变更**: 阶段标记 `human-override-codex-fix → human-override-lead-fix`、子模式 `codex-direct-solve → lead-direct-solve`、step 名 `03c-codex-verify → 03c-verify` / `03b-opencode-impl → 03b-impl`、TODO 标记 `TODO(codex-review) → TODO(lead-review)`。
+
+**未变更 (有意保留)**: 工作目录 `.ai/scratch/oc-helper/`、子任务包文件名约定 `oc-impl-package-*.md`、rubric 文件名 `oc-code-quality-rubric.md` —— 这些是工作目录/文件命名约定, 非角色名, 本次不动以控制 blast radius (后续 finding 可评估)。
+
+### Added · 新增能力
+
+#### F07-v0.7 (P2) · verifier/test 脚本行数预算 → `03-lead-orchestrate.md` / `oc-code-quality-rubric.md`
+- `03-lead-orchestrate.md`: 新增 `03a verifier/test 脚本行数预算预声明` 段 — 含 dedicated verifier/test 脚本的子任务包, 03a 必须在「禁止」段把默认 200 行 cap 改写为该脚本预算
+- `oc-code-quality-rubric.md`: H5 加 verifier/test 脚本例外 — 未预声明时默认放宽到 250 行, 业务代码仍 200 行
+
+#### F08-v0.7 (P2) · 假环境 blocker 防御 → `03-lead-orchestrate.md` / `03b-impl.md`
+- `03-lead-orchestrate.md`: 03a 子任务包模板「测试要求」段必含项目标准执行入口命令原文; 新增 `03c verify-don't-trust` 段 — 收到「不能执行」类 blocker 必须先用标准入口自验
+- `03b-impl.md`: 新增 `环境类 blocker 上报纪律` 段 — 上报前必须用标准入口尝试过, 禁止把「不知道怎么跑」包装成「环境不可达」写进 progress.md
+
+#### F09-v0.7 (P2) · 依赖闭包优先诊断 → `02-lead-plan.md` / `workflow.md`
+- `02-lead-plan.md`: 诊断型 epic 强约束加 `依赖闭包优先 (linkage 类 bug)` 原则 — linkage 问题第一轮先跑完整传递依赖闭包扫描
+- `workflow.md`: §10.3b 新增同名收敛规则段
+
+#### F10-v0.7 (P3) · PowerShell review 覆盖 → `04-review.md`
+- 第三步 3c 语言自适应 quality 表加 PowerShell / Windows 脚本行
+
+### Changed · F11-v0.7 全仓重命名
+
+- 11 个 prompt 文件重命名 (见 Breaking changes)
+- `Codex/OC-*` 角色 token 全仓替换 (`.ai/prompts/` / `state.md` / `workflow.md` / `AGENTS.md` / `oc-code-quality-rubric.md` / `intake-templates.md` / `getting-started.md` / `lite-upgrade-protocol.md` / `review.md` / `README.md` / `STRUCTURE.md`)
+- `workflow.md §0` Track ↔ 工具对照表去工具品牌, 加「角色与工具解耦」说明
+- 主 vs lite 对比表 (`AGENTS.md` / `intake-templates.md`) 的 main 列保留 `Codex` (main starter 仍用 Codex, 非 lite 角色)
+
+### 升级指南 (derived 项目 sync)
+
+> rc 版本默认不强推; 等 v0.7 翻 stable 后再 sync。stable sync 时:
+
+1. `rsync` 新 `.ai/prompts/` (注意是 11 个新文件名, 旧文件名文件需删除)
+2. 项目内若有引用旧 prompt 路径 / 旧角色名的文档 (state.md / progress.md / task 文件), 按 Breaking changes 映射表替换
+3. 旧 epic 归档不动 (历史记录, 保留旧名)
+4. `.ai/scratch/oc-helper/` 目录名不变, 无需迁移
+
+### lite → main sync 候选
+
+- F07-v0.7 (verifier 脚本行数预算)、F08-v0.7 (假环境 blocker 防御)、F09-v0.7 (依赖闭包优先) 为通用诊断/验收改进, 可 sync 到 main inbox
+- F10-v0.7 (PowerShell review 行) 通用, 可 sync
+- F11-v0.7 (工具无关命名) 是 lite 专属 (main 角色固定 Claude+Codex+OpenCode), **不** sync
+
+---
+
 ## [v0.6.0-lite-rc1] — 2026-05-20
 
 > ⚠️ **Release candidate · 待 ≥ 1 个独立真实 epic 用 v0.6 contract dogfood 验证后翻 stable**。
