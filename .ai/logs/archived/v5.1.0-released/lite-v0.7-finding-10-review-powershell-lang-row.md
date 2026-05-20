@@ -65,3 +65,9 @@ InvalidVariableReferenceWithDrive
 ## v0.7 实施记录 (2026-05-20)
 
 本 finding 在 `v0.7.0-lite-rc1` release 消化。实施详情见 `CHANGELOG.md` `[v0.7.0-lite-rc1]` 段。
+
+---
+
+## main v5.1.0-rc1 处置 (2026-05-20)
+
+**采纳** — 已翻译实施到 main 契约。详见 main `CHANGELOG.md` `[v5.1.0-rc1]` 段。

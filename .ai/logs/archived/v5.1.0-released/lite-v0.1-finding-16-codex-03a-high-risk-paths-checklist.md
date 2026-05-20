@@ -104,3 +104,9 @@ Finding 15 已经修了"Codex 必须列 ≥ 1 条具体路径", 但**没指导 C
 - **实施摘要**: 见 `CHANGELOG.md > [v0.2.0-lite-rc1]` 段, 本 finding (F16) 落入对应分组 (group A/B/C/D/E/F/G), 详见 CHANGELOG `### Why these changes` 段
 - **关联 commit**: 见 `git log --oneline v0.1.0-lite-rc1..v0.2.0-lite-rc1` (release 提交 hash 由 Step 6 tag 后填入)
 - **archive 路径**: `.ai/logs/archived/v0.2-released/lite-v0.1-finding-16-codex-03a-high-risk-paths-checklist.md`
+
+---
+
+## main v5.1.0-rc1 处置 (2026-05-20)
+
+**拒收 (lite 架构专属)** — 本 finding target 的 lite 专属文件 (oc-code-quality-rubric / oc-helper / 03a 拆包子任务包) 在 main 不存在; main 的 03 不拆包、无独立 rubric 文件。不适用 main。

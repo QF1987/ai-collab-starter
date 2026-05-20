@@ -57,6 +57,17 @@
 - 已 staged 但漏掉的 docstring / 注释
 此时在 commit message 注明"顺带改进: XXX"。
 
+## 环境类 blocker 上报纪律（v5.1.0 · F08-v0.7）
+
+测试命令跑不起来 / 环境不可达类 blocker，**上报前必须先确认**：
+
+- 已用 task 文件「测试命令」段给定的**标准执行入口**尝试过（e.g. `prlctl exec` / docker exec / 指定 runner）。
+- task 文件**没给**标准入口 → 输出「task 未给 <环境> 执行入口，需 Plan 阶段补」，**不要自己猜** SSH / 其它入口，更不要把猜测当事实。
+
+**禁止**：把「我不知道怎么跑」包装成「环境不可达 / SSH 不可达」事实上报；**禁止**把未经证实的环境判断写进 `.ai/progress.md`（审计文件）。
+
+下游 review 会对「不能执行」类 blocker 做 verify-don't-trust（见 `04-review.md`）——谎报假 blocker 会被实测戳穿。
+
 ## Impl self-flag 路径(v4.0 / 触发来源 B)
 
 实施期发现以下情况,即便守住了 scope,也应**主动 flag Claude review**(不能仅靠 Scout 04 兜底):

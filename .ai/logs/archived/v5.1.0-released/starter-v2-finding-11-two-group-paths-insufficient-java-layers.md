@@ -60,3 +60,9 @@ Java Spring Boot 每个功能至少 5 层（entity / mapper-interface / mapper-x
 - E1 本次 Slice task 文件已使用「统一核心/连带二分 + 代码注释区分风险」的变通方式
 - 信号精度有损失，但 Codex 审校仍可接受
 - 属于改进项，不阻塞当前 E1 流程
+
+---
+
+## main v5.1.0-rc1 处置 (2026-05-20)
+
+**采纳** — 已翻译实施到 main 契约。详见 main `CHANGELOG.md` `[v5.1.0-rc1]` 段。

@@ -84,6 +84,7 @@ Verdict 路径同三步法:`PASS → Human` / `PATCH → Impl` / `REJECT → Cla
 | **Rust** | unsafe 边界、Send/Sync 推理、async runtime 选择一致性 |
 | **SQL / Migrations** | IF NOT EXISTS / IF EXISTS 幂等、destructive 操作有回滚、新约束对历史数据兼容 |
 | **ops-only / shell scripts** | set -euo pipefail、错误信息明确、幂等性、清理 trap |
+| **PowerShell / Windows 脚本**（v5.1.0 · F10-v0.7） | drive-qualified 变量陷阱（`"$var: x"` 应写 `"${var}: x"`，否则 `InvalidVariableReferenceWithDrive`）、`$LASTEXITCODE` 显式检查、外部命令 exit code 语义（robocopy exit 1-7 非失败）、`$ErrorActionPreference` / `-ErrorAction` 一致性、`ExecutionPolicy Bypass` 仅限脚本入口、UNC / network-root 路径行为 |
 
 review 时**只跑改动语言对应那行**,跨语言项目交集都跑。**不**跑改动语言外的项(避免 false positive)。
 
@@ -114,6 +115,25 @@ C6-C7 是垂直领域(看任务性质)。
 
 若 progress.md 含 `self-flag(Impl):` 段(触发来源 B · Impl self-flag)→
 **Next step 已被 Impl 指为 Claude**,Scout 04 不需要再判 escalation(但仍跑三步法做 quality check)。
+
+## verifier/test 脚本规模例外（v5.1.0 · F07-v0.7）
+
+C2（单文件 diff 行数超描述 2x）对 **dedicated verifier / test 脚本**易误判：这类脚本 gate 密集、天然偏长。
+
+- 对纯 verifier/test 脚本，C2 触发时**不直接 escalate**——先看「行数大是否因 gate 多 / 断言密」，是 → 不算 scope-deviation，review.md note 一笔即可。
+- 业务代码文件仍按 C2 正常判定。
+- 反例（dogfood 留底）：lite 侧 verifier PowerShell 脚本两次因撞行数 cap 被退回，纯属脚本天然偏长。
+
+## verify-don't-trust：不采信 Impl 假环境 blocker（v5.1.0 · F08-v0.7）
+
+Impl 报告「测试不能执行 / 环境不可达 / SSH 失败」类 blocker 时，review **不直接采信**：
+
+- 先用 task 文件「测试命令」段给定的**标准执行入口**自己验证一次。
+- 标准入口跑通 → Impl 报的是**假 blocker**，按实测结果继续，并要求 Impl 修正 `progress.md` 里的错误环境记录。
+- 标准入口也失败 → 才是真环境 blocker。
+- 反例（dogfood 留底）：Impl 报「SSH 不可达」并写进 progress.md，实际项目标准入口 `prlctl exec` 完全可用。
+
+> 协同：task 文件「测试命令」段应含**项目标准执行入口命令原文**（02-plan 负责写全，见 `02-claude-plan.md` AC↔Scope.paths 校验）。
 
 ## 禁止
 

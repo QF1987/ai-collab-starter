@@ -9,6 +9,60 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html):
 
 ---
 
+## [v5.1.0-rc1] — 2026-05-20
+
+> ⚠️ **Release candidate · 待实战 dogfood 验证后翻 stable**。
+> 本版本消化 inbox 累积 finding (0 实战 dogfood)。derived 项目默认仍 sync v3.0.0 stable。
+
+### TL;DR
+
+- **消化 inbox 7 条 finding** (3×P2 + 3×P3 + 1×low) —— 来自 lite→main sync (lite v0.1 / v0.7 已实现 finding) + payment-recon-demo starter-v2 backlog。
+- 无 breaking change · 全部为增量契约约束。
+- inbox 19 条总盘点结果: **7 必修 / 5 拒收 (lite 架构专属) / 1 已实现 / 6 deferred**。
+
+### 实战数据
+
+- 无独立 dogfood —— inbox 消化轮。触发: Human 显式启动 main 升级仪式。
+- finding 来源:
+  - `from-payment-recon-demo` (2 条 starter-v2 backlog · 2026-05-13): finding-11 (Java 多层 paths) 采纳; finding-16 (Mockito inline/scope) 评估为 main 早已实现。
+  - `from-lite-smart-uite` (lite→main sync): lite v0.7 的 F07-F10 + lite v0.1 的 F05/F12 采纳; lite v0.1 的 F09/F11/F14/F15/F16 拒收 (target lite 专属文件, main 无对应)。
+
+### Added / Changed
+
+#### `02-claude-plan.md` (4 finding)
+- **lite-v0.1-12 软条件漏洞**: 「决策必须落到唯一具体选择」禁止清单补 4 类软条件措辞 (或等价 / 仅当需要 / 若有必要 / 可考虑)。
+- **lite-v0.1-05 Alternatives UX 维度**: 新增「Alternatives 必须覆盖 UX/行为等价维度」段 —— 不能只对比技术实现不同的方案。
+- **F09-v0.7 依赖闭包优先诊断**: 新增「根因诊断方法: linkage 类 bug 依赖闭包优先」段 —— linkage 类 bug 第一轮先跑完整传递依赖闭包扫描。
+- **starter-v2-finding-11 Java 多层 paths**: Paths 二组分段补「Java 多层结构核心组超 8 文件时再分子标题 (业务逻辑层 / 配置映射层)」。
+
+#### `04-review.md` (3 finding)
+- **F10-v0.7 PowerShell review 行**: 第三步语言自适应 quality 表新增 PowerShell / Windows 脚本行 (drive-qualified 变量陷阱等)。
+- **F07-v0.7 verifier 脚本规模例外**: 新增段 —— C2 规模启发对 dedicated verifier/test 脚本不直接 escalate (脚本天然 gate 密集偏长)。
+- **F08-v0.7 verify-don't-trust**: 新增段 —— Impl 报「环境不可达」类 blocker 时, review 先用标准执行入口自验, 不直接采信。
+
+#### `03-implement.md` (1 finding)
+- **F08-v0.7 环境 blocker 上报纪律**: 新增段 —— 上报环境 blocker 前必须用 task 标准执行入口尝试过, 禁止把「不会跑」包装成「环境不可达」写进 progress.md。
+
+### Why these changes
+
+- F07-F10 来自 lite v0.7 dogfood (smart-uite 两个 P0 epic): verifier 脚本撞行数 cap、Impl 谎报 SSH 不可达、依赖闭包链式挖掘、PowerShell parser 陷阱。
+- lite-v0.1-05/12 来自 lite 早期 dogfood, 通用决策纪律, 同样适用 main 的 02-claude-plan。
+- starter-v2-finding-11 是 payment-recon-demo Java Spring 实战暴露的 paths 二分信号不足。
+
+### Breaking changes
+
+无。全部为增量契约约束, v5.0.0 旧 task / brief / ADR 仍合法。
+
+### 升级指南 (derived 项目 sync)
+
+> rc 默认不强推; 等翻 stable 后再 sync。stable sync 时 `rsync` 新 `.ai/prompts/` 即可, 无文件重命名。
+
+### 未消化 (留 inbox)
+
+`from-lite-smart-uite/` 保留 6 条 deferred (lite-v0.1-02/03/06/07/10/13): state 漂移纪律 / GitNexus 一等公民 / severity-escalation 映射 / 复现纪律 / bug 回归 revert / 阶段枚举 —— spirit 适用 main 但需逐个核对 main 现状, 留下次升级仪式。
+
+---
+
 ## [v5.0.0-rc1] — 2026-05-20
 
 > ⚠️ **Release candidate · 待实战 dogfood 验证后翻 stable**。

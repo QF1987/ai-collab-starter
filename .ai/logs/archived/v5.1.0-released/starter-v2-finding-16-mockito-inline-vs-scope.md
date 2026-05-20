@@ -40,3 +40,9 @@ Codex 本轮未越界新增 Mockito 扩展配置,改为在 `AlipayChannelAdapter
 
 starter task 模板若要求某测试框架特性,应把对应测试配置文件路径纳入 Scope.paths;
 或允许在本地环境不支持 inline mock maker 时使用手写 fake 替代 Mockito。
+
+---
+
+## main v5.1.0-rc1 处置 (2026-05-20)
+
+**已实现** — main `02-claude-plan.md` AC↔Scope.paths 校验段已显式含本 finding 修复 (mockito-extensions 配置文件纳入 Scope.paths)。无需再做。
