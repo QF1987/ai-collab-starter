@@ -1,4 +1,4 @@
-# Prompt: Codex 01-intake · 一句话粗需求 → brief (lite v0.4.0-lite-rc1)
+# Prompt: Codex 01-intake · 一句话粗需求 → brief (lite v0.6.0-lite-rc1)
 
 ## 角色
 
@@ -60,6 +60,26 @@
 
 - Human 一句话**不含**任何 evidence 路径 → 跳过 Step 1.5, 直接 Step 2 反问
 - Human 一句话**只含模糊引用** (e.g. "我之前看到一个 log 不记得路径") → Q1 反问 "evidence 路径是?", 不主动猜路径
+
+### Step 1.5b: 同组件历史归档检索 (v0.6 · F03-v0.6 · 反问前必跑)
+
+从一句话需求 / evidence 提取**核心组件名 / 模块名 / 关键文件名**, 对历史归档做检索:
+
+```bash
+grep -rl "<组件名>" .ai/logs/archived/ 2>/dev/null
+```
+
+- 命中的历史 epic, 读其归档的「未验证嫌疑 / 残留 follow-up / Known Sharp Edge」段。
+- 把命中的未验证嫌疑写入 brief 文件 `## 历史关联嫌疑` 段, 移交 02-plan 作为头号候选假设 (02 §8.1 会消费此段)。
+- 无命中 → brief 文件该段写「无历史关联」。
+
+**为什么必跑**: 同组件上一个 epic 可能已识别出嫌疑点却未验证, 答案躺在 `.ai/logs/archived/` 里。
+不检索 → 重走昂贵的诊断循环 (反例: smart-uite `h5coat-white-screen` epic 根因已在上个 epic 归档里, 没翻, 重走 5 轮诊断 matrix)。
+
+#### 触发边界
+
+- 一句话**完全无**可提取的组件名 (e.g. 纯新项目 bootstrap) → 跳过 Step 1.5b, brief 该段写「无历史关联 (新项目)」。
+- `.ai/logs/archived/` 目录不存在 → 跳过, brief 该段写「无历史归档」。
 
 ### Step 2: 反问澄清问题 (≤ 5 个, 单轮一次性出完)
 
@@ -146,6 +166,9 @@ intake-by: codex-01-intake
 ## Known constraints
 <已知技术限制 / 截止 / 依赖>
 
+## 历史关联嫌疑 (v0.6 · F03-v0.6 · Step 1.5b 产出)
+<同组件历史归档检索命中的未验证嫌疑 / 残留 follow-up; 无命中写「无历史关联」>
+
 ## Acceptance hint
 <一句话定义"完成的样子">
 
@@ -191,6 +214,9 @@ intake-by: codex-01-intake
 
 ## Initial hypothesis
 <Q5 答, 可选>
+
+## 历史关联嫌疑 (v0.6 · F03-v0.6 · Step 1.5b 产出)
+<同组件历史归档检索命中的未验证嫌疑 / 残留 follow-up; 无命中写「无历史关联」>
 
 ## Severity → escalation 映射 (F06)
 <按映射表自动: P0→true / P1→true / P2→false / P3→false; 偏离默认 → "Why this severity-escalation combination" 段写理由>

@@ -335,3 +335,13 @@ state.md 字段更新规则:
 - 工程术语是否在允许英文清单内?
 
 不符合就重写。这条纪律对 OC 国产模型尤其重要——OC 训练数据倾向英文 markdown,必须显式压回中文。
+
+### 国产 OC 模型实战覆盖 (v0.6 · F02-v0.6)
+
+lite framework 所有 Agent (Codex / OC-helper / OC-impl / OC-review) 的 **chat 输出 + scratch / state.md / progress.md / brief / review.md 等元数据 prose 段默认中文**。
+
+国产 OC 模型 (Kimi / Qwen / Doubao 等) 实战可能仍默认英文输出 (训练数据倾向)。处置:
+
+- 各 OC prompt (`oc-helper.md` / `03b-opencode-impl.md` / `04-opencode-review.md`) 输出格式段已加中文硬约束 (v0.6 · F02-v0.6)。
+- 若实战仍发现英文 chat, Human 喂 prompt 时显式加一句临时覆盖: `⚠️ chat 输出请用中文`。
+- 唯一允许英文 chat 的场景: OC-helper req `action.language: en` 显式声明 (跨语言协作 / 国际化 review)。

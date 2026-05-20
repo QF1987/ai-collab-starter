@@ -1,4 +1,4 @@
-# Prompt: Codex 架构与切片 (lite v0.5.0-lite-rc1)
+# Prompt: Codex 架构与切片 (lite v0.6.0-lite-rc1)
 
 ## 角色
 
@@ -254,6 +254,18 @@ grep -rn "^var uploadFile\b\|^const uploadFile\b" <target-package>
 
 Brief 描述里的**关键假设** (类型识别 / 命名映射 / 跨子项目调用 / 32-64 位 / 工作目录 / 编码 等架构敏感选择) 必须显式标在 02 输出末尾 `## Assumptions to verify` 段, 让 Human cross-check。
 
+#### 8.1 历史关联嫌疑优先 (v0.6 · F03-v0.6)
+
+- `## Assumptions to verify` 段的**第一批假设**, 必须来自 task 文件 `## 历史关联嫌疑` 段
+  (01-intake Step 1.5b 检索到的同组件历史 epic 归档未验证嫌疑)。
+- 若 task 文件无 `## 历史关联嫌疑` 段 (旧 brief / 直接进 02 未走 01-intake), Codex 02 必须**自己补做一次**同组件历史归档检索:
+  ```bash
+  grep -rl "<核心组件名 / 模块名 / 关键文件名>" .ai/logs/archived/ 2>/dev/null
+  ```
+  命中的历史 epic, 读其归档 `## 未验证嫌疑 / 残留 follow-up` 段, 把命中项列为头号候选假设; 无命中显式标 "无历史关联"。
+- 若历史嫌疑可用**极小 A/B** (写一个文件 / 改一个配置 / 跑一条命令) 验证, 必须在 `## Quick workaround` 段优先排该 A/B, **早于**昂贵的 instrumentation 矩阵。
+- 反例 (dogfood 留底 · v0.6): smart-uite `h5coat-white-screen` epic 根因 (缺 `qt.conf`) 上一个 epic `h5coat-qt5core-missing` 归档已记为「未验证嫌疑」, 但 02 未检索历史归档, 重走 5 轮诊断 matrix 才解决。
+
 #### 必须列的假设类型 (任一命中 → 必列)
 
 - **命名歧义**: Brief 描述路径 (e.g. "DcBusinessManager 托盘菜单") vs evidence 实际路径 (e.g. `DcReaderService/trayclass.cpp`) 不一致 — **必列**
@@ -413,6 +425,45 @@ bug 任务在通用 7 条强约束之上, 额外要求:
 - 必含: "不顺手 refactor 相邻代码"
 - 必含: "改动范围限定 Affected subprojects"
 
+## 诊断型 epic 强约束 (v0.6 · F04/F05/F06-v0.6)
+
+适用: bug 任务走 02-plan-refine 诊断循环 (每轮换角度 + 跑 instrumentation/matrix 验证) 时。
+跨 prompt SoT 见 `.ai/workflow.md > §诊断循环收敛规则`。
+
+### 诊断方法: differential signal 优先 (v0.6 · F05-v0.6)
+
+诊断型 epic 每轮 matrix 结果回来后, Codex 必须先做**分化检查**:
+
+- 是否出现 PASS/FAIL 分化? (某些 case PASS / 某些 FAIL)
+- 是否排除了一整类根因? (某维度全 PASS / 全 FAIL 无影响)
+
+**一旦出现分化信号**:
+
+1. 立即停止「再开一个广角矩阵」的冲动。
+2. 显式写出分化两侧的**唯一变量** (e.g. local-static vs remote = 「子进程是否需独立解析 runtime」)。
+3. 下一轮必须是**针对该唯一变量的最小 A/B** (改一个文件 / 一个配置, 跑前后对照), 不是又一个广矩阵。
+4. 该最小 A/B 算「强收敛」, 满足下方诊断轮次放宽条件。
+
+无分化信号 (全 FAIL 无差异) → 才允许继续换广角维度。
+
+反例 (dogfood 留底 · v0.6): smart-uite `h5coat-white-screen` epic R4 已出现 local-static PASS / remote FAIL 分化, 但 R5 仍跑广角 LocalDumps / PE Offset Mapping, 多烧一整轮 Windows VM 矩阵。
+
+### 02-plan-refine 诊断轮次上限 + 收敛 gate (v0.6 · F04-v0.6)
+
+诊断型 refine **最多 3 轮**。每轮结束 Codex 必须在 brief 标注:
+
+- 当前轮次 `诊断轮 R<X>/3`
+- 本轮是否产生**收敛信号** (排除了某个根因类别 / 出现 PASS-FAIL 分化 / 缩小了嫌疑范围)
+
+**第 3 轮结束仍无收敛 → 强制进入 `02-human-gate`**, 不允许开 R4。
+human-gate 给 Human 三个选项:
+
+- **(a) 切「Codex direct-solve mode」** — Codex 脱离编排直接推理+修复 (定义见 `workflow.md > §Escalation 模式: Codex direct-solve mode` · v0.6 · F06-v0.6)
+- **(b) 外部审计** (Claude / 资深工程师)
+- **(c) Human 提供新 evidence 后显式批准再开一轮**
+
+例外: 若某轮明确**排除了一整类根因**或**出现强差分信号** (见上方 F05-v0.6), 算「有收敛」, 轮次计数可放宽, 但仍需在 brief 显式论证「为什么这轮算收敛」。
+
 ## 触发 Human 升级路径 (lite 特有)
 
 若 Codex 02 自觉本 task 超能力, 在 frontmatter 加 `human-escalation-suggested: true`,
@@ -471,6 +522,46 @@ prompt body 推荐结构:
 - 任务一句话 + 输入指向 + 输出期望
 - 具体要求 5-8 条 bullet
 - 完成后动作 (跑测试 / 汇报格式 / 刷新 state.md)
+
+#### 多分支 fallback 决策树 (P0/P1 必填 · v0.6 · F01-v0.6)
+
+> **设计意图**: Pattern A 是 Human bus 接力时**只看 state.md 复制粘贴, 不自己写 prompt**。
+> happy path 之外的 fallback / iteration 路径若不预填 prompt body, Human 撞 fallback 时被迫自己拼
+> (含 OC-helper req 字段 / GitNexus query / state.md 刷新格式 / B7 钩子等), Pattern A 在 fallback 路径失效。
+
+P0/P1 任务的 `## 下一步提示词` **必填 ≥ 2 branch** (happy path + ≥ 1 fallback); P2/P3 可只填 happy path。
+每个 branch 必须是**完整 paste-able prompt body** (不允许 "若 X, 做 Y" 文本叙述指令), Human 看 brief 一眼判断当前是哪 branch、直接复制粘贴。
+
+```markdown
+## 下一步提示词 (含 fallback 决策树 · v0.6 · F01-v0.6)
+
+### Branch 1 · Happy path (workaround 解决 + Assumptions 全 confirmed)
+
+\`\`\`text
+你是 Codex。按 .ai/prompts/03-codex-orchestrate.md 契约执行 03a 拆 OC-impl 子任务包.
+[完整启动 prompt body]
+\`\`\`
+
+### Branch 2 · Fallback: workaround 后弹另一错误 (某 Assumption 失败)
+
+\`\`\`text
+你是 Codex。Human 反馈 workaround 解了 X 但弹 Y, A<N> 假设错.
+按 .ai/prompts/02-codex-plan.md 契约执行 02-plan-refine 第 2 轮:
+1. 写 OC-helper req .ai/scratch/oc-helper/req-<epic>-N.md, 扫 <具体 keyword>
+2. 等 OC-helper out 后 finalize 修订 Decision/ADR
+3. 给新 quick workaround + 刷 state.md
+\`\`\`
+
+### Branch 3 · Fallback: workaround 没解决 (核心 Assumption 失败) → 02-plan-refine 修订 Cross-check
+### Branch 4 · Fallback: Human 不接受 Decision → 02 退回 reroll prompt
+### Branch 5 · 意外 error → 升 Human + 外部审计 (简短 escalation 指引)
+```
+
+**必含字段**:
+
+- **每个 branch 名称**: 触发条件一句话, 给 Human 一眼判断当前是哪 branch (e.g. "若弹 DLL 错误 → Branch 2")
+- **每个 branch prompt body**: 完整 paste-able, 不允许文本叙述指令
+- branch 数量按本 task 的 Assumptions / workaround 实际分支裁剪 (至少 happy + 1 fallback)
 
 #### 业务内容
 

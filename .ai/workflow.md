@@ -1,4 +1,4 @@
-# AI Collaboration Workflow (lite v0.5.0-lite-rc1)
+# AI Collaboration Workflow (lite v0.6.0-lite-rc1)
 
 > **lite vs main**: 无 Claude,Codex 当 lead engineer(架构 + 拆任务 + 验收),OC 写代码 + 审 + 信息查询。
 > Escalation 接收方是 **Human**,不是 Claude main session。
@@ -436,6 +436,65 @@ epic: <epic-id> 完了, merge commit <hash>, outcome: <一句话>.
 ```
 
 Codex 跑完, 5 项机器化 verify 全 PASS 即收口完成。
+
+## 10. 诊断循环收敛规则 (v0.6 新增 · F04-v0.6 + F05-v0.6)
+
+> 跨 prompt SoT。02-codex-plan.md `§诊断型 epic 强约束` / 03-codex-orchestrate.md `03a/03c 诊断型` 段引用本节。
+> 适用: bug 任务走 02-plan-refine 诊断循环 (每轮换角度 + 跑 instrumentation/matrix 验证根因) 时。
+
+### 10.1 诊断轮次硬上限 (F04-v0.6)
+
+诊断型 refine **最多 3 轮**。每轮结束 Codex brief 标注 `诊断轮 R<X>/3` + 本轮是否产生收敛信号。
+
+**第 3 轮结束仍无收敛 → 强制进入 `02-human-gate`**, 不允许开 R4。
+对比: 03b-impl 早有 `轮次 X/3` retry cap, 但 02-plan-refine 诊断轮历史上一直裸奔 (F04-v0.6 反例: smart-uite `h5coat-white-screen` 跑了 R1-R5 五轮才被 Human 手动喊停)。
+
+### 10.2 收敛的定义
+
+某轮算「有收敛」当且仅当满足任一:
+
+- 排除了一整类根因 (某维度全 PASS / 全 FAIL 证明无影响)
+- 出现 PASS/FAIL 分化信号 (见 §10.3, 算「强收敛」)
+- 实质缩小了嫌疑范围
+
+仅「换了个诊断角度但结果仍全 FAIL 无差异」**不算**收敛。
+
+### 10.3 differential signal 优先 (F05-v0.6 · 强收敛)
+
+每轮 matrix 结果回来, Codex 先做**分化检查**。一旦出现 PASS/FAIL 分化:
+
+1. 立即停止「再开一个广角矩阵」的冲动。
+2. 显式写出分化两侧的**唯一变量**。
+3. 下一轮必须是针对该唯一变量的**最小 A/B** (改一个文件 / 配置, 跑前后对照), 不是又一个广矩阵。
+4. 该最小 A/B 算「强收敛」, 轮次计数可放宽 (但需在 brief 显式论证)。
+
+F05-v0.6 反例: smart-uite `h5coat-white-screen` R4 已出现 local-static PASS / remote FAIL 分化, R5 仍跑广角诊断, 多烧一整轮 Windows VM 矩阵; Human override 后正是靠该差分一步推到根因。
+
+### 10.4 human-gate 三选项
+
+诊断轮达上限触发 `02-human-gate`, Human 三选:
+
+- **(a)** 切「Codex direct-solve mode」(见 §11)
+- **(b)** 外部审计 (Claude / 资深工程师)
+- **(c)** Human 提供新 evidence 后显式批准再开一轮
+
+## 11. Escalation 模式: Codex direct-solve mode (v0.6 新增 · F06-v0.6)
+
+> 把已验证有效的 ad-hoc 模式成文。lite escalation 原本只有 `<stage>-human-gate` 一个通用态,
+> 「诊断 stall → Codex 脱编排直接推理+修复」一直靠 Human 临场口头触发 (F06-v0.6 反例: smart-uite `h5coat-white-screen` Human 喊「你自己干吧」)。
+
+**触发**: 诊断型 epic 达 §10.1 诊断轮上限 (3 轮无收敛), 02-human-gate 选项 (a); 或 Human 显式说「Codex 你自己干」。
+
+**模式定义**:
+
+- Codex 脱离 03a/03b/03c 4-track 编排, 在 T1 直接: 翻历史归档 → 推理 → 出最小 patch。
+- direct-solve 期间允许 Codex 直接改代码 (不经 OC-impl), 但仍受 scope 约束: 只动诊断已收窄指向的 paths, 单 patch 优先 ≤ 50 行。
+- **必须回归正常质量门**: direct-solve 出 patch 后, 强制补 04 OC-review (不可跳过) + 09 closeout。review 出 P0/P1 → 正常 04-fix-loop。
+- state.md 阶段标 `02-human-gate · codex-direct-solve` (子模式见 state.md 阶段枚举注释)。
+
+**不允许**: direct-solve 跳过 04 review 直接 merge。
+
+**观察**: F03-v0.6 (历史归档检索前移) / F04 / F05 若都生效, direct-solve 应成为罕见兜底, 而非常规出口。
 
 ## 7. Worktree convention(沿用 main)
 

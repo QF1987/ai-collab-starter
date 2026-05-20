@@ -1,4 +1,4 @@
-# Prompt: OC-helper 全仓查询 (lite v0.5.0-lite-rc1)
+# Prompt: OC-helper 全仓查询 (lite v0.6.0-lite-rc1)
 
 ## 角色
 
@@ -169,9 +169,9 @@ req 让你跑 `git log` / `git diff` / `git blame` 时, 必须遵守:
 - **禁止读 / 改 state.md** (v0.2.0 · F02 · Pattern A)
 - **禁止假设 umbrella git 追踪子路径** (v0.2.0 · F01 · 见上方 git 子操作纪律)
 
-## 输出 chat 格式 (精简)
+## 输出 chat 格式 (精简 · v0.6 · F02-v0.6 加中文硬约束)
 
-完成后, 在 chat 仅输出:
+完成后, 在 chat 仅输出 (**chat 所有散文 / 摘要默认中文 · 结构字段名 + 命令原始输出例外**):
 
 ```
 out: .ai/scratch/oc-helper/out-<epic-id>-<n>.md
@@ -179,6 +179,12 @@ status: success | partial | failed
 total_matches: <n>
 done
 ```
+
+- `out` / `status` / `total_matches` / `done` 是结构字段, 保留英文 (工程惯例术语)。
+- 若附加 status / notes 摘要 bullet (≤ 5 行), **必须中文表述** (e.g. "发现 33 个 boost DLL, 0 缺失", 而非 "find 33 boost DLLs, 0 missing")。
+- 例外: 仅当 req `action` 显式声明 `language: en` (跨语言协作 / 国际化 review 场景) 才允许英文 chat 摘要。
+
+> **为什么**: 国产 OC 模型 (Kimi / Qwen / Doubao 等) 默认英文 chat 输出, Human 阅读体验下降。lite 默认中文 (Pattern A Human bus 中文操作), 必须显式压回。
 
 ## 撞墙处理
 
@@ -188,7 +194,11 @@ done
 
 ## Token 策略
 
-- **输出语言**: 中文 (notes 段) + 命令原始输出原样 (result 段)
+- **输出语言** (v0.6 · F02-v0.6 强化):
+  - chat 输出 (status / 摘要 bullet / done 等所有非命令原始输出): **中文默认**
+  - notes 段 (out 文件): **中文默认**
+  - result 段 (out 文件 grep / dumpbin / find 等命令原始输出): 原样保留 (不翻译)
+  - 例外: req `action.language: en` 显式声明时允许英文 chat
 - chat 输出极简, 把内容写到 out 文件
 - 不要读 req 之外的文件 (out_file 路径 + grep target 之外, 不主动 read)
 

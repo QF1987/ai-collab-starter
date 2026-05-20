@@ -1,4 +1,4 @@
-# Session State (lite v0.5.0-lite-rc1)
+# Session State (lite v0.6.0-lite-rc1)
 
 > Resume 协议。每个 Agent 完成后必须刷新本文件。
 > 下一次开 session 第一件事:读这里就知道接哪一步。
@@ -18,7 +18,7 @@
      01-intake            · Codex 跑 ≤ 5 轮 Q&A 把一句话 → brief (v0.3 新增 · 可选起点)
      01-intake-done       · Q&A 完成, brief 文件已落 (v0.3 新增)
      02-plan              · Codex 出 brief 决策
-     02-plan-refine       · brief 已出但需微 L2 / 用户反馈才能 finalize (v0.2 新增)
+     02-plan-refine       · brief 已出但需微 L2 / 用户反馈才能 finalize (v0.2 新增 · 诊断型必标 诊断轮 R<X>/3, v0.6 · F04-v0.6)
      03a-decompose        · Codex 拆 OC-impl 子任务包
      03a-prep             · 03a 前的微 L2 / 补查 (v0.2 新增)
      03b-impl             · OC-impl 写代码 (T3)
@@ -28,6 +28,7 @@
      04-fix-loop          · review 出 finding, OC-impl 修, OC-review 重审 (v0.2 新增)
      merge                · Human 合入
      <stage>-human-gate   · 任意阶段 Human 介入决策 (escalation / override, v0.2 新增)
+                            子模式 codex-direct-solve: 诊断 stall 后 Codex 脱编排直接修 (v0.6 · F06-v0.6)
      -->
 - 起始时间: `NONE` <!-- task 第一次启动时间(intake 完成那一刻);**跨 step 不变**,详见 AGENTS.md > Session State Discipline 字段表 -->
 - 当前 epic 终端布局:
@@ -114,6 +115,12 @@ NONE
    - **04-fix-loop → 04-re-review (T3→T4)**: OC-impl 填 OC-review re-review 启动 prompt (v0.5-rc1 patch 加 · 历史反例 h5coat-qt5core-missing epic)
    - 04-re-review → Human merge (T4→Human): OC-review 填 Human merge 决策指引
    - Human merge → 09-closeout (Human→T1): Human merge prompt 含 09-closeout 启动指引
+   (v0.6 · F01-v0.6 扩展) cross-terminal 切换点 prompt body force, 不只 happy path, 还含 fallback / iteration 路径:
+   - 02 → 02-plan-refine 第 N 轮 (Codex 02 brief fallback 决策树触发) — Codex 02 必预填 (见 `02-codex-plan.md > 多分支 fallback 决策树`)
+   - Human gate → 02 退回 (Human gate 不接受 Decision) — Codex 02 必预填 reroll prompt
+   - 03b → 03b-retry (03c 退回, 轮次 X/3) — Codex 03c 退回模板必预填完整 paste-able OC-impl 重试 prompt
+   - 04-fix-loop → 03b/02 退回 (RV fix 不通过) — OC-review 必预填
+   - OC-helper L2 done → Codex 02 finalize (T2→T1) — Codex 02 写 OC-helper req 时同时预填 finalize prompt body
    不填 / 填错 prompt body → 违反 Pattern A 设计意图, 04 三步法第三步 B7 catch + 升 Human。
 
 ## Human vs Agent · 谁该读 state.md

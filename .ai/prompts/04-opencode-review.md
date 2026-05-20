@@ -1,4 +1,4 @@
-# Prompt: OC-review 独立审 (lite v0.5.0-lite-rc1)
+# Prompt: OC-review 独立审 (lite v0.6.0-lite-rc1)
 
 ## 角色
 
@@ -273,6 +273,10 @@ review 通过门槛：被 review 的改动**必须已 commit**。
 - finding 写紧凑：severity + 证据 + expected fix。
 
 ## 输出
+
+> **chat + review.md 散文默认中文** (v0.6 · F02-v0.6): Summary / Finding / Expected fix / Verification 等所有散文用中文。
+> 例外原样英文: 代码 / 路径 / 命令原始输出 / 工程术语 (severity / scope / PASS 等) / finding 模板结构字段名。
+> 国产 OC 模型默认英文 markdown, 必须显式压回中文。
 
 ```markdown
 # OpenCode Review: <task>

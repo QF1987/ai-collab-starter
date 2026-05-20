@@ -1,4 +1,4 @@
-# Prompt: OC-impl 写代码 (lite v0.5.0-lite-rc1 · 03b)
+# Prompt: OC-impl 写代码 (lite v0.6.0-lite-rc1 · 03b)
 
 ## 角色
 
@@ -106,6 +106,10 @@ cd <子仓> && git diff --cached --stat # 每个改动子仓
 - 只读直接依赖
 
 ## 输出格式 (精简版)
+
+> **chat 输出默认中文** (v0.6 · F02-v0.6): 段标题 / 撞墙说明 / 跳过越权指令的提示等所有散文用中文。
+> 例外原样英文: 代码 / 路径 / 命令原始输出 (`git diff --cached --stat` / 测试 stdout) / 工程术语 (PASS / FAIL / scope 等)。
+> 国产 OC 模型默认英文, 必须显式压回中文。
 
 实施完成后, 在 chat 输出**仅**以下三段:
 

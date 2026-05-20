@@ -1,4 +1,4 @@
-# Prompt: Codex 调度 (lite v0.5.0-lite-rc1 · 03a 拆任务 + 03c 验收)
+# Prompt: Codex 调度 (lite v0.6.0-lite-rc1 · 03a 拆任务 + 03c 验收)
 
 ## 角色
 
@@ -139,6 +139,15 @@ state.md 同步刷:
 - 落档但与 chat 不一致 (任何文字差异)
 - 修订子任务包却不另起版本号 — 出新版应另起文件名 (-2, -3 ...) 而非 silent 覆盖第一版
 
+### 03a 诊断型子任务包: 分化出现 → 收窄 (v0.6 · F05-v0.6)
+
+拆**诊断型**子任务包 (跑 instrumentation / matrix 验证根因) 前, 检查上一轮 brief 是否记录了 PASS/FAIL 分化:
+
+- 若上一轮**已出现分化信号** → 本轮子任务包**必须**是针对分化唯一变量的**收窄型 A/B** (改一个文件 / 配置, 跑前后对照), **禁止**拆又一个广角矩阵包。
+- 若上一轮全 FAIL 无差异 → 才允许拆换广角维度的矩阵包。
+
+跨 prompt SoT 见 `.ai/workflow.md > §诊断循环收敛规则` 与 `02-codex-plan.md > §诊断型 epic 强约束`。
+
 ### 03a 决定何时拆细 vs 拆粗
 
 - 子任务包内"必做"项 ≤ 6 条 (超了拆)
@@ -257,6 +266,8 @@ Verify 不通过. 原因:
 - 若 X=3: 不要再改了, 请输出"达到 3 轮上限, 升 Human 决策"
 ```
 
+**退回模板 prompt body force (v0.6 · F01-v0.6)**: 03c 退回时, state.md `Next step.可粘贴 prompt` 必须填**完整 paste-able 的 OC-impl 重试 prompt** (退回模板正文 + 第 1 行 `你是 OpenCode。按 .ai/prompts/03b-opencode-impl.md 契约执行 03b-retry`), 不允许只写 "回 T3 让 OC-impl 改" 这类文本叙述指令。Human bus 切到 T3 直接复制粘贴, 不自己拼 prompt (Pattern A fallback 路径完整性)。
+
 ### 重试上限与升级路径
 
 - **03b ↔ 03c 最多 3 轮**, 第 3 轮 verify 仍 fail → 升 Human(state.md `触发来源 = H · 重试上限`)
@@ -266,6 +277,15 @@ Verify 不通过. 原因:
   - **(c) 回到 02 重新拆任务**: brief 本身可能有问题
 
 每次走 (a) 必须在 progress.md 记一笔, 月度统计触发频次 (频繁触发 = 子任务包颗粒度或 rubric 门槛该调)。
+
+### 03c 诊断型子任务包: 跨轮收敛检查 (v0.6 · F04-v0.6)
+
+03c 验收**诊断型**子任务包时, 除单轮 rubric 打分外, 必须做一次**跨轮视角**检查:
+
+- 若发现「已是第 3 轮诊断且本轮 matrix 仍全 FAIL 无新收敛」, **即使本轮诊断包质量 PASS**, 也必须在 chat 标:
+  `诊断已达 3 轮无收敛, 建议触发 02-human-gate` — **不直接开下一轮**。
+- 此时 state.md `Next step.Agent = Human`, `触发来源 = H · 诊断轮上限`, 可粘贴 prompt 给 Human 三选项 (见 `02-codex-plan.md > §诊断型 epic 强约束` human-gate 三选项)。
+- 「收敛」定义 (排除一整类根因 / 出现 PASS-FAIL 分化 / 缩小嫌疑范围) 见 `workflow.md > §诊断循环收敛规则`。
 
 ## 禁止
 

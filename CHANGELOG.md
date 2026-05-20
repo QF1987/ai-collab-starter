@@ -12,6 +12,115 @@ fork 起点见 v0.1.0 段。
 
 ---
 
+## [v0.6.0-lite-rc1] — 2026-05-20
+
+> ⚠️ **Release candidate · 待 ≥ 1 个独立真实 epic 用 v0.6 contract dogfood 验证后翻 stable**。
+> (rc1 理由: v0.6 新加的契约 — 02 多分支 fallback 决策树 / 历史关联嫌疑优先 / 诊断轮上限 + 收敛 gate / differential signal 优先 / 01-intake Step 1.5b 归档检索 / 09-closeout 未验证嫌疑归档段 / workflow §10-11 / Codex direct-solve mode — 全部未经独立 v0.6 contract dogfood。F03-F06 来源 epic 已结束, 但 contract force 形态未实战。)
+
+### TL;DR
+
+- **6 条 finding 全消化** (1×P1 + 3×P2 + 2×P3, 来源 lite v0.5 dogfood self + smart-uite h5coat-white-screen epic derived dogfood)
+- **关键 P1 · F03-v0.6**: 01-intake / 02-plan 没有强制检索同组件历史归档「未验证嫌疑」, 已知答案被埋, 重走 5 轮诊断 — 加 01-intake Step 1.5b 归档检索 + brief `## 历史关联嫌疑` 段 + 02 §8.1 历史嫌疑优先 + 09-closeout 未验证嫌疑归档单独成段
+- **新强约束: 诊断循环收敛规则** (F04 诊断轮 3 轮上限 + F05 differential signal 优先) — 02-plan-refine 诊断循环不再裸奔, workflow §10 新增跨 prompt SoT
+- **新 escalation 模式: Codex direct-solve mode** (F06) — Human override「你自己干吧」成文化, workflow §11
+- **Pattern A fallback 路径完整性 · F01-v0.6**: 02 下一步提示词 P0/P1 必填多分支 fallback 决策树, state.md 维护规则 7 扩展 fallback 切换点
+- **Language Discipline 跨 OC 模型加强 · F02-v0.6**: oc-helper / 03b / 04 输出格式加中文硬约束, AGENTS.md 加国产 OC 实战覆盖段
+- 无 breaking change · v0.5 旧 brief / 子任务包 / state.md / 归档仍合法
+
+### 触发数据
+
+- **来源**: lite v0.5.0-lite stable dogfood — 跨 2 来源
+  - **from-self (2 finding)**: smart-uite `bug-20260519-daemon-dcbusinessmanager-error2` epic dogfood 产出 F01-v0.6 (P2) / F02-v0.6 (P3)
+  - **from-derived (4 finding)**: smart-uite `bug-20260519-h5coat-white-screen-network-path` epic dogfood 产出 F03-v0.6 (P1) / F04-v0.6 (P2) / F05-v0.6 (P2) / F06-v0.6 (P3)
+- **重要数据点**: h5coat-white-screen epic 走 R1→R5 五轮诊断 matrix 未解决, Human override「你自己干吧」后 Codex 翻上个 epic (`h5coat-qt5core-missing`) 归档里记的「qt.conf 未验证嫌疑」, 一轮解决。根因极小 (staging 缺一个 `qt.conf`), 但因没检索历史归档 / 诊断循环无上限 / 差分信号没收窄 / override 模式没成文, 浪费 5 轮 — 即 F03-F06 高度协同的同根问题。
+
+### Added · 新增能力
+
+#### F03-v0.6 (P1) · 同组件历史归档检索 → `01-codex-intake.md` / `02-codex-plan.md` / `09-codex-closeout.md`
+- `01-codex-intake.md`: 新增 `Step 1.5b 同组件历史归档检索` (grep `.ai/logs/archived/` → brief `## 历史关联嫌疑` 段); brief 通用 + bug 模板各加固定段
+- `02-codex-plan.md > §8`: 新增 `8.1 历史关联嫌疑优先` — Assumptions 第一批假设必须来自 `## 历史关联嫌疑`; 旧 brief 无该段时 02 自补检索; 极小 A/B 优先于 instrumentation 矩阵
+- `09-codex-closeout.md`: 新增 `Step 3d 未验证嫌疑归档单独成段` — 写固定文件 `.ai/logs/archived/<epic-id>/unverified-suspicions.md` (固定 `# 未验证嫌疑` 标题, 保证后续 grep 稳定命中); Step 4 加第 7 项 verify
+
+#### F04-v0.6 (P2) · 诊断轮次上限 + 收敛 gate → `02-codex-plan.md` / `03-codex-orchestrate.md` / `workflow.md` / `state.md`
+- `02-codex-plan.md`: 新增 `## 诊断型 epic 强约束` 段含诊断轮上限 (最多 3 轮, 第 3 轮无收敛强制 02-human-gate + 三选项)
+- `03-codex-orchestrate.md`: 新增 `03c 诊断型子任务包跨轮收敛检查`
+- `workflow.md`: 新增 `§10 诊断循环收敛规则` (轮次上限 + 收敛定义 + human-gate 三选项, 跨 prompt SoT)
+- `state.md`: 阶段枚举 `02-plan-refine` 加 `诊断轮 R<X>/3` 标注
+
+#### F05-v0.6 (P2) · differential signal 优先 → `02-codex-plan.md` / `03-codex-orchestrate.md` / `workflow.md`
+- `02-codex-plan.md > 诊断型 epic 强约束`: 新增 `诊断方法: differential signal 优先` (分化检查 → 唯一变量 → 最小 A/B → 强收敛)
+- `03-codex-orchestrate.md`: 新增 `03a 诊断型子任务包分化出现 → 收窄` 约束
+- `workflow.md > §10.3`: differential signal 优先并入诊断循环收敛规则段
+
+#### F06-v0.6 (P3) · Codex direct-solve mode → `workflow.md` / `state.md` / `02-codex-plan.md`
+- `workflow.md`: 新增 `§11 Escalation 模式: Codex direct-solve mode` (触发 / 模式定义 / scope ≤ 50 行 / 强制补 04 review + 09 closeout)
+- `state.md`: 阶段枚举 `<stage>-human-gate` 加子模式 `codex-direct-solve`
+- `02-codex-plan.md`: human-gate 选项 (a) 引用 workflow §11 锚点
+
+#### F01-v0.6 (P2) · 多分支 fallback 决策树 → `02-codex-plan.md` / `state.md` / `03-codex-orchestrate.md`
+- `02-codex-plan.md > 收尾必做`: 新增 `多分支 fallback 决策树` (P0/P1 下一步提示词必填 ≥ 2 branch, 每 branch 完整 paste-able)
+- `state.md > 维护规则 7`: 扩展含 5 个 fallback / iteration cross-terminal 切换点
+- `03-codex-orchestrate.md`: 退回模板加 prompt body force 约束
+
+### Changed · 适配性改动
+
+- `oc-helper.md` / `03b-opencode-impl.md` / `04-opencode-review.md` (F02-v0.6): 输出格式段加 chat 输出默认中文硬约束 (结构字段名 + 命令原始输出 result 段例外; req `action.language: en` 例外)
+- `AGENTS.md > Language Discipline`: 加 `国产 OC 模型实战覆盖` 子段 (lite framework 全局规则 + 临时覆盖手法)
+- 全套 prompt / state.md / workflow.md 头部版本号 → `v0.6.0-lite-rc1`
+
+### Removed · 删除
+
+- 无
+
+### Breaking changes
+
+- 无。v0.5 旧 brief (无 `## 历史关联嫌疑` 段) / 旧子任务包 / 旧 state.md / 旧归档仍合法 — 02 在缺段时自补检索, 不阻塞。旧 contract 不达 v0.6 best practice 但不报错。
+
+### Why these changes (按 finding 编号 · 实战 case 摘要)
+
+- **F03-v0.6**: h5coat-white-screen 根因 (缺 `qt.conf`) 在上个 epic `h5coat-qt5core-missing` 归档里已记为「未验证嫌疑」, 但本 epic 没检索归档, 重走 5 轮昂贵 Windows VM 矩阵诊断
+- **F04-v0.6**: 02-plan-refine 诊断循环跑了 R1-R5 五轮无上限, 靠资深 Human 凭直觉手动喊停; 对比 03b-impl 早有 X/3 cap
+- **F05-v0.6**: R4 已出现 local-static PASS / remote FAIL 差分信号, R5 仍跑广角诊断, 多烧一整轮; override 后 Codex 正是靠该差分一步推到根因
+- **F06-v0.6**: Human override「你自己干吧」是被验证有效的 escalation 出口, 但纯临时口头模式, 触发时机靠 Human 经验
+- **F01-v0.6**: daemon-dcbusinessmanager-error2 epic Human 撞 workaround fallback 时, Codex 02 brief 只预填 happy path prompt, Human 自己拼不出含 OC-helper 契约字段的 fallback prompt
+- **F02-v0.6**: 国产 OC 模型 (Kimi / Qwen / Doubao) 实战默认英文 chat 输出, OC-helper status 段全英文, Human 反馈「需要输出默认中文」
+
+### 升级指南 (derived 项目 sync v0.6)
+
+```bash
+cd <derived-project-root>
+
+# 1. rsync prompts (全套 v0.6)
+rsync -av --exclude='.git' /path/to/ai-collab-starter-lite/.ai/prompts/ .ai/prompts/
+
+# 2. rsync key docs
+rsync -av /path/to/ai-collab-starter-lite/.ai/workflow.md .ai/
+
+# 3. state.md surgical merge (阶段枚举 + 维护规则 7 扩展 + 头部 v0.6.0-lite-rc1)
+diff .ai/state.md /path/to/ai-collab-starter-lite/.ai/state.md
+
+# 4. AGENTS.md surgical merge (Language Discipline 国产 OC 实战覆盖段)
+diff AGENTS.md /path/to/ai-collab-starter-lite/AGENTS.md
+
+# 5. stamp version (rc 默认不强推)
+echo "v0.6.0-lite-rc1  · synced $(date +%Y-%m-%d)" > .ai/STARTER_VERSION
+echo "- $(date +%Y-%m-%d) · lite v0.6.0-lite-rc1 同步, 详见 ai-collab-starter-lite CHANGELOG" >> .ai/progress.md
+```
+
+**测试 v0.6 新能力**: 下个诊断型 bug epic 触发时, 01-intake 是否自动 grep `.ai/logs/archived/` 填 brief `## 历史关联嫌疑` 段; 02-plan-refine 诊断轮是否标 `R<X>/3` 且第 3 轮无收敛触发 human-gate; matrix 出现 PASS/FAIL 分化后下一轮是否收窄为最小 A/B; OC-helper chat 输出是否默认中文。
+
+### lite → main sync 候选
+
+本次 6 条 finding 中:
+- **F03-v0.6 (历史归档检索)**: 普适, main 01-intake / 02-claude-plan 也应有同组件历史归档检索 + closeout 未验证嫌疑成段
+- **F04-v0.6 (诊断轮上限)**: 普适, main 诊断型 plan-refine 同样可无限裸奔
+- **F05-v0.6 (differential signal 优先)**: 普适, 诊断方法论, main 也缺
+- **F06-v0.6 (direct-solve mode)**: 部分普适 — main 有 Claude 编排, direct-solve 形态不同, main owner 评估
+- **F01-v0.6 (多分支 fallback 决策树)**: lite-specific (main 无 Pattern A Human bus 复制粘贴模式)
+- **F02-v0.6 (国产 OC 中文硬约束)**: lite-specific (main 无 OC 国产模型 agent)
+
+---
+
 ## [v0.5.0-lite-rc1] — 2026-05-19
 
 > ⚠️ **Release candidate · 待 ≥ 1 个独立真实 epic 用 v0.5 contract dogfood 验证后翻 stable**。

@@ -1,4 +1,4 @@
-# Prompt: Codex 09-closeout · Epic 收口 (lite v0.5.0-lite-rc1)
+# Prompt: Codex 09-closeout · Epic 收口 (lite v0.6.0-lite-rc1)
 
 ## 角色
 
@@ -114,6 +114,30 @@ rm -f .ai/scratch/oc-helper/req-${EPIC_ID}-*.md \
 - 是 dogfood 学到的工具 / 环境 / 编码 / 平台特定经验 → append
 - 是 lite framework finding (从 self / derived 触发) → **不** append (落 inbox 等 lite 升级, 不放项目 AGENTS.md)
 
+#### 3d. 未验证嫌疑归档单独成段 (硬约束 · v0.6 · F03-v0.6)
+
+写一个固定文件 `.ai/logs/archived/<epic-id>/unverified-suspicions.md`, 含固定一级标题 `# 未验证嫌疑 / 残留 follow-up`:
+
+```markdown
+# 未验证嫌疑 / 残留 follow-up · <epic-id>
+
+> 本段供后续同组件 epic `grep` 检索 (01-intake Step 1.5b / 02 §8.1)。
+
+## 核心组件 / 模块 / 关键文件
+<本 epic 涉及的组件名 / 模块名 / 关键文件名, 列全, 便于后续 grep 命中>
+
+## 未验证嫌疑
+<诊断过程中提出但未做 A/B 验证的嫌疑点, 每条一句话 + 为什么没验证; 无则写「无」>
+
+## 残留 follow-up
+<open RV defer / 后续 task 提示 / 已知 Known Sharp Edge 候选; 无则写「无」>
+```
+
+**为什么**: 同组件下一个 epic 走 01-intake Step 1.5b 时 `grep -rl "<组件名>" .ai/logs/archived/` 能稳定命中本文件,
+把未验证嫌疑前移为头号候选假设, 避免重走昂贵诊断循环 (F03-v0.6 反例: smart-uite `h5coat-white-screen` 根因在上个 epic 归档里没被检索到, 重走 5 轮 matrix)。
+
+无未验证嫌疑也**必须写**本文件 (两段都写「无」), 保证 grep 行为可预测。
+
 ### Step 4: 收口验证 (机器化 · 硬门槛)
 
 ```bash
@@ -144,9 +168,17 @@ elif [ -f "$PROMPT_TEMPLATE" ]; then
 else
   echo "FAIL: Prompt template $PROMPT_TEMPLATE not found"
 fi
+
+# 7. 未验证嫌疑归档段存在 (v0.6 · F03-v0.6)
+SUSP=".ai/logs/archived/${EPIC_ID}/unverified-suspicions.md"
+if [ -f "$SUSP" ] && grep -q '^# 未验证嫌疑' "$SUSP"; then
+  echo "unverified-suspicions PASS"
+else
+  echo "FAIL: $SUSP missing or no '# 未验证嫌疑' heading"
+fi
 ```
 
-6 项全 PASS → closeout 完成, chat 输出:
+7 项全 PASS → closeout 完成, chat 输出:
 
 ```
 ✅ closeout done · <epic-id>
