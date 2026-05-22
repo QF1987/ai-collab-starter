@@ -9,10 +9,14 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html):
 
 ---
 
-## [v5.1.0-rc1] — 2026-05-20
+## [v5.1.0] — 2026-05-22
 
-> ⚠️ **Release candidate · 待实战 dogfood 验证后翻 stable**。
-> 本版本消化 inbox 累积 finding (0 实战 dogfood)。derived 项目默认仍 sync v3.0.0 stable。
+> ✅ **Stable** — 由 v5.1.0-rc1 graduate（rc1 发布于 2026-05-20）。
+> rc1 经 DeviceOps **M2-B / M2-C / M2-D 三个 epic 实战 dogfood** 验证：全流程 intake → Scout →
+> Claude plan → Impl → review 跑通，PASS 与 PATCH→fix→verify 全路径、frontmatter `required`/`auto`
+> 多源触发均经实战，未撞 prompt 契约硬伤。本版本内容与 v5.1.0-rc1 完全一致，仅 graduate 为 stable。
+> dogfood 暴露的 2 条新 finding 不属 rc1 内容范畴 → 归 v5.2.0（见下方 v5.2.0-rc1 段）。
+> derived 项目可 sync v5.1.0 stable。
 
 ### TL;DR
 
