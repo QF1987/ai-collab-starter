@@ -9,6 +9,58 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html):
 
 ---
 
+## [v5.2.0-rc1] — 2026-05-22
+
+> ⚠️ **Release candidate · 待实战 dogfood 验证后翻 stable**。
+> 本版本消化 DeviceOps M2 dogfood 暴露的 2 条 finding（prompt 契约增量，0 实战 dogfood）。
+> derived 项目默认仍 sync v5.1.0 stable。
+
+### TL;DR
+
+- **消化 inbox 2 条 finding**（2×P2，均来自 `from-deviceops` · DeviceOps M2-B/C/D dogfood）。
+- 无 breaking change · 全部为增量 prompt 契约约束。
+- inbox 现状：`from-deviceops` 2 条已实施归档；`from-lite-smart-uite` 6 条维持 deferred（lite 架构相关，未纳入本轮）。
+
+### 实战数据
+
+- 无独立 dogfood —— inbox 消化轮。触发：Human 在 DeviceOps M2 路线图全收口后显式启动 starter 升级仪式。
+- finding 来源：`from-deviceops`（DeviceOps M2-B/C/D 三 epic dogfood，2026-05-22）。
+
+### Added / Changed
+
+#### `02-claude-plan.md`（deviceops-m2-finding-01）
+- 新增「**多决策交叉检查**」强约束段：ADR 含 ≥ 2 条 Decision 时，必须做「决策 × 决策」交叉检查——
+  列出每条 Decision 写/改的状态/资源/配置/limiter/单例，找出被多条 Decision 触碰的同一目标，
+  在 ADR 显式声明主导方/写入顺序/冲突优先级，或论证彼此正交。
+
+#### `04-review.md` + `workflow.md`（deviceops-m2-finding-02）
+- `04-review.md` 新增「**Epic 收口全量测试闸门**」段：① 单切片 review 见非本切片起源失败测试须登 finding
+  （不只标 observation）；② epic 末切片 review PASS 后、文档收口前必须全量复跑测试，红测试清零方可收口。
+- `workflow.md` §5.4 新增同名段，交叉引用 04-review.md。
+
+### Why these changes
+
+- **finding-01**：DeviceOps M2-D ADR 的两条 Decision（D2 限速热加载 / D6 自动降速）都写 `limiter` BPS、
+  意图相反，plan 阶段未发现 → 实施后自动降速被热加载每周期撤销（P1，RV-20260522-12）。02-claude-plan 原有
+  强约束都是单决策维度，缺「决策交互」检查。
+- **finding-02**：DeviceOps M2-D 末切片 review 见 `TestReportBandwidth` 失败、判「非本切片」标 observation
+  放过；实为更早切片起源的时间炸弹 fixture，靠 epic 收口预检才抓到（RV-20260522-16）。缺 epic 收口的
+  全量测试强制闸门。
+
+### Breaking changes
+
+无。全部为增量契约约束，v5.1.0 旧 task / brief / ADR 仍合法。
+
+### 升级指南（derived 项目 sync）
+
+> rc 默认不强推；等翻 stable 后再 sync。stable sync 时 `rsync` 新 `.ai/prompts/` + `workflow.md` 即可，无文件重命名。
+
+### 归档
+
+- `.ai/logs/archived/v5.2.0-released/`：`deviceops-m2-finding-01` / `deviceops-m2-finding-02`。
+
+---
+
 ## [v5.1.0] — 2026-05-22
 
 > ✅ **Stable** — 由 v5.1.0-rc1 graduate（rc1 发布于 2026-05-20）。

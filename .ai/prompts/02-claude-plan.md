@@ -46,6 +46,21 @@
 
 下游 Agent 看到 `Decision` 段必须能照着一条路走，不需要再选。
 
+### 多决策交叉检查（v5.2.0 · deviceops-m2-finding-01）
+
+ADR 含 **≥ 2 条 Decision** 时，**必须**做一次「决策 × 决策」交叉检查——单决策维度的强约束
+（Compatibility L1-L5 / Paths 分两组 / Consequences 双段）都照不到「两条决策互相打架」：
+
+1. 列出每条 Decision 写 / 改的**状态、资源、配置项、表列、全局变量、limiter / 单例等**。
+2. 找出被 **≥ 2 条 Decision 触碰的同一目标**。
+3. 对每一组「多 Decision 触碰同一目标」，在 ADR 显式声明**谁主导 / 写入顺序 / 冲突时以谁为准**；
+   或论证彼此正交（不同字段 / 不同时机，互不覆盖）。
+4. 写不出主导关系 = 决策未协调，回 `Decision` 段重新设计，**不要带冲突进实施**。
+
+反例（dogfood 留底）：某 ADR 的 D2「限速值热加载」与 D6「自动降速」都调 `limiter.SetBPS`、意图相反
+（一个拉回 config 值、一个压到其下），plan 未发现 → 实施后自动降速被热加载每采样周期撤销（P1）。
+详见 CHANGELOG v5.2.0 / `deviceops-m2-finding-01`。
+
 ### Alternatives 必须覆盖 UX / 行为等价维度（v5.1.0 · lite-v0.1-05）
 
 `Alternatives considered` 段不能只对比「技术实现不同」的方案，**必须**至少含一组**功能相同但用户层面感知不同**的方案对比：

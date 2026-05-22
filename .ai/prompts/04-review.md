@@ -174,6 +174,20 @@ review 通过门槛：被 review 的改动**必须已 commit**。
 
 > 反面案例：P0-5 在 working tree 未 commit 时被预标 ✅，导致后续 review 误判。详见 `.ai/progress.md` 04:35 段。
 
+## Epic 收口全量测试闸门（v5.2.0 · deviceops-m2-finding-02）
+
+单切片 04-review 跑的是「改动相关」测试——非本切片起源的红测试会被合理判为「非我引入」而放过。
+但 epic 收口若不强制全量绿，就可能在某个包带红测试时宣布 epic「全收口」。两条强约束：
+
+1. **单切片 review**：跑测试时若见**非本切片起源的失败测试**，除可标 observation 外，**必须**同时在
+   `.ai/review.md` 显式登记一条 finding（severity 按测试失败影响定）——不允许只留观察、让它漂到 epic 末尾。
+2. **Epic 收口**：epic 最后一个切片 review PASS 后、文档收口前，**必须全量复跑测试**（task / repo 的全量
+   测试命令，非仅改动相关）。任何红测试——无论起源——都必须在 epic 收口前清零（开 finding 修复，或显式
+   Human 决策接受并记录）。**带红测试不得宣布 epic / 路线图「收口」**。
+
+> 反面案例（dogfood 留底）：某 epic 末切片 review 见 `TestReportBandwidth` 失败、判「非本切片」标 observation
+> 放过；实为更早切片起源的时间炸弹 fixture，靠 epic 收口预检才抓到。详见 CHANGELOG v5.2.0 / `deviceops-m2-finding-02`。
+
 ## Token 策略
 
 - **输出语言**：默认中文，遵循 `AGENTS.md > Language Discipline`。代码 / 路径 / 工程术语 / SQL 关键字保留英文，其它散文用中文。
