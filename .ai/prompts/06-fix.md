@@ -98,6 +98,9 @@ Tokens: in=<n> out=<n> total=<n>
 
 汇报最末追加 `## 下一步提示词` 段落，**并把同一份 prompt 覆盖写入 `.ai/state.md`**（详见 AGENTS.md > Session State Discipline）。两件事缺一不可。
 
+- 刷 state.md 前先按 AGENTS.md「progress.md 行数自检」执行 `wc -l .ai/progress.md`（v5.2.0-rc2 · deviceops-finding-27）。
+- 刷 state.md 时，**严守第 6 / 7 条维护规则**（state ≠ progress 红线 + `Next step` 可粘贴 prompt body ≤ 15 行，v5.2.0-rc2 · deviceops-finding-26）。检查清单见 state.md 头部维护规则段。
+
 #### 统一格式（硬约束）
 
 `## 下一步提示词` 段必须含 4 个固定字段：
@@ -123,6 +126,11 @@ prompt body 推荐结构(**v3.0 指针版 / Finding #20 F-C**):
 prompt 只指向不复述)。若 Human 阅读 prompt 时仍需展开细节,改进 task 文件而非膨胀 prompt。
 
 若有 verdict 分支（如 PASS/PATCH/REJECT），分别给每个分支一个完整代码块并标明触发条件。
+
+**写 review.md 时**（v5.2.0-rc2 · deviceops-finding-25）：Status 字段必须用 7 种标准值之一
+（`open / accepted / in-progress / fixed / verified / rejected / deferred`）。子状态 / 承接路径
+放 Status 行括号注解，**禁止自创复合值**（如 `fixed-with-deferred-X`）——详见 review.md 顶部
+Status semantics 段。
 
 下一步提示词的**业务内容**（按本 prompt 角色具体写）：
 

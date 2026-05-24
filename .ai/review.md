@@ -36,6 +36,17 @@ This file tracks review findings across Scout, Claude Code and Impl fix cycles.
 - `rejected`: 评估后不修
 - `deferred`: 延后处理（注明原因）
 
+**Status 字段只能用以上 7 种值之一**（v5.2.0-rc2 · deviceops-finding-25）。需要表达 subtype /
+承接路径 / 阶段闭合条件（如「fix 完成，等 E2E 验证转 verified」），放 Status 行的**括号注解**，
+**禁止自创复合值**（典型反例：`fixed-with-deferred-E2E` / `fixed-pending-X` / `verified-conditional`
+等）——破坏 grep 与跨工具一致性，starter-status.sh 类脚本按 7 种 status 统计时自创值被漏算。
+
+正确写法示例：
+
+- `Status: **fixed**（S4 场景 2 跑通后由 Verifier 转 verified；此前不算 epic 闭合）`
+- `Status: **deferred**（GA brief 显式承接；本 epic 不修）`
+- `Status: **verified**（随 RV-XX 闭合）`
+
 **关闭规则**：finding 必须由 Reporter（不是 fix 实施人）翻 `verified` 才算关闭。P0/P1 未 verified 不得合并。
 
 ## Severity

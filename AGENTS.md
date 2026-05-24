@@ -294,6 +294,23 @@ Impl 在以下情况之后才能实施：
 - `.ai/state.md` 是当前 session 的活跃任务快照，每个 Agent 完成必须刷新（覆盖式）。session 中断后回来先读这里。
 - `.ai/decisions.md` 单调追加，旧 ADR 不删除（标 superseded）。
 
+### progress.md 行数自检（v5.2.0-rc2 · deviceops-finding-27）
+
+`scripts/archive-progress.sh` 工具完备但缺触发器——dogfood 中曾出现 18 个月零触发、progress.md
+涨到 3038 行的反例。补硬触发：每个 Agent（02 / 03 / 04 / 06）收尾**刷 state.md 前**必须自检：
+
+```bash
+wc -l .ai/progress.md
+```
+
+- **< 500 行**：无需操作
+- **≥ 500 行**：在 state.md `Notes` 段加一行提醒（不强制本次跑 archive，避免阻塞 epic 进度）：
+  `- progress.md 已 N 行，建议下个 epic 切换前跑 bash scripts/archive-progress.sh --keep-days 7`
+- **≥ 2000 行**（严重超阈）：**本次必须**跑 `bash scripts/archive-progress.sh --keep-days 7`
+  归档后再刷 state.md；不归档不结束 session
+
+archive 后 `.ai/progress.md` 留近期段落 + 在 `.ai/archive/YYYY-MM.md` 落档旧段落，零数据丢失。
+
 ## Session State Discipline
 
 > 谁刷 `.ai/state.md`，何时刷，怎么验证。

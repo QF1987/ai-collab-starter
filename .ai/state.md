@@ -73,6 +73,13 @@ NONE
 3. session 中断后回来——**默认 Pattern A**：你（人）用眼读本文件 → 复制 `Next step.可粘贴 prompt` → 粘给对应 Agent。Agent **不读** state.md（它收到的 prompt 已自带完整上下文）。
 4. 任务整体完成（merge + 文档收口都做完）：清空 `Active task / Last completed step / Next step`，仅保留 `Notes` 给下个任务参考。
 5. 多个并行任务：本文件**只**追当前活跃任务；其它任务用各自的 task 文件 `Handoff state` 段记录。
+6. **state ≠ progress 红线**（v5.2.0-rc2 · deviceops-finding-26）：本文件只承载「resume 所需的最小快照」。详细 R1-Rn 摸排发现、token 消耗统计、prompt drafting 备忘、epic 教训复盘等**全部放别处**（packet / progress.md / 独立 lessons 文件），state.md 留指针即可。
+   - ❌ 反例：把 context packet 的 R1-R7 全文 copy 到 `Last completed step.产出`
+   - ❌ 反例：`Token 消耗 in≈178000` 历史统计塞进 `Last completed step`
+   - ✅ 正例：`产出: .ai/logs/<packet>.md（R1-R7 全覆盖）；关键校正 1 行指针`
+   - 合理快照行数 ≤ 80 行；超 100 行说明已膨胀，按本规则瘦身
+7. **`Next step.可粘贴 prompt` body 硬上限 15 行**（对齐 `02-claude-plan.md` 收尾段约束，v5.2.0-rc2 · deviceops-finding-26）。超过说明任务定义不清，应把详细信息搬进 task / packet / ADR，prompt 只承担「指向 + 启动」职责。
+   - 自检：每次写完 Next step prompt 后 `wc -l` 数一下 fence 内行数
 
 ## 人 vs Agent · 谁该读 state.md
 

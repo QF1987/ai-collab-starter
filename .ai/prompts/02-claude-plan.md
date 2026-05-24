@@ -320,6 +320,79 @@ grep -rn "uploadFile :" <target-package>  # 字段 / map key 命名
 理由:DeviceOps P1 #3 实战暴露——brief 锁 `uploadFile`,与 `release.go:543` 已有同名函数冲突,
 Impl 实施期才发现编译失败,改名 `uploadFileHTTPURL` 守 scope。详见 CHANGELOG v3.0 / Finding #22。
 
+##### 锁定外部 API 行为契约前必须最小复现验证（v5.2.0-rc2 · deviceops-finding-23 强约束）
+
+#22 处理「内部新增符号」的**静态可见**冲突；外部第三方 API 的实际行为属**动态可见**风险——
+header doc / 官方文档**未明确定义**的边界值不可推断，必须运行时验证。
+
+在 ADR 中**锁定第三方 API 的具体值或行为契约**时（典型：libtorrent flag / OS SDK getter / SDK
+enum 边界值 / FFI 类型转换 / Native 库 setter 规范化逻辑），Claude **必须**在最终化 ADR 前完成
+**两层验证**：
+
+1. **文档证据**（已有约束）：grep 上游源 / 头文件 / 官方 doc 取语义证据
+2. **行为证据**（本约束新增）：在目标环境（真机 / 桌面 / 对应 SDK 版本）跑最小复现脚本，
+   验证 getter 返回值符合预期
+
+**禁止**：仅凭文档推断**未明确定义**的值（典型反例：doc 说「`-1` = unlimited」就推断
+「`0` 也是最严格限制」——libtorrent 实际把 `0` 也规范化为 unlimited 哨兵 16777215）。
+
+**何时本约束触发**（避免误用）：
+
+- 仅当 ADR 锁定的是「**外部不可控行为**」（第三方 API / OS API / 硬件接口 / Native FFI）时强制
+- 纯内部模块 / 自研 web API / DB schema 等可控领域不强制（由 #22 / L1-L5 / 多决策交叉检查覆盖）
+
+**最小复现脚本要求**：
+
+- 落档 `.ai/logs/<adr-id>-api-probe.md`，含调用代码 + 真机实测 getter 返回值 + 环境信息
+  （SDK 版本 / OS / 硬件标识）
+- ADR `Decision` 段引用此 probe log 路径，作为锁值证据
+
+反例（dogfood 留底）：DeviceOps M3-Beta ADR-20260523-02 amendment v1 锁
+`set_max_uploads(0)` 仅基于 libtorrent header doc，Impl 实施后真机 getter 返回 16777215
+（unlimited 编码）→ amendment v2 改 `(1, 5120)` 组合二次迭代，约 30k token 浪费（P1）。
+详见 CHANGELOG v5.2.0-rc2 / `deviceops-finding-23`。
+
+##### Listener / Observer / Callback 类决策必须规约并发实现（v5.2.0-rc2 · deviceops-finding-24 强约束）
+
+强约束 #1（决策唯一具体）覆盖**水平维度**（A/B/C 方案必须锁一个）；listener pattern 一旦锁定，
+**垂直维度**（同一架构选择内的实现纪律）仍有多个隐藏决策空间，Impl 自由发挥极易踩并发陷阱。
+
+当 ADR 锁定 listener pattern / observer pattern / callback 注册 / event-bus 类**架构选择**时，
+**必须**在 `Decision` 段**同时锁定 4 项并发实现纪律**：
+
+1. **调用纪律**：callback 在持锁内调，还是释放锁后调？（推荐：**解锁后调**，除非有特殊理由）
+2. **Snapshot 策略**：遍历 listeners 前是否必须先拷贝列表到局部容器，再释放锁？（推荐：**必须**）
+3. **锁序约束**：listener 在 callback 内反向调原对象方法时是否允许？如允许，描述锁序图
+4. **生命周期纪律**：listener 用裸指针 / `shared_ptr` / `weak_ptr`？悬挂引用处理路径？
+
+**禁止反模式**：
+
+- 持锁内直接调外部 callback（可能 ABBA 死锁 / 持锁阻塞 / mutex 递归 UB）
+- 「让 Impl 自己决定 snapshot 策略」（等价 #1 决策漂移）
+- 不写锁序图（等价默许 ABBA）
+
+**通用模板**（snapshot + 解锁后调，伪 C++ 表达，其它语言等价转换）：
+
+```cpp
+void Subject::notify(Event e) {
+    std::vector<Listener*> snapshot;
+    {
+        std::lock_guard<std::mutex> lock(mu_);
+        update_state(e);          // 状态变更在持锁内
+        snapshot = listeners_;    // 拷贝 listener 列表
+    }                             // 释放锁
+    for (auto* l : snapshot) if (l) l->on_event(e);  // 解锁后调
+}
+```
+
+**适用范围**：不限 C++——Java synchronized 嵌套 / Kotlin coroutine / Go channel+mutex /
+Rust async / Node EventEmitter / 任意 event-bus 都撞同一陷阱；本约束对所有这些等价适用。
+
+反例（dogfood 留底）：DeviceOps M3-Beta ADR-20260523-02 D2 原锁「NetworkPolicy listener pattern」
+未锁并发实现 → Impl 写成持锁内遍历调 listener → 与 worker 线程 `P2PDownloadManager` 形成 ABBA
+死锁，Android Service 永久 hang；Claude 05-review 拦截后改 snapshot + 解锁调修复（P1 / RV-20260524-02）。
+详见 CHANGELOG v5.2.0-rc2 / `deviceops-finding-24`。
+
 ##### 每 slice 启动时重新评估 freeze 状态（Dogfood #15-v2 强约束）
 
 ADR-05 类「types.ts 全冻结 / package.json 不动 / xx 文件不改」决策**只对当前切片快照有效**。当 epic 进入下一个 slice 时（如 Slice 2 已合入开始 Slice 3 / Slice 3 已合入开始 Slice 4），Claude 在新 slice 启动决策前**必须**重新评估：
@@ -450,6 +523,8 @@ Tokens: in=<n> out=<n> total=<n>
 ### 下一步提示词 + 刷新 state.md
 
 汇报最末追加 `## 下一步提示词` 段落，**并把同一份 prompt 覆盖写入 `.ai/state.md`**（详见 AGENTS.md > Session State Discipline）。两件事缺一不可。
+
+刷新 state.md 时，**严守第 6 / 7 条维护规则**（state ≠ progress 红线 + `Next step` 可粘贴 prompt body ≤ 15 行，v5.2.0-rc2 · deviceops-finding-26）。检查清单见 state.md 头部维护规则段。
 
 #### 统一格式（硬约束）
 

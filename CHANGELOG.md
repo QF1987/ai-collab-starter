@@ -9,6 +9,98 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html):
 
 ---
 
+## [v5.2.0-rc2] — 2026-05-24
+
+> ⚠️ **Release candidate · 合并消化 rc1 · 待 dogfood 验证后翻 stable**。
+> 本版本在 v5.2.0-rc1 基础上消化 DeviceOps M3-Beta dogfood 暴露的 5 条 finding
+> （prompt / template 契约增量 + 维护规则补丁，0 独立 dogfood）。
+> derived 项目默认仍 sync v5.1.0 stable；rc1 的 2 条与 rc2 的 5 条会一起在 stable 翻牌时落地。
+
+### TL;DR
+
+- **消化 inbox 5 条 finding**（2×P1 + 3×P2，全部来自 `from-deviceops` · DeviceOps M3-Beta S2/S3 dogfood）。
+- 无 breaking change · 全部为增量 prompt 契约约束 / template 维护规则 / 收尾自检。
+- inbox 现状：`from-deviceops` 0 条 pending（5 条已实施归档）；`from-lite-smart-uite` 6 条维持 deferred（lite 架构相关）；`from-payment-recon-demo` 不在本轮范畴。
+
+### 实战数据
+
+- 无独立 dogfood —— rc1 的 inbox 续摊 + 同批 DeviceOps M3-Beta dogfood 新增 finding 消化轮。
+- 触发：Human 在 DeviceOps M3-Beta S2/S3 落 finding 后显式启动 starter 升级仪式。
+- finding 来源：`from-deviceops/`（DeviceOps M3-Beta S2 ABBA 死锁 + libtorrent setter 反例 + S3 state.md 膨胀 / progress.md 零归档 / RV status 自创复合值，5 条均 2026-05-24 同批落档）。
+
+### Added / Changed
+
+#### `02-claude-plan.md`（deviceops-finding-23 / 24）
+
+- 新增「**锁定外部 API 行为契约前必须最小复现验证**」P1 强约束段：ADR 锁第三方 API 具体值 /
+  行为契约前必须双层验证（doc + 真机/桌面 getter probe），未明确定义的边界值禁止仅凭文档推断；
+  落档 `.ai/logs/<adr-id>-api-probe.md`，ADR Decision 段引用。仅对外部不可控 API 强制。
+- 新增「**Listener / Observer / Callback 类决策必须规约并发实现**」P1 强约束段：锁 listener
+  pattern 等架构选择时必须同时锁定 4 项并发实现纪律（调用纪律 / Snapshot 策略 / 锁序约束 /
+  生命周期纪律），并给出 snapshot + 解锁后调通用模板。不限语言，event-bus / observer 等同样适用。
+
+#### `.ai/review.md` + `04-review.md` + `06-fix.md`（deviceops-finding-25）
+
+- `.ai/review.md` template 顶部 Status semantics 段明文：**Status 字段只能用 7 种标准值之一**
+  （`open | accepted | in-progress | fixed | verified | rejected | deferred`），**禁止自创复合值**
+  （如 `fixed-with-deferred-E2E`）；子状态 / 承接路径放 Status 行括号注解，给出 3 条正确写法示例。
+- `04-review.md` / `06-fix.md` 收尾段加同条自检提醒。
+
+#### `.ai/state.md` + `02-claude-plan.md / 03-implement.md / 04-review.md`（deviceops-finding-26）
+
+- `.ai/state.md` 维护规则段追加第 6 / 7 条：
+  - 第 6 条「**state ≠ progress 红线**」：state.md 只承载 resume 最小快照，详细摸排发现 /
+    token 统计 / drafting 备忘 / epic 教训复盘全部放别处；合理快照 ≤ 80 行。
+  - 第 7 条「**Next step 可粘贴 prompt body 硬上限 15 行**」对齐 02-claude-plan.md 收尾段，
+    自检 `wc -l` fence 内行数。
+- 02 / 03 / 04 prompt 收尾「下一步提示词 + 刷新 state.md」段加 cross-reference，提醒严守第 6 / 7 条。
+
+#### `AGENTS.md` + `03-implement.md / 04-review.md / 06-fix.md`（deviceops-finding-27）
+
+- `AGENTS.md > Document State Hygiene` 段新增「**progress.md 行数自检**」小节：每个 Agent 收尾
+  刷 state.md 前必须 `wc -l .ai/progress.md`，按三档阈值（< 500 / ≥ 500 / ≥ 2000）触发提醒
+  或强制 archive。补齐 `scripts/archive-progress.sh` 工具与协议触发器之间的缺失环节。
+- 03 / 04 / 06 prompt 收尾段加 cross-reference。
+
+### Why these changes
+
+- **finding-23**：DeviceOps M3-Beta ADR-20260523-02 amendment v1 锁 `set_max_uploads(0)` 仅
+  基于 libtorrent header doc，未明确定义 `0` 语义；Impl 真机实测 getter 返回 16777215（unlimited
+  哨兵）→ amendment v2 改 `(1, 5120)` 二次迭代，~30k token 浪费（P1 / RV-20260524-01）。Finding #22
+  覆盖静态符号冲突，本约束补「动态行为验证」空白。
+- **finding-24**：DeviceOps M3-Beta ADR D2 锁 listener pattern 架构但未锁并发实现，Impl 自由
+  发挥写持锁内调 listener → 与 worker 线程形成 ABBA 死锁，Android Service 永久 hang，靠 Claude
+  05-review 拦截（P1 / RV-20260524-02）。强约束 #1 覆盖水平维度（A/B/C 选一个），本约束补
+  垂直维度（同一架构内的实现规约）。
+- **finding-25**：DeviceOps M3-Beta Claude 在 RV-20260524-04 自创 `fixed-with-deferred-E2E`
+  非标 status，破坏 grep / starter-status.sh 类工具一致性。template 列了 7 种值但没明文禁第 8 种。
+- **finding-26**：DeviceOps M3-Beta S3 阶段 state.md 涨到 175 行（合理 ≤ 80），Next step prompt
+  body 84 行（硬上限 15），packet R1-R7 全文 / token 统计 / 重复 Notes 全塞进 state.md。template
+  维护规则缺「state ≠ progress」红线 + 缺 prompt body 行数自检 cross-reference。
+- **finding-27**：DeviceOps 用 starter v5.0+ 约 18 个月，`scripts/archive-progress.sh` 自 May 10
+  存在但**从未被任何 Agent 触发**，progress.md 涨到 3038 行才由人工 audit 发现。工具齐备但
+  触发器空缺——同类问题 starter 已在 #02 / #26 验证过「工具 ≠ 触发，触发要靠协议」。
+
+### Breaking changes
+
+无。全部为增量契约约束 / 模板维护规则 / 收尾自检，v5.1.0 / v5.2.0-rc1 旧 task / brief / ADR / review.md
+仍合法。derived 项目 sync 后只需在新 task / 新 review 中遵守新约束即可。
+
+### 升级指南（derived 项目 sync）
+
+> rc2 仍为 rc，默认不强推；等翻 stable 后再 sync。stable sync 时 `rsync` 新 `.ai/prompts/` +
+> `.ai/state.md` + `.ai/review.md` + `AGENTS.md` 即可，无文件重命名、无 path 迁移。
+>
+> 已 sync 过 v5.1.0 的 derived 项目特别注意：v5.2.0 stable 翻牌时一次性带 rc1（2 条）+ rc2
+> （5 条）= 7 条增量约束。
+
+### 归档
+
+- `.ai/logs/archived/v5.2.0-rc2-released/`：`deviceops-finding-23` / `deviceops-finding-24` /
+  `deviceops-finding-25` / `deviceops-finding-26` / `deviceops-finding-27`。
+
+---
+
 ## [v5.2.0-rc1] — 2026-05-22
 
 > ⚠️ **Release candidate · 待实战 dogfood 验证后翻 stable**。

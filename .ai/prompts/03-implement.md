@@ -170,6 +170,9 @@ Tokens: in=<n> out=<n> total=<n>
 
 汇报最末追加 `## 下一步提示词` 段落，**并把同一份 prompt 覆盖写入 `.ai/state.md`**（详见 AGENTS.md > Session State Discipline）。两件事缺一不可。
 
+- 刷 state.md 前先按 AGENTS.md「progress.md 行数自检」执行 `wc -l .ai/progress.md`（v5.2.0-rc2 · deviceops-finding-27）。
+- 刷 state.md 时，**严守第 6 / 7 条维护规则**（state ≠ progress 红线 + `Next step` 可粘贴 prompt body ≤ 15 行，v5.2.0-rc2 · deviceops-finding-26）。检查清单见 state.md 头部维护规则段。
+
 #### Next step 必接 04-review,不允许跳到下一个 03
 
 03 完成后，state.md `Next step` **必须**指向 `04-review`：
