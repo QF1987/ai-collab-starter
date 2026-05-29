@@ -39,12 +39,17 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-DEVOPS_ROOT="${DEVICEOPS_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+# 默认用调用方 $PWD（在哪个项目根喊就归档哪个项目），而非脚本自身父目录。
+# v5.3.0 · deviceops-finding-29:旧默认 $(dirname "$0")/.. 会让 derived 项目用绝对路径调用时
+# 误扫 starter 自己的 progress.md（silent "0 段" 假成功）。显式 DEVICEOPS_ROOT 仍优先（向后兼容）。
+DEVOPS_ROOT="${DEVICEOPS_ROOT:-$PWD}"
 PROGRESS="$DEVOPS_ROOT/.ai/progress.md"
 ARCHIVE_DIR="$DEVOPS_ROOT/.ai/archive"
 
 if [[ ! -f "$PROGRESS" ]]; then
   echo "找不到 $PROGRESS" >&2
+  echo "  提示:请 cd 到目标项目根再跑,或显式设 DEVICEOPS_ROOT=<项目根> 环境变量。" >&2
+  echo "  (v5.3.0 · deviceops-finding-29:默认归档当前工作目录 \$PWD 的 .ai/progress.md)" >&2
   exit 1
 fi
 

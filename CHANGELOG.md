@@ -9,6 +9,50 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html):
 
 ---
 
+## [v5.3.0-rc1] — 2026-05-29
+
+### TL;DR
+
+消化 DeviceOps M3-Beta + M3-Beta-Scale dogfood 4 findings(#28/29/30/31)。MINOR:引入 review 第 4 verdict 值 `NEEDS-EXECUTION` + E2E/真机切片专项检查 + lifecycle 闭环测试纪律 + Epic 收口「回归 verdict 不可 split 替代」+ archive 脚本默认 root 修复。无 breaking change。
+
+> ⚠️ 本版本待实战 dogfood 验证后翻 stable。rc1+rc2 的既有约束(finding-23 probe / finding-24 listener / finding-25 RV status / finding-26 state 红线 / finding-27 progress 自检 / m2-finding-01 多决策交叉 / m2-finding-02 Epic 全量闸门)已在 DeviceOps M3-Beta-Scale 全 epic 实战验证生效;本 v5.3.0-rc1 的**新增 patch** 待下一轮 derived 实战后与 rc2 一并翻 stable。
+
+### 实战数据
+
+DeviceOps M3-Beta-Scale epic(5 slice · fleet 30→60→100 Docker ramp + 跨仓 telemetry + 真机 ground-truth · CLOSED 2026-05-29)dogfood 暴露 4 个 starter 协议缺口:#28 Scout 把模板占位符 epic 误判 PASS escalate;#29 archive 脚本默认扫 starter 自己;#30 telemetry 单点写入测试漏 lifecycle overwrite(P1 RV-11);#31 split evidence 差点替代 AC 点名的 Alpha 回归绿 verdict(S5 review 拦下)。
+
+### Added
+
+- **`NEEDS-EXECUTION` review verdict(第 4 值)**(`04-review.md` / `state.md` template / `06-fix.md` / `workflow.md` · deviceops-finding-28):`PASS / PATCH / REJECT / NEEDS-EXECUTION` 四值。NEEDS-EXECUTION = 设计完整但真机/E2E/集成测试未跑或证据是模板占位符,既非 fail 也非 PASS,返回 Impl 跑测试+回填。明确与 finding-25 的 finding `Status` 7 值是**两条轴**,勿混。
+- **E2E / 真机 / 集成切片专项检查**(`04-review.md` · deviceops-finding-28):三步法之外加三项——模板vs实测数据(grep `{{VAR}}`/`<TODO>`/`TBD`)、脚本可跑vs已跑通(追实跑证据)、deferred 承接追踪(cross-check 前序 RV 承接路径)。
+- **状态/telemetry 字段闭环测试纪律**(`03-implement.md` + `04-review.md` Quality 通用项 · deviceops-finding-30):跨多次上报累积的状态字段必须测完整 lifecycle 序列 + 服务端 overwrite vs sticky 核对。
+
+### Changed
+
+- **Epic 收口全量测试闸门加第 3 条**(`04-review.md` + `workflow.md` §5.4 · deviceops-finding-31):AC 明文要求「`--scenario=all` PASS」或「X 回归 suite PASS」时,closeout 必须有该脚本本身的绿 verdict,分场景 targeted PASS 不可替代;无绿 verdict 给「最小补跑 gate」。是 m2-finding-02 的精确化补丁。
+- **`scripts/archive-progress.sh` 默认 root → `$PWD`**(deviceops-finding-29):旧默认 `$(dirname "$0")/..` 致 derived 项目绝对路径调用时误扫 starter 自己(silent 0 段假成功);改用 `$PWD` + 找不到时错误提示 + AGENTS.md 补「跑 archive 两前提」(从项目根跑 / 0 归档不一定 bug)。`DEVICEOPS_ROOT` 显式仍优先。
+
+### Removed
+
+无。
+
+### Breaking changes
+
+无。`NEEDS-EXECUTION` 是新增 verdict 值,不破坏既有 PASS/PATCH/REJECT 三值语义(向后兼容扩展)。
+
+### Why these changes
+
+- #28:DeviceOps M3-Beta S4,Scout escalate PASS 但 3 个 scenario log 全 `{{VAR}}` 占位符,Claude 复审 spot-check 才发现,多耗一轮 token。
+- #29:M3-Beta-Scale intake 后 Human 跑 archive 建议,出 silent「0 段」误以为 bug;根因脚本默认扫 starter 自己。
+- #30:M3-Beta-Scale S3 telemetry,`completion_path` 被后续 UNSPECIFIED 上报清空(P1 RV-11),Impl 单点 probe 测不出,Claude review 跑完整 lifecycle 才发现。
+- #31:M3-Beta-Scale S5,Alpha 回归 23 run 全 SKIP + 1 incomplete,split evidence 差点替代「Alpha 回归 PASS」AC,Claude required review 拦下并指定最小 gate。
+
+### 升级指南(derived 项目)
+
+rc 版本默认不强推 `STARTER_VERSION`(rc 留 starter 自身实验,见 starter-upgrade-protocol Step 7)。derived 项目如需提前用 NEEDS-EXECUTION verdict / E2E 专项检查,rsync `.ai/prompts/{03,04,06}-*.md` + `.ai/workflow.md` + `scripts/archive-progress.sh` + AGENTS.md 对应段。stable 翻牌时一并带 rc1+rc2+本 rc1 全量增量。
+
+---
+
 ## [v5.2.0-rc2] — 2026-05-24
 
 > ⚠️ **Release candidate · 合并消化 rc1 · 待 dogfood 验证后翻 stable**。

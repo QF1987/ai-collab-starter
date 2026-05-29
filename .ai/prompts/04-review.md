@@ -35,7 +35,7 @@ Small Task 精简 review 步骤:
 4. **一条常规检查**: 全仓 grep 调用点(有遗漏记 P2)
 
 Small Task review **不**需要 ADR Data Contract L1-L5 对齐、GitNexus impact 结果、commit 状态完整检查。
-Verdict 路径同三步法:`PASS → Human` / `PATCH → Impl` / `REJECT → Claude(escalation)`。
+Verdict 路径同三步法:`PASS → Human` / `PATCH → Impl` / `REJECT → Claude(escalation)` / `NEEDS-EXECUTION → Impl`(E2E/真机切片设计完整但未实测,v5.3.0 · 见下方「Verdict 第 4 值」)。
 
 为什么这么改:v2.0 dogfood 二轮发现三步法对 ≤30 行小修补 over-engineered(读起来像在审 Epic)。
 详见 CHANGELOG v3.0 / Finding #20 F-A。
@@ -73,6 +73,7 @@ Verdict 路径同三步法:`PASS → Human` / `PATCH → Impl` / `REJECT → Cla
 - correctness / missing tests / docs drift / style consistency
 - 字段语义滥用(如 success 路径写 errorMessage)
 - 写完又读的无谓 round-trip
+- **lifecycle 闭环（v5.3.0 · deviceops-finding-30）**：改动「跨多次上报/调用累积」的状态字段(status / 完成路径 / 阶段时间戳 / 计数器)时,确认测试覆盖了**完整 lifecycle 序列**(如 pending→downloading→downloaded→installing→installed),而非只测首次写入;并核对服务端 UPDATE/upsert 对「本次不带值」的字段是 overwrite 还是 sticky(`COALESCE`/`NULLIF`),与客户端「仅某状态上报该字段」语义是否一致。单点写入查值 PASS ≠ 闭环 PASS。反例:DeviceOps RV-20260526-11(`completion_path` 被后续 UNSPECIFIED 上报清空,单次 probe 测不出)。
 
 按改动文件后缀 / 语言**自适应启用**的子项:
 
@@ -188,6 +189,35 @@ review 通过门槛：被 review 的改动**必须已 commit**。
 > 反面案例（dogfood 留底）：某 epic 末切片 review 见 `TestReportBandwidth` 失败、判「非本切片」标 observation
 > 放过；实为更早切片起源的时间炸弹 fixture，靠 epic 收口预检才抓到。详见 CHANGELOG v5.2.0 / `deviceops-m2-finding-02`。
 
+3. **AC 点名的回归 / 全场景 verdict 不可被 split evidence 替代**（v5.3.0 · deviceops-finding-31）：若 task AC 明文要求「`<script> --scenario=all` PASS」或「X 回归 / E2E suite PASS」，closeout **必须**有该脚本 / 回归 suite **本身的绿 verdict 证据文件**。分场景 targeted PASS 可作补充,**不能替代**那个聚合 verdict——尤其当某 carry-in finding 修复的正是该脚本的自动化闭合能力时(分场景跑天然绕开被修的那条路径)。无绿 verdict → 该 finding 不得 verified、epic 不得 CLOSED;给出「最小补跑 gate」而非接受拼图。
+> 反面案例（dogfood 留底）：DeviceOps M3-Beta-Scale S5,Alpha 回归 23 run 全 SKIP + 1 run incomplete,split evidence 一度差点替代「Alpha 回归 PASS」AC;Claude required review 拦下,指定最小 gate = leecher-healthy 真机单跑 `m3-alpha-e2e.sh` 出绿。详见 CHANGELOG v5.3.0 / `deviceops-finding-31`。
+
+## E2E / 真机 / 集成切片专项检查（v5.3.0 · deviceops-finding-28）
+
+当被 review 的 task brief 含**真机 / E2E / 集成测试 / 端到端验证**类 acceptance 时,Scout 04-review(及 Claude 复审)**必须**在三步法之外额外校验三项:
+
+1. **模板 vs 实测数据**:对所有 `.log` / `.md` / `summary` 类落档文件,grep 占位符模式(`{{VAR}}` / `<TODO>` / `TBD`)。命中则 verdict **不能 PASS**——raise「`<path>` 内含 N 处模板占位符,实测数据未回填」P1 finding(epic 不可 CLOSED)。
+2. **脚本可跑 vs 已跑通**:对新增 / 改动的 E2E 脚本,追问 progress.md / commit message / state.md「实际跑过几次?哪台真机 serial?summary verdict 是什么?」。找不到实跑证据 → raise「`<script>` 设计完整但无实跑证据」P1 finding。
+3. **deferred 承接追踪**:cross-check `.ai/review.md` 是否有前序 RV 标 `Status: **fixed**（…等 epic Y 跑通转 verified）` 类承接路径。有则本 review **必须显式判断 epic Y 是否已承接**;未承接不得默默标 epic CLOSED,escalate Claude。
+
+判定:三项全 PASS + AC 全覆盖 → 走原流程;任一项触发 P1 → verdict = **`NEEDS-EXECUTION`**(见下),返回 Impl 执行 + 回填证据后复 review。
+
+### Verdict 第 4 值:`NEEDS-EXECUTION`（v5.3.0 · deviceops-finding-28）
+
+review verdict 集合从 `PASS / PATCH / REJECT` 扩为四值:
+
+| Verdict | 含义 | 下游动作 |
+|---------|------|---------|
+| `PASS` | 设计 + 实测都过 | Human 合入 / epic 闭合 |
+| `PATCH` | 有 finding 需修但不阻塞架构 | Impl 修 → 复 review |
+| `REJECT` | 架构 / 决策错误 | 回 Claude 02-plan |
+| **`NEEDS-EXECUTION`** | 设计完整,但真机 / E2E / 集成测试**未跑**或证据是模板占位符 | Impl 跑测试 + 回填实测证据 → 复 review |
+
+`NEEDS-EXECUTION` **既不是 fail**(不 demotivate Impl,设计本身 OK)**也不是 PASS**(防 epic 误闭合)。state.md `Next step.Agent = Impl`,prompt 写明「跑哪个脚本 / 哪台真机 / 回填哪个 summary」。Claude 复审同样可判 `NEEDS-EXECUTION`,但**不替 Impl 跑真机**,只判定 + 返回。
+
+> 注:`NEEDS-EXECUTION` 是 **review verdict**(PASS/PATCH/REJECT/NEEDS-EXECUTION 这一轴),**不是** finding 的 `Status` 字段(后者仍只用 `open/accepted/in-progress/fixed/verified/rejected/deferred` 7 值,见 review.md 顶部 · deviceops-finding-25)。两轴勿混。
+> 反面案例（dogfood 留底）：DeviceOps M3-Beta S4 — Scout escalate PASS 但 3 个 scenario log 全 `{{VAR}}` 占位符,Claude 复审 spot-check 才发现,多耗一轮 review token。详见 CHANGELOG v5.3.0 / `deviceops-finding-28`。
+
 ## Token 策略
 
 - **输出语言**：默认中文，遵循 `AGENTS.md > Language Discipline`。代码 / 路径 / 工程术语 / SQL 关键字保留英文，其它散文用中文。
@@ -296,7 +326,7 @@ prompt body 推荐结构(**v3.0 指针版 / Finding #20 F-C**):
 **禁止**:在 prompt body 内复述 review 已写明的 finding 细节 / Expected fix 步骤(那是 review.md 的责任,
 prompt 只指向不复述)。若 Human 阅读 prompt 时仍需展开细节,改进 review.md 而非膨胀 prompt。
 
-若有 verdict 分支（如 PASS/PATCH/REJECT），分别给每个分支一个完整代码块并标明触发条件。
+若有 verdict 分支（如 PASS/PATCH/REJECT/NEEDS-EXECUTION），分别给每个分支一个完整代码块并标明触发条件。E2E/真机/集成切片须显式判断是否触发 `NEEDS-EXECUTION`（v5.3.0 · deviceops-finding-28）。
 
 **写 review.md 时**（v5.2.0-rc2 · deviceops-finding-25）：Status 字段必须用 7 种标准值之一
 （`open / accepted / in-progress / fixed / verified / rejected / deferred`）。子状态 / 承接路径

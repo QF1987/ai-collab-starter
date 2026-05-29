@@ -24,6 +24,12 @@
 - 跑指定测试或说明为何没跑。
 - 把改动文件、命令、风险写到 `.ai/progress.md`。
 
+### 状态/telemetry 字段闭环测试纪律（v5.3.0 · deviceops-finding-30）
+
+新增 / 修改「跨多次上报或调用累积」的状态字段(status / 完成路径 / 阶段时间戳 / 计数器 / completion_path 类)时,测试**必须覆盖完整 lifecycle 上报序列**(典型 pending→downloading→downloaded→installing→installed),并断言**终态字段值符合预期**(不被中间态覆盖 / 不被清空)。**单次写入查值 PASS 不算闭环**——后续状态对同字段的 sticky / overwrite 行为是隐藏决策空间,单点测试照不到。
+
+反例(留底):DeviceOps RV-20260526-11 —— `completion_path` 仅在 `downloaded` 上报,但 server `UpdateReleaseBatchDevice` 无条件 `= $6`,后续 `installing/installed` 上报 UNSPECIFIED 把已写的 `P2P_PRIMARY` 清成 NULL;Impl 只测单次 `downloaded` 查到值就判 PASS,Claude review 跑完整 lifecycle 才发现。修复用 SQL `COALESCE(NULLIF($6,''), col)` + 4 步 lifecycle 单测。详见 CHANGELOG v5.3.0 / `deviceops-finding-30`。
+
 ## 禁止
 
 - 没有 Claude 决策不重新设计系统。

@@ -311,6 +311,8 @@ wc -l .ai/progress.md
 
 archive 后 `.ai/progress.md` 留近期段落 + 在 `.ai/archive/YYYY-MM.md` 落档旧段落，零数据丢失。
 
+> **跑 archive 的两个前提**（v5.3.0 · deviceops-finding-29）:① **从项目根目录跑**(脚本默认归档 `$PWD/.ai/progress.md`),或显式 `DEVICEOPS_ROOT=<项目根> bash <starter>/scripts/archive-progress.sh ...`;② 输出 `归档 0 段 / 无需归档` 不一定是 bug —— 若所有段落日期都在 `--keep-days` 窗口内(如近期 burst 写了很多段但全在 7 天内),0 归档是真实结果,不必排查。
+
 ## Session State Discipline
 
 > 谁刷 `.ai/state.md`，何时刷，怎么验证。

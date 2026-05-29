@@ -36,6 +36,8 @@
     → Next step.Agent 为 Claude(触发来源 C, 写明命中的 C 编号)
   - 若 06-fix 完成且 RV severity = P0/P1 → Next step.Agent 必须为 Reporter(通常 Scout 或 Claude)
     (触发来源 D · Auto-P0/P1 / 详见 06-fix.md 收尾纪律 v3.0)
+  - 若 04-review verdict = `NEEDS-EXECUTION`(E2E/真机/集成切片设计完整但未实测 / 证据是模板占位符,v5.3.0 · deviceops-finding-28)
+    → Next step.Agent 必须为 Impl,prompt 写明「跑哪个脚本 / 哪台真机 / 回填哪个 summary」;**不**标 epic CLOSED
   - 违反上述规则的 state.md 视为损坏，需 Claude 复检后才能继续
   - 若本步在 worktree 中执行（pwd 含 `.claude/worktrees/`），Next step.可粘贴 prompt 必须以 `⚠️ 粘贴前请先 rsync 回主仓` 起头
 -->

@@ -125,7 +125,7 @@ prompt body 推荐结构(**v3.0 指针版 / Finding #20 F-C**):
 **禁止**:在 prompt body 内复述 task 文件已有的 AC / 改动步骤 / 决策细节(那是 task 文件的责任,
 prompt 只指向不复述)。若 Human 阅读 prompt 时仍需展开细节,改进 task 文件而非膨胀 prompt。
 
-若有 verdict 分支（如 PASS/PATCH/REJECT），分别给每个分支一个完整代码块并标明触发条件。
+若有 verdict 分支（如 PASS/PATCH/REJECT/NEEDS-EXECUTION），分别给每个分支一个完整代码块并标明触发条件（`NEEDS-EXECUTION` = E2E/真机切片设计完整但未实测,v5.3.0 · deviceops-finding-28）。
 
 **写 review.md 时**（v5.2.0-rc2 · deviceops-finding-25）：Status 字段必须用 7 种标准值之一
 （`open / accepted / in-progress / fixed / verified / rejected / deferred`）。子状态 / 承接路径

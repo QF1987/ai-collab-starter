@@ -131,6 +131,10 @@ Epic 最后一个切片 review PASS 后、文档收口前，**必须全量复跑
 ——无论起源——清零方可宣布 epic / 路线图「收口」。单切片 review 见非本切片起源的失败测试，
 须在 `.ai/review.md` 登记 finding（不只标 observation）。详见 `04-review.md` > Epic 收口全量测试闸门。
 
+**AC 点名的回归 / 全场景 verdict 不可被 split evidence 替代**（v5.3.0 · deviceops-finding-31）:task AC 明文要求「`<script> --scenario=all` PASS」或「X 回归 suite PASS」时,closeout 必须有该脚本本身的绿 verdict,分场景 targeted PASS 不能替代;无绿 verdict 则给「最小补跑 gate」而非接受拼图。详见 `04-review.md` > Epic 收口全量测试闸门 第 3 条。
+
+E2E / 真机 / 集成切片 review 另见 `04-review.md` > E2E / 真机 / 集成切片专项检查 + Verdict 第 4 值 `NEEDS-EXECUTION`（v5.3.0 · deviceops-finding-28）。
+
 ## 6. Fix
 
 Owner: Impl.
