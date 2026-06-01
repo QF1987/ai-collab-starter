@@ -133,7 +133,7 @@ Epic 最后一个切片 review PASS 后、文档收口前，**必须全量复跑
 
 **AC 点名的回归 / 全场景 verdict 不可被 split evidence 替代**（v5.3.0 · deviceops-finding-31）:task AC 明文要求「`<script> --scenario=all` PASS」或「X 回归 suite PASS」时,closeout 必须有该脚本本身的绿 verdict,分场景 targeted PASS 不能替代;无绿 verdict 则给「最小补跑 gate」而非接受拼图。详见 `04-review.md` > Epic 收口全量测试闸门 第 3 条。
 
-E2E / 真机 / 集成切片 review 另见 `04-review.md` > E2E / 真机 / 集成切片专项检查 + Verdict 第 4 值 `NEEDS-EXECUTION`（v5.3.0 · deviceops-finding-28）。
+E2E / 真机 / 集成切片 review 另见 `04-review.md` > E2E / 真机 / 集成切片专项检查 + Verdict 第 4 值 `NEEDS-EXECUTION`（v5.3.0 · deviceops-finding-28）+ 第 5 值 `FAIL-by-instrumentation`（测试红但根因在 harness/环境、被测代码实际工作 → Human disposition · v5.4.0 · deviceops-finding-32）。
 
 ## 6. Fix
 

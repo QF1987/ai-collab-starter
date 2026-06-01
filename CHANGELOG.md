@@ -9,6 +9,42 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html):
 
 ---
 
+## [v5.4.0-rc1] — 2026-06-01
+
+### TL;DR
+
+消化 DeviceOps M3-GA dogfood 2 findings(#32/#33)。MINOR:review verdict 轴加**第 5 值 `FAIL-by-instrumentation`**(E2E/真机切片测试红但根因在 harness/环境、被测代码实际工作 → Human disposition)+ Quality 加**「测试有效性:测代码不测 mock」**纪律(把 bug 任务的 revert-verify 扩展到 feature/数据语义改动)。无 breaking change。
+
+> ⚠️ **Release candidate · 待实战 dogfood 验证后翻 stable**。本版新增 patch 待下一轮 derived 实战(下个 epic 用上第 5 verdict / test-validity 检查)后翻 v5.4.0 stable。
+
+### 实战数据
+
+DeviceOps M3-GA epic(功能就绪 readiness 3 slice + P2P 计数 followup · CLOSED 2026-06-01)dogfood 暴露 2 个 starter 缺口:
+- **#32**:M3-GA S3 本机 Linux VM fleet-smoke gate 红(`peer_positive=0/10`),但实读判定根因 = Lima vz loopback + `from_peers` 周期采样竞态,被测产品代码(原生 Linux 纯-P2P 投递 + SHA)实际 PASS。四值 verdict 无一干净对应,Claude 临时造 `FAIL-by-instrumentation` 兜过去 → 暴露 verdict 轴缺这一档。
+- **#33**:M3-GA 两次遇到「单测过但测的是 mock/fake」(S2 fakeRateLimitDB sticky + D1 ledger 无直接单测),revert 真实改动单测照样绿 → 暴露「revert-verify」纪律只 enforce 到 bug 任务、未覆盖 feature/数据语义改动。
+
+### Added / Changed
+
+- `.ai/prompts/04-review.md`:
+  - Verdict 集合 4→5 值,新增 `FAIL-by-instrumentation`(表 + 「Verdict 第 5 值」子段 + verdict 路径行 + 与 NEEDS-EXECUTION 边界 + 强证据门槛防滥用)。
+  - 第三步 Quality 新增「测试有效性:测代码不测 mock」纪律(#33)。
+- `.ai/workflow.md`:E2E/真机切片 review 引用补第 5 值。
+
+### Why these changes
+
+- #32:E2E/真机/集成/fleet 切片天然会遇到「测试失败但根因是环境/harness 不 faithful、被测代码无辜」;没有明确档 → reviewer 误判 PASS(掩盖)/ PATCH(白改产品码)/ 卡死。第 5 值 + 强证据门槛(必须正向证明代码工作)填平。
+- #33:改数据契约/语义的 feature 若回归测试 revert 后仍绿,保护价值为零;把 revert-verify 纪律扩展到 feature 流程 + mock 难造时强制标注真验证承接处。
+
+### Breaking changes
+
+无(MINOR · 纯新增能力,不破坏既有 4 值 verdict 与 quality 流程)。
+
+### 升级指南
+
+derived 项目 rsync `.ai/prompts/` + `.ai/workflow.md` 即可;`STARTER_VERSION` 标 `v5.4.0-rc1`。
+
+---
+
 ## [v5.3.0] — 2026-06-01(stable · 由 v5.3.0-rc1 翻牌)
 
 ### TL;DR

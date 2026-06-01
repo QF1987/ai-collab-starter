@@ -35,7 +35,7 @@ Small Task 精简 review 步骤:
 4. **一条常规检查**: 全仓 grep 调用点(有遗漏记 P2)
 
 Small Task review **不**需要 ADR Data Contract L1-L5 对齐、GitNexus impact 结果、commit 状态完整检查。
-Verdict 路径同三步法:`PASS → Human` / `PATCH → Impl` / `REJECT → Claude(escalation)` / `NEEDS-EXECUTION → Impl`(E2E/真机切片设计完整但未实测,v5.3.0 · 见下方「Verdict 第 4 值」)。
+Verdict 路径同三步法:`PASS → Human` / `PATCH → Impl` / `REJECT → Claude(escalation)` / `NEEDS-EXECUTION → Impl`(E2E/真机切片设计完整但未实测,v5.3.0 · 见下方「Verdict 第 4 值」)/ `FAIL-by-instrumentation → Human`(E2E/真机切片测试红但根因在 harness/环境、被测代码实际工作,v5.4.0 · 见下方「Verdict 第 5 值」)。
 
 为什么这么改:v2.0 dogfood 二轮发现三步法对 ≤30 行小修补 over-engineered(读起来像在审 Epic)。
 详见 CHANGELOG v3.0 / Finding #20 F-A。
@@ -74,6 +74,7 @@ Verdict 路径同三步法:`PASS → Human` / `PATCH → Impl` / `REJECT → Cla
 - 字段语义滥用(如 success 路径写 errorMessage)
 - 写完又读的无谓 round-trip
 - **lifecycle 闭环（v5.3.0 · deviceops-finding-30）**：改动「跨多次上报/调用累积」的状态字段(status / 完成路径 / 阶段时间戳 / 计数器)时,确认测试覆盖了**完整 lifecycle 序列**(如 pending→downloading→downloaded→installing→installed),而非只测首次写入;并核对服务端 UPDATE/upsert 对「本次不带值」的字段是 overwrite 还是 sticky(`COALESCE`/`NULLIF`),与客户端「仅某状态上报该字段」语义是否一致。单点写入查值 PASS ≠ 闭环 PASS。反例:DeviceOps RV-20260526-11(`completion_path` 被后续 UNSPECIFIED 上报清空,单次 probe 测不出)。
+- **测试有效性:测代码不测 mock（v5.4.0 · deviceops-finding-33）**：改**数据契约/语义**的 feature(非 bug 任务也算)时,回归测试须能在 **revert 真实改动后 fail**(否则测的是 mock/fake 自身行为,保护价值为零)。reviewer 自检:这条断言若把被测 SQL/逻辑改回旧版,会不会还绿?会绿 = 假测试。**若因 fixture/mock 难造(外部库 alert、无真 DB)无法满足 → Impl 必须显式标注**「该断言验证 mock/fake 行为,真验证依赖 X(集成/真机/真 DB)」+ 指明真验证承接处,**不许默认绿**。bug 任务的「revert 后 fail」AC(getting-started)在此扩展到 feature/语义改动。反例:DeviceOps S2 `fakeRateLimitDB` 自己实现 set-once,revert `releases.go` 的 `COALESCE` 单测照样过。
 
 按改动文件后缀 / 语言**自适应启用**的子项:
 
@@ -212,11 +213,23 @@ review verdict 集合从 `PASS / PATCH / REJECT` 扩为四值:
 | `PATCH` | 有 finding 需修但不阻塞架构 | Impl 修 → 复 review |
 | `REJECT` | 架构 / 决策错误 | 回 Claude 02-plan |
 | **`NEEDS-EXECUTION`** | 设计完整,但真机 / E2E / 集成测试**未跑**或证据是模板占位符 | Impl 跑测试 + 回填实测证据 → 复 review |
+| **`FAIL-by-instrumentation`** | 测试**已跑且证据真实**,但 verify-don't-trust 判定失败根因在**测试 harness / 环境 / instrumentation**,被测代码/设计**实际工作** | 不开 code PATCH;落测试/环境侧 finding + 交 **Human disposition** |
 
 `NEEDS-EXECUTION` **既不是 fail**(不 demotivate Impl,设计本身 OK)**也不是 PASS**(防 epic 误闭合)。state.md `Next step.Agent = Impl`,prompt 写明「跑哪个脚本 / 哪台真机 / 回填哪个 summary」。Claude 复审同样可判 `NEEDS-EXECUTION`,但**不替 Impl 跑真机**,只判定 + 返回。
 
 > 注:`NEEDS-EXECUTION` 是 **review verdict**(PASS/PATCH/REJECT/NEEDS-EXECUTION 这一轴),**不是** finding 的 `Status` 字段(后者仍只用 `open/accepted/in-progress/fixed/verified/rejected/deferred` 7 值,见 review.md 顶部 · deviceops-finding-25)。两轴勿混。
 > 反面案例（dogfood 留底）：DeviceOps M3-Beta S4 — Scout escalate PASS 但 3 个 scenario log 全 `{{VAR}}` 占位符,Claude 复审 spot-check 才发现,多耗一轮 review token。详见 CHANGELOG v5.3.0 / `deviceops-finding-28`。
+
+### Verdict 第 5 值:`FAIL-by-instrumentation`（v5.4.0 · deviceops-finding-32）
+
+仅用于 **E2E / 真机 / 集成 / fleet 类切片**。当测试 gate 红、但 reviewer 经 **verify-don't-trust 实读** 判定:**失败根因在测试 harness / 测试环境 / instrumentation(采样、计数、网络栈不 faithful 等),而被测产品代码/设计实际工作** —— 用本档,不要误塞 PASS(掩盖)/ PATCH(让 Impl 白改产品码)/ REJECT(无架构错)/ NEEDS-EXECUTION(那是"没跑/模板",本档是"跑了、证据真、测错了对象")。
+
+**强证据门槛(防滥用 · 硬约束)**:必须有实读证据**正向证明被测代码工作**才可用此档(例:DeviceOps S3 — 无 web-seed 纯 P2P + SHA 10/10 + mesh 真连真实容器 IP,证明原生 Linux P2P 数据面 PASS,`peer_positive=0` 纯属采样竞态)。**拿不出"代码实际工作"的正向证据 → 不许用本档逃避真 bug**,按 PATCH/REJECT 走。
+
+**下游动作**:① **不开 code PATCH**(被测代码无需改)② 落 finding 到测试/环境侧(owner = harness/环境,可 carry 到有 faithful 环境时复验)③ verdict 交 **Human disposition**(接受 + carry / 先修测试或换环境再跑 / defer)。state.md `Next step.Agent = Human`。
+
+> 与 NEEDS-EXECUTION 的边界:NEEDS-EXECUTION = 测试**没跑**或证据是模板占位符(责任在 Impl 去跑);FAIL-by-instrumentation = 测试**跑了、证据真实、但 harness/环境测错了对象**(责任在测试/环境,不在被测代码)。两者都**不是** PASS,也都**不是**对被测代码的 fail。
+> 反面案例（dogfood 留底）：DeviceOps M3-GA S3 — 本机 Lima vz fleet-smoke `peer_positive=0/10` gate 红,若直接判 FAIL/PATCH 会冤枉产品码;实读证明原生 Linux 纯-P2P 投递 + SHA 全过,根因是 Lima loopback self-announce + `from_peers` 周期采样竞态(同根问题在生产路径另开 RV 真修)。详见 CHANGELOG v5.4.0 / `deviceops-finding-32`。
 
 ## Token 策略
 
