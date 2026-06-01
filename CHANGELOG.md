@@ -9,13 +9,23 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html):
 
 ---
 
+## [v5.3.0] — 2026-06-01(stable · 由 v5.3.0-rc1 翻牌)
+
+### TL;DR
+
+**v5.3.0-rc1 → stable 翻牌**:rc1 的新增 patch(`NEEDS-EXECUTION` verdict + E2E/真机切片专项检查 + lifecycle 闭环测试纪律 + Epic 回归 verdict 不可 split)已由 **DeviceOps M3-GA epic 实战 dogfood 验证生效**,无回归 → 翻 stable。内容与 rc1 一致,无新改动。
+
+> ✅ **Dogfood 验证(2026-06-01)**:DeviceOps M3-GA(readiness 3 slice + P2P 计数 followup · CLOSED 2026-06-01)实战使用了 rc1 的两项新能力 —— S3 Linux VM smoke 切片用上 `NEEDS-EXECUTION` verdict 纪律 + E2E 专项检查 3 项(模板占位符 / 实跑证据 / deferred 承接),均生效、无返工。rc1 既有约束(finding-23/24/25/26/27 + m2-01/02)此前已在 M3-Beta-Scale 验证。**v5.3.0-rc1 全部 patch 实战闭合 → stable**。
+
+---
+
 ## [v5.3.0-rc1] — 2026-05-29
 
 ### TL;DR
 
 消化 DeviceOps M3-Beta + M3-Beta-Scale dogfood 4 findings(#28/29/30/31)。MINOR:引入 review 第 4 verdict 值 `NEEDS-EXECUTION` + E2E/真机切片专项检查 + lifecycle 闭环测试纪律 + Epic 收口「回归 verdict 不可 split 替代」+ archive 脚本默认 root 修复。无 breaking change。
 
-> ⚠️ 本版本待实战 dogfood 验证后翻 stable。rc1+rc2 的既有约束(finding-23 probe / finding-24 listener / finding-25 RV status / finding-26 state 红线 / finding-27 progress 自检 / m2-finding-01 多决策交叉 / m2-finding-02 Epic 全量闸门)已在 DeviceOps M3-Beta-Scale 全 epic 实战验证生效;本 v5.3.0-rc1 的**新增 patch** 待下一轮 derived 实战后与 rc2 一并翻 stable。
+> ✅ **已翻 stable v5.3.0(2026-06-01)** —— 经 DeviceOps M3-GA 实战 dogfood 验证。详见上方 v5.3.0 段。
 
 ### 实战数据
 
